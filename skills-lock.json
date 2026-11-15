@@ -1,0 +1,47 @@
+{
+  "version": 2,
+  "skills": {
+    "game-playtest": {
+      "source": "openai/plugins",
+      "ref": "main",
+      "sourceType": "github",
+      "skillPath": "plugins/game-studio/skills/game-playtest/SKILL.md",
+      "computedHash": "8a026ade1edc0b1e06a74005b83d4785eb2898547dbe6f866eaf5f7c31e4616a"
+    },
+    "game-studio": {
+      "source": "openai/plugins",
+      "ref": "main",
+      "sourceType": "github",
+      "skillPath": "plugins/game-studio/skills/game-studio/SKILL.md",
+      "computedHash": "647502ad4c3ea4f93fd2cb71db5f4e775249eab86ae83ee821b8cb50b32f65c1"
+    },
+    "game-ui-frontend": {
+      "source": "openai/plugins",
+      "ref": "main",
+      "sourceType": "github",
+      "skillPath": "plugins/game-studio/skills/game-ui-frontend/SKILL.md",
+      "computedHash": "a306c0bb097a45e0e33128f033ce17caf0709b66c9bfe5660c98ceb87f00a5c9"
+    },
+    "react-three-fiber-game": {
+      "source": "openai/plugins",
+      "ref": "main",
+      "sourceType": "github",
+      "skillPath": "plugins/game-studio/skills/react-three-fiber-game/SKILL.md",
+      "computedHash": "51fc02f9b92a8037e4676ab67d007f0505a09ee6ee449d4d27e5b26b1f28dc2a"
+    },
+    "web-3d-asset-pipeline": {
+      "source": "openai/plugins",
+      "ref": "main",
+      "sourceType": "github",
+      "skillPath": "plugins/game-studio/skills/web-3d-asset-pipeline/SKILL.md",
+      "computedHash": "62267f7f1140ea17b9bb50c7cca9cb1289588c512b758b67a0cf6077de0e5da0"
+    },
+    "web-game-foundations": {
+      "source": "openai/plugins",
+      "ref": "main",
+      "sourceType": "github",
+      "skillPath": "plugins/game-studio/skills/web-game-foundations/SKILL.md",
+      "computedHash": "8fac38faa5c1d15e065e3db94d2121d4aeb20cfc181b75fd996a9a1dbbd81629"
+    }
+  }
+}
