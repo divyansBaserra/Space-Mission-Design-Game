@@ -72,6 +72,19 @@ export function GameManager({ onReturnToHub }: GameManagerProps) {
   // Sync initial sound volume
   useEffect(() => {
     soundManager.setVolume(INITIAL_SETTINGS.soundVolume);
+
+    const handleDevCockpit = () => {
+      setGameState((prev) => ({
+        ...prev,
+        controlMode: prev.controlMode === "SPACECRAFT_COCKPIT" ? "ASTRONAUT" : "SPACECRAFT_COCKPIT",
+        step: prev.controlMode === "SPACECRAFT_COCKPIT" ? "EVA_APPROACH_SATELLITE" : "COCKPIT_ORBITAL_MANEUVER",
+        substepText: prev.controlMode === "SPACECRAFT_COCKPIT"
+          ? "Disembarked back to astronaut mode."
+          : "Cockpit active: Fly shuttle ORV-1 and align for docking.",
+      }));
+    };
+    window.addEventListener("toggle-cockpit-mode", handleDevCockpit);
+    return () => window.removeEventListener("toggle-cockpit-mode", handleDevCockpit);
   }, []);
 
   // MET and Vitals timer loop
