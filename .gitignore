@@ -37,3 +37,8 @@ Thumbs.db
 .vscode/*
 !.vscode/settings.json
 !.vscode/extensions.json
+
+# Local Agent Skills Cache
+.agents/
+skills-lock.json
+
