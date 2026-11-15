@@ -2,9 +2,12 @@
 
 import dynamic from "next/dynamic";
 import React from "react";
+import type { SpacecraftSceneProps } from "./SpacecraftScene";
+
+export type { SpacecraftSceneProps };
 
 // Dynamic import with SSR disabled to guarantee zero SSR hydration or window errors
-export const SpacecraftViewport = dynamic(
+export const SpacecraftViewport = dynamic<SpacecraftSceneProps>(
   () => import("./SpacecraftCanvas"),
   {
     ssr: false,

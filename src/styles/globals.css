@@ -11,7 +11,7 @@ html, body {
   background-color: var(--color-canvas);
   color: var(--color-text-primary);
   font-family: var(--font-sans);
-  font-size: 16px;
+  font-size: 14px;
   line-height: var(--leading-normal);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -23,7 +23,7 @@ html, body {
 h1, h2, h3, h4, h5, h6 {
   font-weight: 600;
   color: var(--color-text-primary);
-  letter-spacing: -0.015em;
+  letter-spacing: -0.01em;
   line-height: var(--leading-tight);
 }
 
@@ -41,62 +41,108 @@ button {
   cursor: pointer;
   border: none;
   background: none;
+  outline: none;
 }
 
-/* Monospace Telemetry Class */
+input, select, textarea {
+  font-family: inherit;
+  color: inherit;
+  outline: none;
+}
+
+/* Monospace Class */
 .font-mono {
   font-family: var(--font-mono);
   font-feature-settings: "tnum" 1, "zero" 1;
 }
 
-/* Aerospace Card Surface */
+/* Clean Engineering Panel */
 .panel {
   background-color: var(--color-surface-1);
   border: 1px solid var(--color-border-subtle);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-sm);
   padding: var(--space-4);
-  box-shadow: var(--shadow-sm);
-  transition: border-color var(--duration-fast) var(--ease-out-natural);
+  transition: border-color var(--duration-fast) var(--ease-standard);
 }
 
-.panel:hover {
-  border-color: var(--color-border-default);
-}
-
-/* Status Indicators */
-.badge-status {
+/* Status Indicators - Minimalist dots and clean labels */
+.status-indicator {
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
-  padding: 2px var(--space-2);
-  border-radius: var(--radius-sm);
   font-size: var(--text-xs);
-  font-family: var(--font-mono);
+  color: var(--color-text-secondary);
   font-weight: 500;
+}
+
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.status-dot-nominal {
+  background-color: var(--color-status-nominal);
+}
+
+.status-dot-caution {
+  background-color: var(--color-status-caution);
+}
+
+.status-dot-critical {
+  background-color: var(--color-status-critical);
+}
+
+.status-dot-neutral {
+  background-color: var(--color-text-muted);
+}
+
+/* Engineering Data Table */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-xs);
+}
+
+.data-table th {
+  text-align: left;
+  font-weight: 500;
+  color: var(--color-text-muted);
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--color-border-subtle);
+  letter-spacing: 0.04em;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  font-size: 11px;
 }
 
-.badge-nominal {
-  background-color: var(--color-status-nominal-surface);
-  border: 1px solid var(--color-status-nominal-border);
-  color: var(--color-status-nominal);
+.data-table td {
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--color-border-subtle);
+  color: var(--color-text-primary);
+  vertical-align: middle;
 }
 
-.badge-caution {
-  background-color: var(--color-status-caution-surface);
-  border: 1px solid var(--color-status-caution-border);
-  color: var(--color-status-caution);
+.data-table tr:last-child td {
+  border-bottom: none;
 }
 
-.badge-critical {
-  background-color: var(--color-status-critical-surface);
-  border: 1px solid var(--color-status-critical-border);
-  color: var(--color-status-critical);
+/* Custom Minimal Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
 }
 
-.badge-telemetry {
-  background-color: var(--color-status-telemetry-surface);
-  border: 1px solid var(--color-status-telemetry-border);
-  color: var(--color-status-telemetry);
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border-default);
+  border-radius: var(--radius-none);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-border-strong);
 }
