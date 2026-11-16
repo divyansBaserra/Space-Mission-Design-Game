@@ -7,12 +7,13 @@ import { SpacecraftScene, SpacecraftSceneProps } from "./SpacecraftScene";
 
 export default function SpacecraftCanvas(props: SpacecraftSceneProps) {
   const isOrbit = props.viewMode === "ORBIT";
+  const isBlackHole = props.viewMode === "BLACK_HOLE";
 
   return (
     <div style={{ width: "100%", height: "100%", position: "relative" }}>
       <Canvas
         camera={{
-          position: isOrbit ? [0, 4.5, 7.5] : [3, 2.5, 4],
+          position: isBlackHole ? [0, 2.2, 8.8] : isOrbit ? [0, 4.5, 7.5] : [3, 2.5, 4],
           fov: 45,
         }}
         gl={{

@@ -5,6 +5,7 @@ import { useFrame } from "@react-three/fiber";
 import { OrbitControls, Stars } from "@react-three/drei";
 import * as THREE from "three";
 import { RealisticEarth } from "./RealisticEarth";
+import { BlackHoleScene } from "./BlackHoleScene";
 
 export interface SpacecraftSceneProps {
   busSize?: "1U" | "3U" | "6U";
@@ -15,7 +16,7 @@ export interface SpacecraftSceneProps {
   hasPropulsion?: boolean;
   thrusterActive?: boolean;
   isEclipse?: boolean;
-  viewMode?: "SPACECRAFT" | "ORBIT";
+  viewMode?: "SPACECRAFT" | "ORBIT" | "BLACK_HOLE";
   orbitAltitudeKm?: number;
   orbitProgress?: number; // 0 to 1
   activeStationName?: string | null;
@@ -90,6 +91,13 @@ export function SpacecraftScene({
   const wingSpan = 1.15;
   const wingHeight = heightMultiplier * 0.82;
   const wingXOffset = halfW;
+
+  // ==========================================================================
+  // VIEW MODE: INTERSTELLAR GRAVITATIONAL LENSING BLACK HOLE (Gargantua)
+  // ==========================================================================
+  if (viewMode === "BLACK_HOLE") {
+    return <BlackHoleScene />;
+  }
 
   // ==========================================================================
   // VIEW MODE: ORBIT VIEW (Photorealistic Blue Marble Earth + Orbit Track)
