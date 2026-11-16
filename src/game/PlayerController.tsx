@@ -279,9 +279,13 @@ export function PlayerController({
       );
 
       // Solve collision with lunar base obstacles
-      const { finalPos } = physics.movePlayer(playerPosRef.current, deltaPos);
+      const { finalPos, collided } = physics.movePlayer(playerPosRef.current, deltaPos, 0.52);
       playerPosRef.current.x = finalPos.x;
       playerPosRef.current.z = finalPos.z;
+      if (collided) {
+        velocityRef.current.x *= 0.4;
+        velocityRef.current.z *= 0.4;
+      }
 
       // Solve Y ground plane (surface is at Y = -18.0)
       playerPosRef.current.y += velocityRef.current.y * dt;
@@ -336,9 +340,13 @@ export function PlayerController({
       );
 
       // Solve XZ collision with station walls & doors
-      const { finalPos } = physics.movePlayer(playerPosRef.current, deltaPos);
+      const { finalPos, collided } = physics.movePlayer(playerPosRef.current, deltaPos, 0.52);
       playerPosRef.current.x = finalPos.x;
       playerPosRef.current.z = finalPos.z;
+      if (collided) {
+        velocityRef.current.x *= 0.4;
+        velocityRef.current.z *= 0.4;
+      }
 
       // Solve Y ground plane
       playerPosRef.current.y += velocityRef.current.y * dt;
@@ -401,8 +409,11 @@ export function PlayerController({
 
       // Move with collision checking along gantry
       const deltaPos = velocityRef.current.clone().multiplyScalar(dt);
-      const { finalPos } = physics.movePlayer(playerPosRef.current, deltaPos);
+      const { finalPos, collided } = physics.movePlayer(playerPosRef.current, deltaPos, 0.52);
       playerPosRef.current.copy(finalPos);
+      if (collided) {
+        velocityRef.current.multiplyScalar(0.3);
+      }
     }
 
     // Dynamic acoustic environment: vacuum in zero-g EVA vs pressurized module

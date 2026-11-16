@@ -104,7 +104,7 @@ export function GameCanvas({
       }}
     >
       <Canvas
-        camera={{ position: [0, 1.65, 9], fov: 75, near: 0.1, far: 500 }}
+        camera={{ position: [0, 1.65, 9], fov: 75, near: 0.04, far: 500 }}
         shadows={isShadowsEnabled}
         dpr={dprSetting}
         gl={{
