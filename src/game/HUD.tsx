@@ -49,6 +49,7 @@ export function HUD({
 }: HUDProps) {
   const [hasEntered, setHasEntered] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [selectedCampaignTab, setSelectedCampaignTab] = useState<"ARTEMIS" | "AEGIS" | "EUROPA">("ARTEMIS");
 
   useEffect(() => {
     if (isPointerLocked) {
@@ -881,6 +882,8 @@ export function HUD({
                   { id: "ISS_400", label: "ISS-400", name: "Gateway Docking" },
                   { id: "LUN_PAD1", label: "LUN-PAD1", name: "Lunar Touchdown" },
                   { id: "RET_100", label: "RET-100", name: "Atmosphere Entry" },
+                  { id: "AEGIS_DART", label: "GAME 02", name: "Aegis Asteroid Deflection" },
+                  { id: "EUROPA_ABYSS", label: "GAME 03", name: "Europa Subsurface Cryo" },
                 ].map((contract) => {
                   const isSelected = (gameState.activeFlightContract || "ARC_600") === contract.id;
                   return (
@@ -1494,12 +1497,13 @@ export function HUD({
                     fontWeight: 700,
                     color: "#f8fafc",
                     margin: "6px 0",
+                    letterSpacing: "0.5px",
                   }}
                 >
-                  MISSION 01: ORBITAL REPAIR &amp; RETURN
+                  OPERATION ARTEMIS-VII: SHACKLETON CRADLE
                 </h1>
                 <p style={{ fontSize: "12px", color: "#94a3b8", lineHeight: 1.5 }}>
-                  A dual-phase first-person 3D space mission. Explore the station on foot, perform zero-g EVA to repair the damaged Earth Sentinel CubeSat, then pilot the orbital shuttle ORV-1 in cockpit flight mode and dock back with the station.
+                  A high-stakes 3-phase aerospace campaign. Atmospheric solar storm imminent. Restore deep-space sentinel relay during microgravity EVA, pilot shuttle ORV-1 through orbital debris in 6-DOF cockpit flight to dock with Gateway-1, and execute powered descent into Shackleton Crater to deploy the Apollo ALSEP station.
                 </p>
               </div>
 
@@ -1847,45 +1851,168 @@ export function HUD({
               boxShadow: "0 20px 40px rgba(0,0,0,0.8)",
             }}
           >
-            <div style={{ borderBottom: "1px solid rgba(255,255,255,0.1)", paddingBottom: "12px" }}>
-              <span className="font-mono" style={{ fontSize: "11px", color: "#38bdf8", fontWeight: 700 }}>
-                FLIGHT OPERATIONS BRIEFING // MISSION 01: REPAIR &amp; RETURN
-              </span>
-              <h2 style={{ fontSize: "20px", fontWeight: 700, color: "#f8fafc", marginTop: "4px" }}>
-                Target: AERO-3X Earth Observation Sentinel
-              </h2>
+            {/* Campaign Selector Tabs */}
+            <div style={{ display: "flex", gap: "6px", borderBottom: "1px solid rgba(255,255,255,0.1)", paddingBottom: "10px" }}>
+              <button
+                onClick={() => setSelectedCampaignTab("ARTEMIS")}
+                style={{
+                  padding: "6px 12px",
+                  fontSize: "11px",
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  backgroundColor: selectedCampaignTab === "ARTEMIS" ? "#0284c7" : "rgba(30, 41, 59, 0.7)",
+                  color: selectedCampaignTab === "ARTEMIS" ? "#ffffff" : "#94a3b8",
+                  border: selectedCampaignTab === "ARTEMIS" ? "1px solid #38bdf8" : "1px solid rgba(255,255,255,0.1)",
+                }}
+              >
+                01: ARTEMIS-VII
+              </button>
+              <button
+                onClick={() => setSelectedCampaignTab("AEGIS")}
+                style={{
+                  padding: "6px 12px",
+                  fontSize: "11px",
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  backgroundColor: selectedCampaignTab === "AEGIS" ? "#b45309" : "rgba(30, 41, 59, 0.7)",
+                  color: selectedCampaignTab === "AEGIS" ? "#ffffff" : "#94a3b8",
+                  border: selectedCampaignTab === "AEGIS" ? "1px solid #f59e0b" : "1px solid rgba(255,255,255,0.1)",
+                }}
+              >
+                02: PROJECT AEGIS (DART)
+              </button>
+              <button
+                onClick={() => setSelectedCampaignTab("EUROPA")}
+                style={{
+                  padding: "6px 12px",
+                  fontSize: "11px",
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  backgroundColor: selectedCampaignTab === "EUROPA" ? "#4f46e5" : "rgba(30, 41, 59, 0.7)",
+                  color: selectedCampaignTab === "EUROPA" ? "#ffffff" : "#94a3b8",
+                  border: selectedCampaignTab === "EUROPA" ? "1px solid #818cf8" : "1px solid rgba(255,255,255,0.1)",
+                }}
+              >
+                03: PROJECT EUROPA
+              </button>
             </div>
 
-            <div style={{ display: "flex", flexDirection: "column", gap: "10px", fontSize: "12px", color: "#cbd5e1", lineHeight: 1.5 }}>
-              <p>
-                <strong>Situation:</strong> The AERO-3X Earth observation CubeSat in Berth 1 suffered orbital micrometeoroid damage. The primary solar wing is shattered and the S-Band telemetry patch antenna is offline.
-              </p>
-              <div style={{ backgroundColor: "rgba(30, 41, 59, 0.6)", padding: "12px", border: "1px solid rgba(255,255,255,0.08)" }}>
-                <strong style={{ color: "#38bdf8" }}>Primary Directives:</strong>
-                <ol style={{ paddingLeft: "18px", margin: "6px 0 0 0" }}>
-                  <li>Enter the Engineering Workshop and collect the Toolkit, GaAs Solar Wing (28W), and S-Band Transceiver.</li>
-                  <li>Proceed to the Airlock Chamber and depressurize to vacuum.</li>
-                  <li>Perform zero-g EVA along the exterior gantry to satellite AERO-3X.</li>
-                  <li>Detach the broken wing, mount the replacement wing and transceiver, and run avionics diagnostics.</li>
-                  <li>Board the orbital utility shuttle ORV-1 at Berth 2, pilot it into orbital space, and execute precision soft docking at Station Port DOCK-01.</li>
-                </ol>
-              </div>
-            </div>
+            {selectedCampaignTab === "ARTEMIS" && (
+              <>
+                <div style={{ borderBottom: "1px solid rgba(255,255,255,0.1)", paddingBottom: "10px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <span className="font-mono" style={{ fontSize: "11px", color: "#38bdf8", fontWeight: 700, letterSpacing: "1px" }}>
+                      NASA DEEP SPACE DIRECTIVE // ARTEMIS-VII
+                    </span>
+                    <span className="font-mono" style={{ fontSize: "10px", backgroundColor: "rgba(239, 68, 68, 0.2)", color: "#f87171", padding: "2px 8px", border: "1px solid rgba(239, 68, 68, 0.4)", fontWeight: 700 }}>
+                      PRIORITY: ALPHA-1
+                    </span>
+                  </div>
+                  <h2 style={{ fontSize: "20px", fontWeight: 700, color: "#f8fafc", marginTop: "6px" }}>
+                    Operation Shackleton Cradle &amp; Orbital Crisis
+                  </h2>
+                </div>
+
+                <div style={{ display: "flex", flexDirection: "column", gap: "10px", fontSize: "12px", color: "#cbd5e1", lineHeight: 1.5 }}>
+                  <p>
+                    <strong>CRITICAL SITUATION:</strong> A severe Class X-4 Coronal Mass Ejection is tracking towards cis-lunar space (Impact Window: T-minus 18 minutes). Earth communication links will undergo full telemetry blackout. Lunar Base Alpha in the permanently shadowed Shackleton Crater depends on orbital relay satellite AERO-3X to sustain life-support telemetry.
+                  </p>
+                  <div style={{ backgroundColor: "rgba(30, 41, 59, 0.6)", padding: "12px", border: "1px solid rgba(56, 189, 248, 0.2)" }}>
+                    <strong style={{ color: "#38bdf8", letterSpacing: "0.5px" }}>MISSION EXECUTION DIRECTIVES:</strong>
+                    <ol style={{ paddingLeft: "18px", margin: "6px 0 0 0", display: "flex", flexDirection: "column", gap: "4px" }}>
+                      <li><strong>Workshop Procurement:</strong> Retrieve the Aerospace Toolkit [1], GaAs Solar Array [2], and high-gain S-Band Transceiver [3].</li>
+                      <li><strong>Vacuum Depressurization:</strong> Cycle the airlock chamber to vacuum and commence exterior microgravity spacewalk along the gantry.</li>
+                      <li><strong>Sentinel Restoration:</strong> Remove damaged wing, mount high-efficiency array and antenna, and lock telemetry beacon.</li>
+                      <li><strong>Orbital Shuttle Insertion:</strong> Board ORV-1, fly 6-DOF RCS vectors through orbital debris corridor, and execute precision soft docking at Gateway Port DOCK-01.</li>
+                      <li><strong>Lunar Touchdown &amp; Science:</strong> Engage de-orbit burn [T] into Shackleton Crater (Lunar Base Alpha PAD-01), deploy the Apollo ALSEP array, and extract cryogenic water-ice core samples.</li>
+                    </ol>
+                  </div>
+                </div>
+              </>
+            )}
+
+            {selectedCampaignTab === "AEGIS" && (
+              <>
+                <div style={{ borderBottom: "1px solid rgba(255,255,255,0.1)", paddingBottom: "10px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <span className="font-mono" style={{ fontSize: "11px", color: "#f59e0b", fontWeight: 700, letterSpacing: "1px" }}>
+                      PLANETARY DEFENSE INITIATIVE // PROJECT AEGIS (DART-II)
+                    </span>
+                    <span className="font-mono" style={{ fontSize: "10px", backgroundColor: "rgba(245, 158, 11, 0.2)", color: "#fbbf24", padding: "2px 8px", border: "1px solid rgba(245, 158, 11, 0.4)", fontWeight: 700 }}>
+                      NEO COLLISION ALERT: 72H
+                    </span>
+                  </div>
+                  <h2 style={{ fontSize: "20px", fontWeight: 700, color: "#f8fafc", marginTop: "6px" }}>
+                    Kinetic Asteroid Redirection // Target: 2032-XK Didymos
+                  </h2>
+                </div>
+
+                <div style={{ display: "flex", flexDirection: "column", gap: "10px", fontSize: "12px", color: "#cbd5e1", lineHeight: 1.5 }}>
+                  <p>
+                    <strong>PLANETARY THREAT:</strong> A 160-meter binary moonlet asteroid is gravitationally deflected onto an Earth-intersecting impact trajectory. Automated interceptor Aegis-IV must execute an Oberth gravity slingshot around Mars and perform a precision hypervelocity kinetic collision at 6.2 km/s.
+                  </p>
+                  <div style={{ backgroundColor: "rgba(30, 41, 59, 0.6)", padding: "12px", border: "1px solid rgba(245, 158, 11, 0.3)" }}>
+                    <strong style={{ color: "#f59e0b", letterSpacing: "0.5px" }}>KINETIC IMPACT DIRECTIVES:</strong>
+                    <ol style={{ paddingLeft: "18px", margin: "6px 0 0 0", display: "flex", flexDirection: "column", gap: "4px" }}>
+                      <li><strong>Mars Slingshot Maneuver:</strong> Time retrograde burn for Oberth effect amplification, reaching 11.4 km/s egress velocity.</li>
+                      <li><strong>Autonomous SMART Nav:</strong> Under 14-minute lightspeed radio delay, lock optical LIDAR tracking on asteroid center-of-mass.</li>
+                      <li><strong>Terminal 6.2 km/s Run:</strong> Fire cold-gas micro-thrusters to counter solar radiation pressure drift and impact within 3 meters of target boulder.</li>
+                      <li><strong>LICIACube Damage Assessment:</strong> Eject companion CubeSat observer to photograph ejecta plume and measure 73-second orbital period deflection.</li>
+                    </ol>
+                  </div>
+                </div>
+              </>
+            )}
+
+            {selectedCampaignTab === "EUROPA" && (
+              <>
+                <div style={{ borderBottom: "1px solid rgba(255,255,255,0.1)", paddingBottom: "10px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <span className="font-mono" style={{ fontSize: "11px", color: "#818cf8", fontWeight: 700, letterSpacing: "1px" }}>
+                      EXTREMO-ASTROBIOLOGY // PROJECT EUROPA ABYSS
+                    </span>
+                    <span className="font-mono" style={{ fontSize: "10px", backgroundColor: "rgba(99, 102, 241, 0.2)", color: "#a5b4fc", padding: "2px 8px", border: "1px solid rgba(99, 102, 241, 0.4)", fontWeight: 700 }}>
+                      JOVIAN RADIATION: 400 RAD/H
+                    </span>
+                  </div>
+                  <h2 style={{ fontSize: "20px", fontWeight: 700, color: "#f8fafc", marginTop: "6px" }}>
+                    Deep Subsurface Ocean &amp; Hydrothermal Vent Biosignatures
+                  </h2>
+                </div>
+
+                <div style={{ display: "flex", flexDirection: "column", gap: "10px", fontSize: "12px", color: "#cbd5e1", lineHeight: 1.5 }}>
+                  <p>
+                    <strong>ASTROBIOLOGY DISCOVERY:</strong> Jupiter's ice moon Europa conceals a 100km-deep liquid saltwater ocean beneath a 20km cryogenic ice crust. Mission Deep-Valkyrie must survive Jovian radiation belts, melt through the ice shell via nuclear thermal probe, and navigate an abyssal submarine to hydrothermal black smokers.
+                  </p>
+                  <div style={{ backgroundColor: "rgba(30, 41, 59, 0.6)", padding: "12px", border: "1px solid rgba(99, 102, 241, 0.3)" }}>
+                    <strong style={{ color: "#818cf8", letterSpacing: "0.5px" }}>ABYSSAL EXPLORATION DIRECTIVES:</strong>
+                    <ol style={{ paddingLeft: "18px", margin: "6px 0 0 0", display: "flex", flexDirection: "column", gap: "4px" }}>
+                      <li><strong>Jovian Flux Evasion:</strong> Orient lead-Kevlar shielding along magnetic flux lines to protect mission avionics.</li>
+                      <li><strong>Chaos Terrain Landing:</strong> Avoid 15-meter jagged penitente ice blades; target smooth thermal fracture zone.</li>
+                      <li><strong>Nuclear Cryo-Drill Melt:</strong> Engage 900°C thermal probe to melt through 20km cryogenic ice, navigating pressurized methane gas pockets.</li>
+                      <li><strong>Abyssal Submersible Sonar:</strong> Pilot 6-DOF submersible through 130 MPa pitch-black ocean, locate volcanic vents, and sample extraterrestrial microbial RNA.</li>
+                    </ol>
+                  </div>
+                </div>
+              </>
+            )}
 
             <button
               onClick={onCloseBriefing}
               style={{
-                padding: "12px 20px",
-                backgroundColor: "#0284c7",
+                padding: "12px 24px",
+                backgroundColor: selectedCampaignTab === "ARTEMIS" ? "#0284c7" : selectedCampaignTab === "AEGIS" ? "#b45309" : "#4f46e5",
                 color: "#f8fafc",
-                border: "1px solid #38bdf8",
+                border: selectedCampaignTab === "ARTEMIS" ? "1px solid #38bdf8" : selectedCampaignTab === "AEGIS" ? "1px solid #f59e0b" : "1px solid #818cf8",
                 fontSize: "12px",
-                fontWeight: 600,
+                fontWeight: 700,
                 cursor: "pointer",
                 alignSelf: "flex-end",
+                letterSpacing: "0.5px",
+                boxShadow: "0 0 15px rgba(0, 0, 0, 0.5)",
               }}
             >
-              Acknowledge &amp; Enter Workshop →
+              ACCEPT DIRECTIVE // COMMENCE {selectedCampaignTab === "ARTEMIS" ? "ARTEMIS-VII" : selectedCampaignTab === "AEGIS" ? "PROJECT AEGIS" : "PROJECT EUROPA"} →
             </button>
           </div>
         </div>
@@ -1922,11 +2049,11 @@ export function HUD({
             }}
           >
             <div style={{ borderBottom: "1px solid rgba(255,255,255,0.1)", paddingBottom: "12px" }}>
-              <span className="font-mono" style={{ fontSize: "11px", color: "#22c55e", fontWeight: 700 }}>
-                MISSION 01 COMPLETE // GRADE: A+ MASTER ASTRONAUT
+              <span className="font-mono" style={{ fontSize: "11px", color: "#22c55e", fontWeight: 700, letterSpacing: "1px" }}>
+                MISSION DEBRIEFING // OPERATION ARTEMIS-VII: COMPLETE (GRADE: A+)
               </span>
               <h2 style={{ fontSize: "22px", fontWeight: 700, color: "#f8fafc", marginTop: "4px" }}>
-                Orbital Repair &amp; Precision Docking Accomplished
+                Deep Space Relay Online &amp; Lunar Base Alpha Secured
               </h2>
             </div>
 

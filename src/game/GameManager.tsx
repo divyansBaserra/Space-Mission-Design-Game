@@ -18,7 +18,7 @@ const INITIAL_SETTINGS: GameSettings = {
 const INITIAL_GAME_STATE: GameState = {
   controlMode: "ASTRONAUT",
   step: "BRIEFING",
-  substepText: "Visit the Command Deck Terminal [E] to review the Mission 01 Briefing.",
+  substepText: "PRIORITY ALPHA-1 ALERT: Inbound Solar Storm. Access Command Deck Terminal [E] for Artemis-VII Flight Directive.",
   inventory: [],
   equippedItem: null,
   settings: INITIAL_SETTINGS,
@@ -430,7 +430,7 @@ export function GameManager({ onReturnToHub, gameMode = "ORBITAL_REPAIR" }: Game
           controlMode: "SURFACE_EXPLORATION",
           step: "EXPLORE_SURFACE",
           substepText:
-            "Disembarked onto Lunar Base Alpha. Low lunar gravity (1.62 m/s²). Deploy ALSEP station [4/E] or collect sample.",
+            "SURFACE EVA ACTIVE: Shackleton Crater Floor. Deploy Apollo ALSEP Station [4/E] and extract cryogenic core sample.",
         };
       }
 
@@ -894,13 +894,18 @@ export function GameManager({ onReturnToHub, gameMode = "ORBITAL_REPAIR" }: Game
   // Close Briefing Modal
   const handleCloseBriefing = useCallback(() => {
     setShowBriefingModal(false);
+    soundManager.playQuindarTone(true);
+    soundManager.speakRadioComm(
+      "Houston confirms Artemis Seven directive acknowledged. Inbound solar storm window closing. Proceed to Engineering Workshop.",
+      "HOUSTON"
+    );
     setGameState((prev) => {
       if (prev.step === "BRIEFING") {
         return {
           ...prev,
           step: "COLLECT_EQUIPMENT",
           substepText:
-            "Go to the Engineering Workshop and collect repair hardware: Toolkit, Solar Wing, and Antenna (0/3).",
+            "OPERATION ARTEMIS-VII: Inbound Solar Storm. Enter Engineering Workshop and collect repair hardware (0/3).",
         };
       }
       return prev;
@@ -1048,6 +1053,14 @@ export function GameManager({ onReturnToHub, gameMode = "ORBITAL_REPAIR" }: Game
       } else if (contractId === "RET_100") {
         nextSubstep = "FLIGHT CONTRACT RET-100 ACTIVE: Retrograde deorbit burn. Maintain 40° entry pitch angle.";
         nextDest = "ORBIT_GATEWAY";
+      } else if (contractId === "AEGIS_DART") {
+        nextSubstep = "OPERATION AEGIS (GAME 02): Planetary Defense! Mars gravity assist complete. Optical SMART nav locked on Didymos moonlet (6.2 km/s terminal impact).";
+        soundManager.speakRadioComm("Aegis Flight, Mars gravity assist nominal. Optical SMART nav locked on Didymos moonlet. Closing velocity 6.2 kilometers per second.", "HOUSTON");
+        nextDest = "ORBIT_GATEWAY";
+      } else if (contractId === "EUROPA_ABYSS") {
+        nextSubstep = "OPERATION EUROPA (GAME 03): Jovian Radiation survived. Nuclear cryo-drill melted through 20km ice. Submersible navigating hydrothermal vents for biosignatures.";
+        soundManager.speakRadioComm("Europa Control, submersible breach into subsurface ocean confirmed. Radiation shielding holding. Track hydrothermal plumes.", "HOUSTON");
+        nextDest = "LUNAR_BASE_ALPHA";
       }
 
       return {

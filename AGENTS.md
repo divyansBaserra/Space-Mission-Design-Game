@@ -32,3 +32,10 @@ Before writing any code, stop at the first rung that satisfies the requirement:
 - **Zero-Threat**: No unverified binaries or external scrapers.
 - **Zero Emojis**: Keep all commits, responses, and docs professional.
 
+## 4. GSD (Getting Shit Done) Autonomous Engine
+- **Mandatory Lifecycle**: Every feature, fix, and refactoring task must follow the GSD autonomous lifecycle: Plan -> Execute -> Verify -> Audit-Fix.
+- **Atomic Wave Execution**: Execute complex multi-file changes in decoupled, staged waves rather than monolithic edits.
+- **Self-Healing Loop**: When errors or build failures occur, immediately classify root cause (Critical / Logic / Performance) and surgically repair before continuing.
+- **Nyquist Verification**: No task is declared complete without automated validation (`bun run build` and `bun test`). Never commit broken code.
+
+
