@@ -95,9 +95,11 @@ export function SpacecraftFlight({
   const hasSpokenIntroRef = useRef<boolean>(false);
   const hasSpokenDockingApproachRef = useRef<boolean>(false);
 
-  // Cockpit camera spring-damper lag and recoil vectors
+  // Cockpit camera spring-damper lag, recoil vectors & rotational mass sway
   const camQuatRef = useRef<THREE.Quaternion>(new THREE.Quaternion());
   const camRecoilRef = useRef<THREE.Vector3>(new THREE.Vector3());
+  const camSwayRef = useRef<THREE.Vector3>(new THREE.Vector3());
+  const angularVelRef = useRef<THREE.Vector3>(new THREE.Vector3());
 
   // Cockpit Multi-Function Display (MFD) dynamic instruments
   const mfd = useMemo(() => {
@@ -201,6 +203,8 @@ export function SpacecraftFlight({
       announcedAltitudesRef.current.clear();
       hasSpokenIntroRef.current = false;
       hasSpokenDockingApproachRef.current = false;
+      angularVelRef.current.set(0, 0, 0);
+      camSwayRef.current.set(0, 0, 0);
     }
   }, [gameState.step, gameState.missionMetSeconds, gameState.spacecraft.position]);
 
@@ -284,12 +288,9 @@ export function SpacecraftFlight({
       if (document.pointerLockElement && !gameState.paused) {
         const sensitivity = 0.0016 * (gameState.settings?.mouseSensitivity ?? 1.0);
         const invertY = gameState.settings?.invertY ? -1 : 1;
-        yawRef.current -= e.movementX * sensitivity;
-        pitchRef.current -= e.movementY * sensitivity * invertY;
-
-        // Pitch clamp
-        const maxPitch = (75 * Math.PI) / 180;
-        pitchRef.current = Math.max(-maxPitch, Math.min(maxPitch, pitchRef.current));
+        // Inject rotational torque into angular velocity (Newtonian rotational inertia)
+        angularVelRef.current.y -= e.movementX * sensitivity * 4.2;
+        angularVelRef.current.x -= e.movementY * sensitivity * invertY * 4.2;
       }
     };
 
@@ -337,26 +338,35 @@ export function SpacecraftFlight({
     const up = new THREE.Vector3(0, 1, 0).applyQuaternion(rotQuat);
     const right = new THREE.Vector3(1, 0, 0).applyQuaternion(rotQuat);
 
-    // Arrow keys flight attitude controls (accessible keyboard flight controls)
-    if (keys["ArrowLeft"]) yawRef.current += 1.8 * dt;
-    if (keys["ArrowRight"]) yawRef.current -= 1.8 * dt;
-    if (keys["ArrowUp"]) pitchRef.current += 1.8 * dt;
-    if (keys["ArrowDown"]) pitchRef.current -= 1.8 * dt;
-    const maxFlightPitch = (75 * Math.PI) / 180;
-    pitchRef.current = Math.max(-maxFlightPitch, Math.min(maxFlightPitch, pitchRef.current));
+    // Arrow keys flight attitude controls (injecting angular momentum)
+    if (keys["ArrowLeft"]) angularVelRef.current.y += 2.6 * dt;
+    if (keys["ArrowRight"]) angularVelRef.current.y -= 2.6 * dt;
+    if (keys["ArrowUp"]) angularVelRef.current.x += 2.6 * dt;
+    if (keys["ArrowDown"]) angularVelRef.current.x -= 2.6 * dt;
 
     // Roll input (Q / E)
     if (keys["KeyQ"]) {
-      rollRef.current += 1.8 * dt;
+      angularVelRef.current.z += 2.4 * dt;
       if (Math.random() < 0.15) soundManager.playRcsBurst();
     }
     if (keys["KeyE"]) {
-      rollRef.current -= 1.8 * dt;
+      angularVelRef.current.z -= 2.4 * dt;
       if (Math.random() < 0.15) soundManager.playRcsBurst();
     }
 
-    // Roll centering damping
-    rollRef.current *= Math.pow(0.92, dt * 10);
+    // Active SAS Counter-Torque damping (bleeds off angular velocity for stability)
+    angularVelRef.current.multiplyScalar(Math.pow(0.82, dt * 10));
+
+    // Integrate angular velocity into flight attitude
+    yawRef.current += angularVelRef.current.y * dt;
+    pitchRef.current += angularVelRef.current.x * dt;
+    rollRef.current += angularVelRef.current.z * dt;
+
+    const maxFlightPitch = (75 * Math.PI) / 180;
+    pitchRef.current = Math.max(-maxFlightPitch, Math.min(maxFlightPitch, pitchRef.current));
+
+    // Roll centering return
+    rollRef.current *= Math.pow(0.92, dt * 8);
 
     let isThrusting = false;
 
@@ -605,11 +615,17 @@ export function SpacecraftFlight({
         }
       }
 
+      // Dynamic pilot head sway from rotational inertia (reacting to angular velocity)
+      const targetSwayX = -angularVelRef.current.y * 0.035;
+      const targetSwayY = -angularVelRef.current.x * 0.035;
+      camSwayRef.current.x = THREE.MathUtils.lerp(camSwayRef.current.x, targetSwayX, dt * 8);
+      camSwayRef.current.y = THREE.MathUtils.lerp(camSwayRef.current.y, targetSwayY, dt * 8);
+
       const cockpitEye = posRef.current
         .clone()
         .add(forward.clone().multiplyScalar(-camRecoilRef.current.z))
-        .add(right.clone().multiplyScalar(shakeX))
-        .add(up.clone().multiplyScalar(shakeY));
+        .add(right.clone().multiplyScalar(shakeX + camSwayRef.current.x))
+        .add(up.clone().multiplyScalar(shakeY + camSwayRef.current.y));
 
       camera.position.copy(cockpitEye);
 
