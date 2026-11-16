@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { SpacecraftViewport } from "@/components/viewport";
 import { GameManager } from "@/game/GameManager";
+import AegisGameManager from "@/game/aegis/AegisGameManager";
 import { soundManager } from "@/game/audio";
 import { preloadAllGameAssets } from "@/game/useNASAModel";
 import {
@@ -34,6 +35,7 @@ type GameStage =
   | "FIRST_PERSON_GAME"
   | "FLIGHT_SIM_GAME"
   | "HANGAR_GAME"
+  | "PROJECT_AEGIS_GAME"
   | "MAIN_MENU"
   | "MISSION_SELECT"
   | "MISSION_BRIEFING"
@@ -1408,7 +1410,7 @@ export default function SpaceMissionGame() {
         {/* Prominent Glowing NASA Evaluation Top Banner */}
         <NasaJudgesGithubBanner />
 
-        <GameManager gameMode="ORBITAL_REPAIR" onReturnToHub={() => setStage("MAIN_MENU")} />
+        <GameManager gameMode="ORBITAL_REPAIR" onReturnToHub={() => setStage("MAIN_MENU")} onLaunchAegis={() => setStage("PROJECT_AEGIS_GAME")} />
       </main>
     );
   }
@@ -1422,7 +1424,7 @@ export default function SpaceMissionGame() {
         {/* Prominent Glowing NASA Evaluation Top Banner */}
         <NasaJudgesGithubBanner />
 
-        <GameManager gameMode="FLIGHT_SIM" onReturnToHub={() => setStage("MAIN_MENU")} />
+        <GameManager gameMode="FLIGHT_SIM" onReturnToHub={() => setStage("MAIN_MENU")} onLaunchAegis={() => setStage("PROJECT_AEGIS_GAME")} />
       </main>
     );
   }
@@ -1436,7 +1438,21 @@ export default function SpaceMissionGame() {
         {/* Prominent Glowing NASA Evaluation Top Banner */}
         <NasaJudgesGithubBanner />
 
-        <GameManager gameMode="HANGAR_SANDBOX" onReturnToHub={() => setStage("MAIN_MENU")} />
+        <GameManager gameMode="HANGAR_SANDBOX" onReturnToHub={() => setStage("MAIN_MENU")} onLaunchAegis={() => setStage("PROJECT_AEGIS_GAME")} />
+      </main>
+    );
+  }
+
+  // ============================================================================
+  // STAGE 0D: GAME 02 - PROJECT AEGIS (HYPERVELOCITY DART DEFLECTION)
+  // ============================================================================
+  if (stage === "PROJECT_AEGIS_GAME") {
+    return (
+      <main style={{ position: "relative", width: "100vw", height: "100vh", overflow: "hidden", backgroundColor: "#040608" }}>
+        {/* Prominent Glowing NASA Evaluation Top Banner */}
+        <NasaJudgesGithubBanner />
+
+        <AegisGameManager onReturnToHub={() => setStage("MAIN_MENU")} />
       </main>
     );
   }
@@ -1622,8 +1638,37 @@ export default function SpaceMissionGame() {
               }}
             >
               <div>
-                <div style={{ fontSize: "13px", fontWeight: 700, color: "#ffffff" }}>1. PLAY FIRST-PERSON 3D GAME</div>
-                <div style={{ fontSize: "11px", color: "#38bdf8", fontWeight: 500, marginTop: "2px" }}>Gateway-1 Orbital Facility &amp; Lunar Surface</div>
+                <div style={{ fontSize: "13px", fontWeight: 700, color: "#ffffff" }}>1. PLAY GAME 01: OPERATION ARTEMIS-VII</div>
+                <div style={{ fontSize: "11px", color: "#38bdf8", fontWeight: 500, marginTop: "2px" }}>Gateway-1 Orbital Facility &amp; Shackleton Lunar Touchdown</div>
+              </div>
+              <span style={{ fontSize: "18px" }}>→</span>
+            </button>
+
+            <button
+              onClick={() => {
+                soundManager.playEquip();
+                setStage("PROJECT_AEGIS_GAME");
+              }}
+              style={{
+                padding: "16px 20px",
+                backgroundColor: "rgba(180, 83, 9, 0.25)",
+                border: "1px solid #f59e0b",
+                color: "#f59e0b",
+                fontWeight: 700,
+                fontSize: "var(--text-sm)",
+                textAlign: "left",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                transition: "all var(--duration-fast)",
+                backdropFilter: "blur(8px)",
+                boxShadow: "0 4px 20px rgba(245, 158, 11, 0.2)",
+                cursor: "pointer",
+              }}
+            >
+              <div>
+                <div style={{ fontSize: "13px", fontWeight: 700, color: "#ffffff" }}>2. PLAY GAME 02: PROJECT AEGIS (DART DEFLECTION)</div>
+                <div style={{ fontSize: "11px", color: "#fbbf24", fontWeight: 500, marginTop: "2px" }}>Mars Oberth Slingshot · SMART Nav · 6.2 km/s Kinetic Impact</div>
               </div>
               <span style={{ fontSize: "18px" }}>→</span>
             </button>
@@ -1651,7 +1696,7 @@ export default function SpaceMissionGame() {
               }}
             >
               <div>
-                <div style={{ fontSize: "13px", fontWeight: 700, color: "#ffffff" }}>2. FLIGHT CONTRACTS &amp; CAREER MISSIONS</div>
+                <div style={{ fontSize: "13px", fontWeight: 700, color: "#ffffff" }}>3. FLIGHT CONTRACTS &amp; CAREER MISSIONS</div>
                 <div style={{ fontSize: "11px", color: "#38bdf8", fontWeight: 500, marginTop: "2px" }}>Tactical Star Command · 3D Modular Assembly &amp; Orbital Flight Sim</div>
               </div>
               <span style={{ fontSize: "18px" }}>→</span>
@@ -1680,7 +1725,7 @@ export default function SpaceMissionGame() {
               }}
             >
               <div>
-                <div style={{ fontSize: "13px", fontWeight: 700, color: "#ffffff" }}>3. SPACECRAFT HANGAR (3D ZERO-G ASSEMBLY SANDBOX)</div>
+                <div style={{ fontSize: "13px", fontWeight: 700, color: "#ffffff" }}>4. SPACECRAFT HANGAR (3D ZERO-G ASSEMBLY SANDBOX)</div>
                 <div style={{ fontSize: "11px", color: "#10b981", fontWeight: 500, marginTop: "2px" }}>Modular Construction Bay · Thruster Static-Fire &amp; 3D Orbital Launch</div>
               </div>
               <span style={{ fontSize: "18px" }}>→</span>
@@ -1707,7 +1752,7 @@ export default function SpaceMissionGame() {
               }}
             >
               <div>
-                <div style={{ fontSize: "12px", fontWeight: 600, color: "#f8fafc" }}>4. FLIGHT ACADEMY &amp; REFERENCE MANUAL</div>
+                <div style={{ fontSize: "12px", fontWeight: 600, color: "#f8fafc" }}>5. FLIGHT ACADEMY &amp; REFERENCE MANUAL</div>
                 <div style={{ fontSize: "10px", color: "var(--color-text-muted)", marginTop: "2px" }}>CDS Standards, Telecom Link Budgets, JPL Margins</div>
               </div>
               <span>→</span>

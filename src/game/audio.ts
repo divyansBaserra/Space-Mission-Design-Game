@@ -12,6 +12,9 @@ class SoundManager {
   private rumbleGain: GainNode | null = null;
   private rumbleFilter: BiquadFilterNode | null = null;
 
+  private dopplerOsc: OscillatorNode | null = null;
+  private dopplerGain: GainNode | null = null;
+
   private getContext(): AudioContext | null {
     if (typeof window === "undefined") return null;
     if (!this.ctx) {
@@ -1053,6 +1056,170 @@ class SoundManager {
       window.speechSynthesis.speak(utterance);
     } catch {
       // Speech synthesis best-effort
+    }
+  }
+
+  // ==========================================================================
+  // GAME 02: PROJECT AEGIS (HYPERVELOCITY DART DEFLECTION SYNTHESIZER)
+  // ==========================================================================
+
+  // 1. Hypervelocity Doppler Whine: sweeps 800 Hz to 4200 Hz scaled with closing velocity (up to 6.2 km/s)
+  public startDopplerWhine(velocityKms: number = 0.5) {
+    if (!this.soundEnabled || this.volume <= 0) return;
+    const ctx = this.getContext();
+    const dest = this.getDest();
+    if (!ctx || !dest) return;
+    try {
+      if (this.dopplerOsc) {
+        this.updateDopplerWhine(velocityKms);
+        return;
+      }
+      const now = ctx.currentTime;
+      this.dopplerOsc = ctx.createOscillator();
+      this.dopplerGain = ctx.createGain();
+
+      this.dopplerOsc.type = "sine";
+      const clampedVel = Math.max(0, Math.min(6.2, velocityKms));
+      const targetFreq = 800 + (clampedVel / 6.2) * 3400; // 800 Hz -> 4200 Hz
+      this.dopplerOsc.frequency.setValueAtTime(targetFreq, now);
+
+      this.dopplerGain.gain.setValueAtTime(0.001, now);
+      this.dopplerGain.gain.linearRampToValueAtTime(0.12 * this.volume, now + 0.2);
+
+      this.dopplerOsc.connect(this.dopplerGain);
+      this.dopplerGain.connect(dest);
+      this.dopplerOsc.start(now);
+    } catch {
+      // Audio best-effort
+    }
+  }
+
+  public updateDopplerWhine(velocityKms: number) {
+    if (!this.dopplerOsc || !this.dopplerGain) return;
+    const ctx = this.getContext();
+    if (!ctx) return;
+    try {
+      const now = ctx.currentTime;
+      const clampedVel = Math.max(0, Math.min(6.2, velocityKms));
+      const targetFreq = 800 + (clampedVel / 6.2) * 3400;
+      this.dopplerOsc.frequency.setTargetAtTime(targetFreq, now, 0.05);
+    } catch {
+      // Audio best-effort
+    }
+  }
+
+  public stopDopplerWhine() {
+    if (!this.dopplerOsc || !this.dopplerGain) return;
+    const ctx = this.getContext();
+    if (!ctx) return;
+    try {
+      const now = ctx.currentTime;
+      this.dopplerGain.gain.linearRampToValueAtTime(0.001, now + 0.15);
+      const osc = this.dopplerOsc;
+      setTimeout(() => {
+        try {
+          osc.stop();
+          osc.disconnect();
+        } catch {}
+      }, 200);
+      this.dopplerOsc = null;
+      this.dopplerGain = null;
+    } catch {
+      this.dopplerOsc = null;
+      this.dopplerGain = null;
+    }
+  }
+
+  // 2. Terminal Kinetic Impact Crunch: 40 Hz - 120 Hz explosive burst + white noise telemetry annihilation
+  public playKineticImpactCrunch() {
+    this.stopDopplerWhine();
+    if (!this.soundEnabled || this.volume <= 0) return;
+    const ctx = this.getContext();
+    const dest = this.getDest();
+    if (!ctx || !dest) return;
+    try {
+      const now = ctx.currentTime;
+
+      // Low-frequency explosive impact boom (120 Hz down to 40 Hz)
+      const subOsc = ctx.createOscillator();
+      const subGain = ctx.createGain();
+      const subFilter = ctx.createBiquadFilter();
+
+      subOsc.type = "sawtooth";
+      subOsc.frequency.setValueAtTime(120, now);
+      subOsc.frequency.exponentialRampToValueAtTime(40, now + 0.8);
+
+      subFilter.type = "lowpass";
+      subFilter.frequency.setValueAtTime(160, now);
+      subFilter.frequency.exponentialRampToValueAtTime(50, now + 0.8);
+
+      subGain.gain.setValueAtTime(0.35 * this.volume, now);
+      subGain.gain.exponentialRampToValueAtTime(0.001, now + 1.2);
+
+      subOsc.connect(subFilter);
+      subFilter.connect(subGain);
+      subGain.connect(dest);
+
+      subOsc.start(now);
+      subOsc.stop(now + 1.25);
+
+      // Probe telemetry annihilation white-noise static burst
+      const bufferSize = Math.floor(ctx.sampleRate * 0.45);
+      const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+      const output = noiseBuffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        output[i] = Math.random() * 2 - 1;
+      }
+
+      const whiteNoise = ctx.createBufferSource();
+      whiteNoise.buffer = noiseBuffer;
+
+      const noiseFilter = ctx.createBiquadFilter();
+      noiseFilter.type = "bandpass";
+      noiseFilter.frequency.setValueAtTime(1200, now);
+      noiseFilter.Q.setValueAtTime(2.0, now);
+
+      const noiseGain = ctx.createGain();
+      noiseGain.gain.setValueAtTime(0.28 * this.volume, now);
+      noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
+
+      whiteNoise.connect(noiseFilter);
+      noiseFilter.connect(noiseGain);
+      noiseGain.connect(dest);
+
+      whiteNoise.start(now);
+      whiteNoise.stop(now + 0.46);
+    } catch {
+      // Audio best-effort
+    }
+  }
+
+  // 3. LICIACube Beacon Telemetry: 1800 Hz periodic data packet transmission of ejecta imagery
+  public playLiciacubeBeacon() {
+    if (!this.soundEnabled || this.volume <= 0) return;
+    const ctx = this.getContext();
+    const dest = this.getDest();
+    if (!ctx || !dest) return;
+    try {
+      const now = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(1800, now);
+      osc.frequency.setValueAtTime(1850, now + 0.04);
+      osc.frequency.setValueAtTime(1800, now + 0.08);
+
+      gain.gain.setValueAtTime(0.08 * this.volume, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.16);
+
+      osc.connect(gain);
+      gain.connect(dest);
+
+      osc.start(now);
+      osc.stop(now + 0.18);
+    } catch {
+      // Audio best-effort
     }
   }
 }

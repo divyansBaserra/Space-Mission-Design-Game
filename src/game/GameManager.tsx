@@ -86,9 +86,10 @@ const INITIAL_GAME_STATE: GameState = {
 interface GameManagerProps {
   onReturnToHub?: () => void;
   gameMode?: GameMode;
+  onLaunchAegis?: () => void;
 }
 
-export function GameManager({ onReturnToHub, gameMode = "ORBITAL_REPAIR" }: GameManagerProps) {
+export function GameManager({ onReturnToHub, gameMode = "ORBITAL_REPAIR", onLaunchAegis }: GameManagerProps) {
   const physics = useMemo(() => new StationPhysics(), []);
 
   const [gameState, setGameState] = useState<GameState>(() => {
@@ -1086,6 +1087,10 @@ export function GameManager({ onReturnToHub, gameMode = "ORBITAL_REPAIR" }: Game
         nextSubstep = "FLIGHT CONTRACT RET-100 ACTIVE: Retrograde deorbit burn. Maintain 40° entry pitch angle.";
         nextDest = "ORBIT_GATEWAY";
       } else if (contractId === "AEGIS_DART") {
+        if (onLaunchAegis) {
+          onLaunchAegis();
+          return prev;
+        }
         nextSubstep = "OPERATION AEGIS (GAME 02): Planetary Defense! Mars gravity assist complete. Optical SMART nav locked on Didymos moonlet (6.2 km/s terminal impact).";
         soundManager.speakRadioComm("Aegis Flight, Mars gravity assist nominal. Optical SMART nav locked on Didymos moonlet. Closing velocity 6.2 kilometers per second.", "HOUSTON");
         nextDest = "ORBIT_GATEWAY";

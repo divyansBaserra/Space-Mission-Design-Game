@@ -2044,7 +2044,12 @@ export function HUD({
             )}
 
             <button
-              onClick={onCloseBriefing}
+              onClick={() => {
+                onCloseBriefing();
+                if (selectedCampaignTab === "AEGIS") {
+                  onSelectFlightContract?.("AEGIS_DART");
+                }
+              }}
               style={{
                 padding: "12px 24px",
                 backgroundColor: selectedCampaignTab === "ARTEMIS" ? "#0284c7" : selectedCampaignTab === "AEGIS" ? "#b45309" : "#4f46e5",
