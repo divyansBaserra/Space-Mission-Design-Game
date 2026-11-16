@@ -4,10 +4,12 @@ import React, { useRef, useEffect } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import { GameState } from "./types";
+import { StationPhysics } from "./physics";
 import { soundManager } from "./audio";
 
 interface SpacecraftFlightProps {
   gameState: GameState;
+  physics: StationPhysics;
   onUpdateSpacecraft: (
     pos: THREE.Vector3,
     vel: THREE.Vector3,
@@ -19,19 +21,32 @@ interface SpacecraftFlightProps {
     speed: number,
     distToDock: number,
     relVel: number,
-    alignAngle: number
+    alignAngle: number,
+    cameraViewMode: "COCKPIT" | "CHASE",
+    landingGearDeployed: boolean,
+    isLanded: boolean,
+    surfaceAltitudeMeters: number,
+    verticalSpeedMps: number,
+    distToPad: number
   ) => void;
   onDockComplete: () => void;
+  onLandComplete?: () => void;
   onTogglePause?: () => void;
   onExitCockpit?: () => void;
+  onToggleCameraView?: () => void;
+  onToggleLandingGear?: () => void;
 }
 
 export function SpacecraftFlight({
   gameState,
+  physics,
   onUpdateSpacecraft,
   onDockComplete,
+  onLandComplete,
   onTogglePause,
   onExitCockpit,
+  onToggleCameraView,
+  onToggleLandingGear,
 }: SpacecraftFlightProps) {
   const { camera } = useThree();
 
@@ -45,14 +60,46 @@ export function SpacecraftFlight({
   const pitchRef = useRef<number>(gameState.spacecraft.pitch || 0);
   const yawRef = useRef<number>(gameState.spacecraft.yaw || 0);
   const rollRef = useRef<number>(gameState.spacecraft.roll || 0);
-  const propRef = useRef<number>(gameState.spacecraft.propellantPercent || 100);
-  const pwrRef = useRef<number>(gameState.spacecraft.powerPercent || 100);
+  const propRef = useRef<number>(gameState.spacecraft.propellantPercent ?? 100);
+  const pwrRef = useRef<number>(gameState.spacecraft.powerPercent ?? 100);
+
+  // Camera & landing gear modes
+  const cameraViewModeRef = useRef<"COCKPIT" | "CHASE">(
+    gameState.spacecraft.cameraViewMode ?? "COCKPIT"
+  );
+  const landingGearRef = useRef<boolean>(
+    gameState.spacecraft.landingGearDeployed ?? false
+  );
+  const isLandedRef = useRef<boolean>(
+    gameState.spacecraft.isLanded ?? false
+  );
 
   const keysRef = useRef<{ [code: string]: boolean }>({});
   const lastRoarTimeRef = useRef<number>(0);
   const lastRadarBeepRef = useRef<number>(0);
+  const lastAlarmTimeRef = useRef<number>(0);
+  const lastImpactTimeRef = useRef<number>(0);
 
-  // Keyboard listeners
+  // Sync state changes from props
+  useEffect(() => {
+    if (gameState.spacecraft.cameraViewMode) {
+      cameraViewModeRef.current = gameState.spacecraft.cameraViewMode;
+    }
+  }, [gameState.spacecraft.cameraViewMode]);
+
+  useEffect(() => {
+    landingGearRef.current = !!gameState.spacecraft.landingGearDeployed;
+  }, [gameState.spacecraft.landingGearDeployed]);
+
+  useEffect(() => {
+    isLandedRef.current = !!gameState.spacecraft.isLanded;
+    if (gameState.spacecraft.isLanded) {
+      posRef.current.set(0, -16.2, -110.0);
+      velRef.current.set(0, 0, 0);
+    }
+  }, [gameState.spacecraft.isLanded]);
+
+  // Keyboard and mouse listeners
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       keysRef.current[e.code] = true;
@@ -69,14 +116,32 @@ export function SpacecraftFlight({
         return;
       }
 
+      // Camera view toggle (Cockpit vs Chase)
+      if (e.code === "KeyV" && gameState.controlMode === "SPACECRAFT_COCKPIT") {
+        const nextMode = cameraViewModeRef.current === "COCKPIT" ? "CHASE" : "COCKPIT";
+        cameraViewModeRef.current = nextMode;
+        soundManager.playEquip();
+        onToggleCameraView?.();
+        return;
+      }
+
+      // Landing Gear toggle (Down vs Up)
+      if (e.code === "KeyG" && gameState.controlMode === "SPACECRAFT_COCKPIT") {
+        landingGearRef.current = !landingGearRef.current;
+        soundManager.playGearDeploy();
+        onToggleLandingGear?.();
+        return;
+      }
+
       // Manual Docking Capture Key (Enter)
       if (e.code === "Enter" && gameState.controlMode === "SPACECRAFT_COCKPIT") {
         const dockingPortPos = gameState.spacecraft.dockingTargetPos;
         const dist = dockingPortPos.distanceTo(posRef.current);
         const speed = velRef.current.length();
-        if (dist <= 3.2 && speed <= 2.8 && !gameState.spacecraft.isDocked) {
+        if (dist <= 3.2 && speed <= 1.2 && !gameState.spacecraft.isDocked) {
           soundManager.playDockingLatch();
           soundManager.playSuccessFanfare();
+          soundManager.playQuindarTone(true);
           onDockComplete();
         }
       }
@@ -104,6 +169,7 @@ export function SpacecraftFlight({
     window.addEventListener("mousemove", handleMouseMove);
 
     return () => {
+      soundManager.stopThrusterRumble();
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
       window.removeEventListener("mousemove", handleMouseMove);
@@ -117,6 +183,8 @@ export function SpacecraftFlight({
     onDockComplete,
     onExitCockpit,
     onTogglePause,
+    onToggleCameraView,
+    onToggleLandingGear,
   ]);
 
   // Flight simulation loop
@@ -134,7 +202,7 @@ export function SpacecraftFlight({
     const up = new THREE.Vector3(0, 1, 0).applyQuaternion(rotQuat);
     const right = new THREE.Vector3(1, 0, 0).applyQuaternion(rotQuat);
 
-    // Arrow keys flight attitude controls (keyboard flight mode)
+    // Arrow keys flight attitude controls (accessible keyboard flight controls)
     if (keys["ArrowLeft"]) yawRef.current += 1.8 * dt;
     if (keys["ArrowRight"]) yawRef.current -= 1.8 * dt;
     if (keys["ArrowUp"]) pitchRef.current += 1.8 * dt;
@@ -143,78 +211,189 @@ export function SpacecraftFlight({
     pitchRef.current = Math.max(-maxFlightPitch, Math.min(maxFlightPitch, pitchRef.current));
 
     // Roll input (Q / E)
-    if (keys["KeyQ"]) rollRef.current += 1.8 * dt;
-    if (keys["KeyE"]) rollRef.current -= 1.8 * dt;
+    if (keys["KeyQ"]) {
+      rollRef.current += 1.8 * dt;
+      if (Math.random() < 0.15) soundManager.playRcsBurst();
+    }
+    if (keys["KeyE"]) {
+      rollRef.current -= 1.8 * dt;
+      if (Math.random() < 0.15) soundManager.playRcsBurst();
+    }
 
     // Roll centering damping
     rollRef.current *= Math.pow(0.92, dt * 10);
 
-    // RCS Translation input
-    const thrustAcc = 4.2; // m/s^2
-    const translation = new THREE.Vector3();
     let isThrusting = false;
 
-    if (propRef.current > 0) {
-      if (keys["KeyW"]) {
-        translation.addScaledVector(forward, thrustAcc);
+    // Check if craft is firmly landed on lunar surface pad
+    if (isLandedRef.current) {
+      // Craft is resting on surface
+      posRef.current.y = -16.2;
+      velRef.current.set(0, 0, 0);
+
+      // Check for liftoff ascent thrust (Space or W)
+      if ((keys["Space"] || keys["KeyW"]) && propRef.current > 0) {
+        isLandedRef.current = false;
+        velRef.current.y = 4.2;
         isThrusting = true;
+        soundManager.playEngineRoar();
       }
-      if (keys["KeyS"]) {
-        translation.addScaledVector(forward, -thrustAcc * 0.7);
-        isThrusting = true;
-      }
-      if (keys["KeyA"]) {
-        translation.addScaledVector(right, -thrustAcc * 0.6);
-        isThrusting = true;
-      }
-      if (keys["KeyD"]) {
-        translation.addScaledVector(right, thrustAcc * 0.6);
-        isThrusting = true;
-      }
-      if (keys["Space"]) {
-        translation.addScaledVector(up, thrustAcc * 0.6);
-        isThrusting = true;
-      }
-      if (keys["KeyC"] || keys["ControlLeft"]) {
-        translation.addScaledVector(up, -thrustAcc * 0.6);
-        isThrusting = true;
+    } else {
+      // Free flight dynamics
+      const isBoosting = !!keys["ShiftLeft"] || !!keys["ShiftRight"];
+      const baseThrustAcc = isBoosting ? 9.8 : 4.4; // m/s^2
+      const translation = new THREE.Vector3();
+
+      if (propRef.current > 0) {
+        if (keys["KeyW"]) {
+          translation.addScaledVector(forward, baseThrustAcc);
+          isThrusting = true;
+        }
+        if (keys["KeyS"]) {
+          translation.addScaledVector(forward, -baseThrustAcc * 0.7);
+          isThrusting = true;
+        }
+        if (keys["KeyA"]) {
+          translation.addScaledVector(right, -baseThrustAcc * 0.6);
+          isThrusting = true;
+        }
+        if (keys["KeyD"]) {
+          translation.addScaledVector(right, baseThrustAcc * 0.6);
+          isThrusting = true;
+        }
+        if (keys["Space"]) {
+          translation.addScaledVector(up, baseThrustAcc * 0.7);
+          isThrusting = true;
+        }
+        if (keys["KeyC"] || keys["ControlLeft"]) {
+          translation.addScaledVector(up, -baseThrustAcc * 0.7);
+          isThrusting = true;
+        }
+
+        // Continuous Low-Frequency Thruster Rumble
+        if ((keys["KeyW"] || keys["KeyS"]) && propRef.current > 0) {
+          soundManager.startThrusterRumble();
+        } else {
+          soundManager.stopThrusterRumble();
+        }
+
+        // Propellant drain on thrusting
+        if (isThrusting) {
+          const drainRate = isBoosting ? 1.2 : 0.45;
+          propRef.current = Math.max(0, propRef.current - drainRate * dt);
+          const now = Date.now();
+          if (now - lastRoarTimeRef.current > 280) {
+            soundManager.playEngineRoar();
+            lastRoarTimeRef.current = now;
+          }
+        }
+      } else {
+        soundManager.stopThrusterRumble();
       }
 
-      // Propellant drain on thrusting
-      if (isThrusting) {
-        propRef.current = Math.max(0, propRef.current - 0.45 * dt);
+      // Flight Stabilization / Retrograde Brake (KeyX)
+      if (keys["KeyX"]) {
+        velRef.current.multiplyScalar(Math.pow(0.35, dt * 8));
+      }
+
+      // Planetary gravity gradient near lunar surface
+      if (posRef.current.z < -50 || posRef.current.y < 5) {
+        // Lunar gravity acceleration: 1.62 m/s^2 towards surface
+        velRef.current.y -= 1.62 * dt;
+      }
+
+      // Apply linear acceleration
+      velRef.current.addScaledVector(translation, dt);
+
+      // Orbital damping
+      velRef.current.multiplyScalar(Math.pow(0.97, dt * 5));
+
+      // Advance candidate position
+      posRef.current.addScaledVector(velRef.current, dt);
+
+      // Solve 3D collision against station modules, gantry, and lunar terrain
+      const col = physics.resolveSpacecraftCollision(
+        posRef.current,
+        velRef.current,
+        2.2,
+        -18.0
+      );
+
+      posRef.current.copy(col.newPos);
+      velRef.current.copy(col.newVel);
+
+      if (col.collided && !col.surfaceContact) {
+        const impactSpeed = velRef.current.length();
         const now = Date.now();
-        if (now - lastRoarTimeRef.current > 300) {
-          soundManager.playEngineRoar();
-          lastRoarTimeRef.current = now;
+        if (impactSpeed > 1.8 && now - lastImpactTimeRef.current > 400) {
+          soundManager.playHullImpact();
+          lastImpactTimeRef.current = now;
         }
       }
+
+      // Extended mission boundaries
+      posRef.current.x = THREE.MathUtils.clamp(posRef.current.x, -65, 65);
+      posRef.current.y = THREE.MathUtils.clamp(posRef.current.y, -16.2, 45);
+      posRef.current.z = THREE.MathUtils.clamp(posRef.current.z, -140, 15);
     }
 
-    // Flight Stabilization / Retrograde Brake (KeyX)
-    if (keys["KeyX"]) {
-      velRef.current.multiplyScalar(Math.pow(0.4, dt * 8));
+    // Calculate Surface Landing Telemetry (PAD-01 at [0, -18.0, -110.0])
+    const padTopPos = new THREE.Vector3(0, -16.2, -110.0);
+    const distToPad = new THREE.Vector2(
+      posRef.current.x,
+      posRef.current.z - -110.0
+    ).length();
+    const surfaceAlt = Math.max(0, posRef.current.y - -16.2);
+    const verticalSpeed = velRef.current.y;
+
+    // Proximity warning alarm when descending too fast near ground
+    if (surfaceAlt < 14.0 && verticalSpeed < -3.6 && !isLandedRef.current) {
+      const now = Date.now();
+      if (now - lastAlarmTimeRef.current > 750) {
+        soundManager.playWarningAlarm();
+        lastAlarmTimeRef.current = now;
+      }
     }
 
-    // Apply linear acceleration
-    velRef.current.addScaledVector(translation, dt);
+    // Touchdown Detection on PAD-01 (Strict vertical descent velocity <= 2.0 m/s with landing gear deployed)
+    if (
+      surfaceAlt <= 0.35 &&
+      distToPad <= 9.2 &&
+      Math.abs(verticalSpeed) <= 2.0 &&
+      landingGearRef.current &&
+      !isLandedRef.current
+    ) {
+      isLandedRef.current = true;
+      posRef.current.y = -16.2;
+      velRef.current.set(0, 0, 0);
+      soundManager.playTouchdown();
+      soundManager.playSuccessFanfare();
+      soundManager.playQuindarTone(false);
+      onLandComplete?.();
+    }
 
-    // Gentle orbital space drag (stabilizer damping)
-    velRef.current.multiplyScalar(Math.pow(0.96, dt * 6));
+    // Camera view synchronization
+    if (cameraViewModeRef.current === "CHASE") {
+      const chaseOffset = forward
+        .clone()
+        .multiplyScalar(-7.2)
+        .add(up.clone().multiplyScalar(2.2));
+      const targetCamPos = posRef.current.clone().add(chaseOffset);
+      camera.position.lerp(targetCamPos, 0.22);
 
-    // Update position
-    posRef.current.addScaledVector(velRef.current, dt);
+      const lookTarget = posRef.current.clone().add(forward.clone().multiplyScalar(4.0));
+      camera.lookAt(lookTarget);
+    } else {
+      // First-person cockpit view with acoustic engine hull micro-vibration
+      camera.position.copy(posRef.current);
+      if (isThrusting) {
+        camera.position.x += (Math.random() - 0.5) * 0.005;
+        camera.position.y += (Math.random() - 0.5) * 0.005;
+      }
+      camera.quaternion.copy(rotQuat);
+    }
 
-    // Keep spacecraft within orbital mission area bounds
-    posRef.current.x = THREE.MathUtils.clamp(posRef.current.x, -50, 50);
-    posRef.current.y = THREE.MathUtils.clamp(posRef.current.y, -25, 35);
-    posRef.current.z = THREE.MathUtils.clamp(posRef.current.z, -85, 5);
-
-    // Synchronize camera to pilot seat in cockpit
-    camera.position.copy(posRef.current);
-    camera.quaternion.copy(rotQuat);
-
-    // Calculate Docking telemetry to station port (0, 1.5, -11.2)
+    // Docking Telemetry to station port (0, 1.5, -11.2)
     const dockingPortPos = gameState.spacecraft.dockingTargetPos;
     const toDock = dockingPortPos.clone().sub(posRef.current);
     const distToDock = toDock.length();
@@ -230,7 +409,7 @@ export function SpacecraftFlight({
     const alignmentAngleDeg = (Math.acos(alignmentCos) * 180) / Math.PI;
 
     // Periodic docking radar proximity beeps when approaching (< 18m)
-    if (distToDock < 18 && distToDock > 2.5) {
+    if (distToDock < 18 && distToDock > 2.5 && !isLandedRef.current) {
       const now = Date.now();
       const beepInterval = THREE.MathUtils.lerp(1800, 250, (18 - distToDock) / 16);
       if (now - lastRadarBeepRef.current > beepInterval) {
@@ -239,19 +418,20 @@ export function SpacecraftFlight({
       }
     }
 
-    // Check Auto Soft Capture Condition
+    // Check Auto Soft Capture Condition at Station Docking Port
     if (
-      distToDock <= 2.2 &&
-      speed <= 2.4 &&
+      distToDock <= 3.2 &&
+      speed <= 0.8 &&
       alignmentAngleDeg <= 25 &&
       !gameState.spacecraft.isDocked
     ) {
       soundManager.playDockingLatch();
       soundManager.playSuccessFanfare();
+      soundManager.playQuindarTone(true);
       onDockComplete();
     }
 
-    // Notify state manager
+    // Notify state manager of complete flight telemetry
     onUpdateSpacecraft(
       posRef.current,
       velRef.current,
@@ -263,11 +443,20 @@ export function SpacecraftFlight({
       speed,
       distToDock,
       relVel,
-      alignmentAngleDeg
+      alignmentAngleDeg,
+      cameraViewModeRef.current,
+      landingGearRef.current,
+      isLandedRef.current,
+      surfaceAlt,
+      verticalSpeed,
+      distToPad
     );
   });
 
   if (gameState.controlMode !== "SPACECRAFT_COCKPIT") return null;
+
+  // Only render the cockpit interior geometry when in Cockpit view mode
+  if (cameraViewModeRef.current !== "COCKPIT") return null;
 
   return (
     <group position={posRef.current}>

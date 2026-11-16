@@ -16,6 +16,8 @@ interface HUDProps {
   onEquipItem?: (id: InventoryItemId) => void;
   onExitCockpit?: () => void;
   onManualDock?: () => void;
+  onToggleCameraView?: () => void;
+  onToggleLandingGear?: () => void;
   onReturnToHub?: () => void;
   onToggleFlashlight?: () => void;
 }
@@ -32,6 +34,8 @@ export function HUD({
   onEquipItem,
   onExitCockpit,
   onManualDock,
+  onToggleCameraView,
+  onToggleLandingGear,
   onReturnToHub,
   onToggleFlashlight,
 }: HUDProps) {
@@ -63,6 +67,7 @@ export function HUD({
   ];
 
   const isCockpit = gameState.controlMode === "SPACECRAFT_COCKPIT";
+  const isSurface = gameState.controlMode === "SURFACE_EXPLORATION";
   const canDock =
     isCockpit &&
     gameState.spacecraft.distanceToDockMeters <= 3.2 &&
@@ -83,9 +88,47 @@ export function HUD({
         userSelect: "none",
       }}
     >
-      {/* ==================================================================== */}
-      {/* TOP BAR: OBJECTIVE, TELEMETRY & SYSTEM CONTROLS                      */}
-      {/* ==================================================================== */}
+      {/* Astronaut Helmet Visor Overlay (Vignette & Curved Arc Glass Reflection) */}
+      {!isCockpit && (
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            pointerEvents: "none",
+            background:
+              "radial-gradient(ellipse at center, rgba(0, 0, 0, 0) 62%, rgba(4, 12, 24, 0.42) 100%)",
+            boxShadow: "inset 0 0 100px rgba(0, 0, 0, 0.55)",
+            zIndex: 1,
+          }}
+        >
+          <div
+            style={{
+              position: "absolute",
+              top: "16px",
+              left: "24px",
+              width: "180px",
+              height: "40px",
+              borderRadius: "50%",
+              borderTop: "1.5px solid rgba(56, 189, 248, 0.12)",
+              filter: "blur(1px)",
+            }}
+          />
+          <div
+            style={{
+              position: "absolute",
+              top: "16px",
+              right: "24px",
+              width: "180px",
+              height: "40px",
+              borderRadius: "50%",
+              borderTop: "1.5px solid rgba(56, 189, 248, 0.12)",
+              filter: "blur(1px)",
+            }}
+          />
+        </div>
+      )}
+
+      {/* TOP BAR: OBJECTIVE, TELEMETRY & SYSTEM CONTROLS */}
       <header
         style={{
           display: "flex",
@@ -119,6 +162,8 @@ export function HUD({
                     ? "#22c55e"
                     : gameState.step === "MISSION_FAILED"
                     ? "#ef4444"
+                    : isSurface
+                    ? "#a855f7"
                     : isCockpit
                     ? "#f59e0b"
                     : "#38bdf8",
@@ -138,6 +183,8 @@ export function HUD({
                 ? "MISSION COMPLETE // SUCCESS"
                 : gameState.step === "MISSION_FAILED"
                 ? "MISSION FAILED // CRITICAL"
+                : isSurface
+                ? "SURFACE EXPLORATION // LUNAR BASE ALPHA (0.166 G)"
                 : isCockpit
                 ? "ORBITAL FLIGHT // COCKPIT MODE"
                 : "STATION OPERATIONS // ASTRONAUT MODE"}
@@ -331,10 +378,34 @@ export function HUD({
                     boxShadow: "0 0 25px rgba(34, 197, 94, 0.6)",
                   }}
                 >
-                  ✓ ENGAGE DOCKING LATCH (ENTER)
+                  [ENGAGE DOCKING LATCH - ENTER]
                 </button>
                 <span style={{ fontSize: "10px", color: "#86efac", fontWeight: 600 }}>
                   Soft capture envelope aligned (&lt;2.5 m/s, &lt;25°)
+                </span>
+              </div>
+            )}
+
+            {/* Surface Touchdown Confirmation Banner */}
+            {isCockpit && gameState.spacecraft.isLanded && (
+              <div
+                style={{
+                  marginTop: "16px",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: "6px",
+                  backgroundColor: "rgba(5, 46, 22, 0.92)",
+                  border: "2px solid #22c55e",
+                  padding: "12px 24px",
+                  boxShadow: "0 0 30px rgba(34, 197, 94, 0.6)",
+                }}
+              >
+                <span style={{ fontSize: "13px", fontWeight: 700, color: "#86efac", letterSpacing: "0.08em" }}>
+                  [TOUCHDOWN CONFIRMED - PAD-01 LUNAR BASE ALPHA]
+                </span>
+                <span style={{ fontSize: "11px", color: "#f0fdf4" }}>
+                  All landing gear locked · Pressure seal nominal. Press [H] to Disembark onto surface.
                 </span>
               </div>
             )}
@@ -357,17 +428,18 @@ export function HUD({
         {isCockpit ? (
           /* COCKPIT INSTRUMENT READOUTS */
           <>
-            {/* Left Cluster: Propulsion & Power */}
+            {/* Left Cluster: Propulsion, Power & Camera/Gear Buttons */}
             <div
               style={{
                 display: "flex",
                 flexDirection: "column",
                 gap: "8px",
-                backgroundColor: "rgba(18, 22, 28, 0.9)",
+                backgroundColor: "rgba(18, 22, 28, 0.92)",
                 border: "1px solid rgba(255, 255, 255, 0.12)",
                 padding: "10px 14px",
-                minWidth: "200px",
+                minWidth: "220px",
                 backdropFilter: "blur(6px)",
+                pointerEvents: "auto",
               }}
             >
               <div style={{ display: "flex", justifyContent: "space-between", fontSize: "11px" }}>
@@ -387,71 +459,179 @@ export function HUD({
                 />
               </div>
 
-              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "11px", marginTop: "4px" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "11px" }}>
                 <span style={{ color: "#94a3b8" }}>SPEED</span>
                 <span className="font-mono" style={{ fontWeight: 600, color: "#f8fafc" }}>
                   {gameState.spacecraft.speedMps.toFixed(2)} m/s
                 </span>
               </div>
+
+              {/* View & Gear Interactive Buttons */}
+              <div style={{ display: "flex", gap: "8px", marginTop: "4px" }}>
+                <button
+                  onClick={() => onToggleCameraView?.()}
+                  style={{
+                    flex: 1,
+                    padding: "4px 8px",
+                    backgroundColor:
+                      gameState.spacecraft.cameraViewMode === "CHASE"
+                        ? "rgba(14, 116, 144, 0.8)"
+                        : "rgba(30, 41, 59, 0.8)",
+                    border: "1px solid rgba(56, 189, 248, 0.4)",
+                    color: "#f8fafc",
+                    fontSize: "10px",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                  }}
+                >
+                  [V] {gameState.spacecraft.cameraViewMode === "CHASE" ? "CHASE CAM" : "COCKPIT"}
+                </button>
+                <button
+                  onClick={() => onToggleLandingGear?.()}
+                  style={{
+                    flex: 1,
+                    padding: "4px 8px",
+                    backgroundColor: gameState.spacecraft.landingGearDeployed
+                      ? "rgba(22, 101, 52, 0.8)"
+                      : "rgba(30, 41, 59, 0.8)",
+                    border: gameState.spacecraft.landingGearDeployed
+                      ? "1px solid #22c55e"
+                      : "1px solid rgba(255, 255, 255, 0.2)",
+                    color: gameState.spacecraft.landingGearDeployed ? "#86efac" : "#94a3b8",
+                    fontSize: "10px",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                  }}
+                >
+                  [G] {gameState.spacecraft.landingGearDeployed ? "GEAR DOWN" : "GEAR UP"}
+                </button>
+              </div>
             </div>
 
-            {/* Center Cluster: Docking Radar */}
+            {/* Center Cluster: Docking & Surface Landing Radar */}
             <div
               style={{
                 display: "flex",
-                gap: "18px",
-                backgroundColor: "rgba(18, 22, 28, 0.9)",
+                flexDirection: "column",
+                gap: "6px",
+                backgroundColor: "rgba(18, 22, 28, 0.92)",
                 border: "1px solid rgba(255, 255, 255, 0.12)",
-                padding: "10px 18px",
-                fontSize: "11px",
+                padding: "8px 16px",
                 backdropFilter: "blur(6px)",
               }}
             >
-              <div>
-                <span style={{ color: "#94a3b8" }}>PORT: </span>
-                <span className="font-mono" style={{ color: "#f8fafc", fontWeight: 700 }}>
-                  DOCK-01
+              {/* Target Selector Header */}
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "10px", color: "#64748b", borderBottom: "1px solid rgba(255,255,255,0.08)", paddingBottom: "4px" }}>
+                <span>FLIGHT TELEMETRY</span>
+                <span style={{ color: gameState.spacecraft.position.z < -45 ? "#a855f7" : "#38bdf8", fontWeight: 700 }}>
+                  {gameState.spacecraft.position.z < -45 ? "LUNAR DESCENT MODE" : "STATION ORBIT MODE"}
                 </span>
               </div>
-              <div>
-                <span style={{ color: "#94a3b8" }}>DIST: </span>
-                <span
-                  className="font-mono"
-                  style={{
-                    color: gameState.spacecraft.distanceToDockMeters <= 3.2 ? "#22c55e" : "#38bdf8",
-                    fontWeight: 700,
-                  }}
-                >
-                  {gameState.spacecraft.distanceToDockMeters.toFixed(1)} m
-                </span>
-              </div>
-              <div>
-                <span style={{ color: "#94a3b8" }}>REL VEL: </span>
-                <span
-                  className="font-mono"
-                  style={{
-                    color: Math.abs(gameState.spacecraft.relativeVelocityMps) <= 2.5 ? "#22c55e" : "#f59e0b",
-                    fontWeight: 700,
-                  }}
-                >
-                  {gameState.spacecraft.relativeVelocityMps.toFixed(2)} m/s
-                </span>
-              </div>
-              <div>
-                <span style={{ color: "#94a3b8" }}>ALIGN: </span>
-                <span
-                  className="font-mono"
-                  style={{
-                    color: gameState.spacecraft.alignmentAngleDeg <= 25 ? "#22c55e" : "#f59e0b",
-                    fontWeight: 700,
-                  }}
-                >
-                  {gameState.spacecraft.alignmentAngleDeg.toFixed(1)}°
-                </span>
-              </div>
+
+              {gameState.spacecraft.position.z < -45 ? (
+                /* Lunar Landing Telemetry (PAD-01) */
+                <div style={{ display: "flex", gap: "16px", fontSize: "11px" }}>
+                  <div>
+                    <span style={{ color: "#94a3b8" }}>PAD: </span>
+                    <span className="font-mono" style={{ color: "#f8fafc", fontWeight: 700 }}>
+                      PAD-01
+                    </span>
+                  </div>
+                  <div>
+                    <span style={{ color: "#94a3b8" }}>DIST: </span>
+                    <span
+                      className="font-mono"
+                      style={{
+                        color: (gameState.spacecraft.distanceToLandingPad ?? 99) <= 10.0 ? "#22c55e" : "#38bdf8",
+                        fontWeight: 700,
+                      }}
+                    >
+                      {(gameState.spacecraft.distanceToLandingPad ?? 0).toFixed(1)} m
+                    </span>
+                  </div>
+                  <div>
+                    <span style={{ color: "#94a3b8" }}>RADAR ALT: </span>
+                    <span
+                      className="font-mono"
+                      style={{
+                        color:
+                          (gameState.spacecraft.surfaceAltitudeMeters ?? 99) <= 2.0
+                            ? "#22c55e"
+                            : (gameState.spacecraft.surfaceAltitudeMeters ?? 99) <= 12.0
+                            ? "#f59e0b"
+                            : "#38bdf8",
+                        fontWeight: 700,
+                      }}
+                    >
+                      {(gameState.spacecraft.surfaceAltitudeMeters ?? 0).toFixed(1)} m
+                    </span>
+                  </div>
+                  <div>
+                    <span style={{ color: "#94a3b8" }}>V/S: </span>
+                    <span
+                      className="font-mono"
+                      style={{
+                        color:
+                          Math.abs(gameState.spacecraft.verticalSpeedMps ?? 0) <= 3.8
+                            ? "#22c55e"
+                            : "#ef4444",
+                        fontWeight: 700,
+                      }}
+                    >
+                      {(gameState.spacecraft.verticalSpeedMps ?? 0).toFixed(2)} m/s
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                /* Orbital Station Docking Telemetry (DOCK-01) */
+                <div style={{ display: "flex", gap: "16px", fontSize: "11px" }}>
+                  <div>
+                    <span style={{ color: "#94a3b8" }}>PORT: </span>
+                    <span className="font-mono" style={{ color: "#f8fafc", fontWeight: 700 }}>
+                      DOCK-01
+                    </span>
+                  </div>
+                  <div>
+                    <span style={{ color: "#94a3b8" }}>DIST: </span>
+                    <span
+                      className="font-mono"
+                      style={{
+                        color: gameState.spacecraft.distanceToDockMeters <= 3.2 ? "#22c55e" : "#38bdf8",
+                        fontWeight: 700,
+                      }}
+                    >
+                      {gameState.spacecraft.distanceToDockMeters.toFixed(1)} m
+                    </span>
+                  </div>
+                  <div>
+                    <span style={{ color: "#94a3b8" }}>REL VEL: </span>
+                    <span
+                      className="font-mono"
+                      style={{
+                        color: Math.abs(gameState.spacecraft.relativeVelocityMps) <= 2.5 ? "#22c55e" : "#f59e0b",
+                        fontWeight: 700,
+                      }}
+                    >
+                      {gameState.spacecraft.relativeVelocityMps.toFixed(2)} m/s
+                    </span>
+                  </div>
+                  <div>
+                    <span style={{ color: "#94a3b8" }}>ALIGN: </span>
+                    <span
+                      className="font-mono"
+                      style={{
+                        color: gameState.spacecraft.alignmentAngleDeg <= 25 ? "#22c55e" : "#f59e0b",
+                        fontWeight: 700,
+                      }}
+                    >
+                      {gameState.spacecraft.alignmentAngleDeg.toFixed(1)}°
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
 
-            {/* Right Cluster: Disembark & Cockpit Controls */}
+            {/* Right Cluster: Disembark & Cockpit Flight Controls Legend */}
             <div
               style={{
                 display: "flex",
@@ -464,8 +644,12 @@ export function HUD({
                 onClick={() => onExitCockpit?.()}
                 style={{
                   padding: "8px 14px",
-                  backgroundColor: "rgba(30, 41, 59, 0.9)",
-                  border: "1px solid rgba(56, 189, 248, 0.4)",
+                  backgroundColor: gameState.spacecraft.isLanded
+                    ? "rgba(22, 101, 52, 0.9)"
+                    : "rgba(30, 41, 59, 0.9)",
+                  border: gameState.spacecraft.isLanded
+                    ? "1px solid #22c55e"
+                    : "1px solid rgba(56, 189, 248, 0.4)",
                   color: "#f8fafc",
                   fontSize: "11px",
                   fontWeight: 600,
@@ -473,7 +657,9 @@ export function HUD({
                   backdropFilter: "blur(6px)",
                 }}
               >
-                [H] Disembark / Exit Cockpit
+                {gameState.spacecraft.isLanded
+                  ? "[H] Disembark onto Lunar Base"
+                  : "[H] Disembark / Exit Cockpit"}
               </button>
 
               <div
@@ -488,10 +674,125 @@ export function HUD({
                 }}
               >
                 <span>W/S Thrust</span>
+                <span>Shift Boost</span>
                 <span>A/D Yaw</span>
                 <span>Q/E Roll</span>
-                <span>Space/C Vert RCS</span>
+                <span>Space/C Vert</span>
                 <span>X Brake</span>
+              </div>
+            </div>
+          </>
+        ) : isSurface ? (
+          /* LUNAR SURFACE EXPLORATION HUD */
+          <>
+            {/* Left Cluster: Surface Life Support */}
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: "8px",
+                backgroundColor: "rgba(18, 22, 28, 0.9)",
+                border: "1px solid rgba(255, 255, 255, 0.12)",
+                padding: "10px 14px",
+                minWidth: "210px",
+                backdropFilter: "blur(6px)",
+              }}
+            >
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "11px" }}>
+                <span style={{ color: "#94a3b8" }}>SUIT OXYGEN</span>
+                <span className="font-mono" style={{ fontWeight: 600, color: "#22c55e" }}>
+                  {gameState.oxygenPercent.toFixed(0)}%
+                </span>
+              </div>
+              <div style={{ width: "100%", height: "4px", backgroundColor: "#1e293b" }}>
+                <div style={{ width: `${gameState.oxygenPercent}%`, height: "100%", backgroundColor: "#22c55e" }} />
+              </div>
+
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "11px" }}>
+                <span style={{ color: "#94a3b8" }}>SURFACE GRAVITY</span>
+                <span className="font-mono" style={{ fontWeight: 600, color: "#a855f7" }}>
+                  1.62 m/s² (0.166 G)
+                </span>
+              </div>
+
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "11px" }}>
+                <span style={{ color: "#94a3b8" }}>RADIATION</span>
+                <span className="font-mono" style={{ fontWeight: 600, color: "#38bdf8" }}>
+                  {(gameState.radiationLevelMsv ?? 0.14).toFixed(2)} mSv/h [NOMINAL]
+                </span>
+              </div>
+            </div>
+
+            {/* Center Cluster: Surface Objective / Sector Info */}
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: "4px",
+                backgroundColor: "rgba(18, 22, 28, 0.9)",
+                border: "1px solid rgba(255, 255, 255, 0.12)",
+                padding: "8px 20px",
+                backdropFilter: "blur(6px)",
+              }}
+            >
+              <div style={{ fontSize: "12px", color: "#f8fafc", fontWeight: 700, letterSpacing: "0.06em" }}>
+                LUNAR BASE ALPHA · RESEARCH SECTOR
+              </div>
+              <div style={{ fontSize: "10px", color: "#38bdf8", fontFamily: "var(--font-mono)" }}>
+                LOC: {gameState.surfaceCoordinates?.lat ?? "0.6740° N"}, {gameState.surfaceCoordinates?.lon ?? "23.4720° E"} // MARE TRANQUILLITATIS
+              </div>
+              <div style={{ fontSize: "10px", color: "#94a3b8" }}>
+                Touchdown Pad PAD-01 | Habitat Module | S-Band Deep Space Mast
+              </div>
+              <div style={{ fontSize: "10px", color: gameState.lunarSampleCollected ? "#22c55e" : "#f59e0b", fontWeight: 600 }}>
+                {gameState.lunarSampleCollected ? "[CORE-GEO-01 SECURED]" : "[CORE-GEO-01 SAMPLE READY FOR RETRIEVAL]"}
+              </div>
+            </div>
+
+            {/* Right Cluster: Surface Controls Legend */}
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: "6px",
+                pointerEvents: "auto",
+              }}
+            >
+              <button
+                onClick={() => onToggleFlashlight?.()}
+                style={{
+                  padding: "8px 14px",
+                  backgroundColor: gameState.flashlightOn
+                    ? "rgba(234, 179, 8, 0.25)"
+                    : "rgba(30, 41, 59, 0.9)",
+                  border: gameState.flashlightOn
+                    ? "1px solid #eab308"
+                    : "1px solid rgba(255, 255, 255, 0.2)",
+                  color: gameState.flashlightOn ? "#fef08a" : "#f8fafc",
+                  fontSize: "11px",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                }}
+              >
+                [F] Helmet Flashlight: {gameState.flashlightOn ? "ON" : "OFF"}
+              </button>
+
+              <div
+                style={{
+                  backgroundColor: "rgba(18, 22, 28, 0.9)",
+                  border: "1px solid rgba(255, 255, 255, 0.12)",
+                  padding: "6px 12px",
+                  fontSize: "10px",
+                  color: "#94a3b8",
+                  display: "flex",
+                  gap: "10px",
+                }}
+              >
+                <span>WASD Walk</span>
+                <span>Shift Sprint</span>
+                <span>Space Moon Jump</span>
+                <span>E Interact</span>
               </div>
             </div>
           </>

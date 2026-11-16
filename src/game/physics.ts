@@ -90,6 +90,14 @@ export class StationPhysics {
 
     // Satellite Docking Stand
     this.addBox(-0.6, 0.0, -22.6, 0.6, 0.7, -21.4, "satellite_dock_base");
+
+    // ========================================================================
+    // 5. LUNAR BASE ALPHA SURFACE OBSTACLES (around Z = -110.0, Y = -18.0)
+    // ========================================================================
+    // Habitat Module at [16.0, -18.0, -102.0]
+    this.addBox(12.0, -18.0, -106.0, 20.0, -12.0, -98.0, "lunar_base_habitat");
+    // Communications Mast at [-14.0, -18.0, -100.0]
+    this.addBox(-15.0, -18.0, -101.0, -13.0, -10.0, -99.0, "lunar_comms_mast");
   }
 
   private addBox(
@@ -131,7 +139,7 @@ export class StationPhysics {
   }
 
   /**
-   * Resolves player movement with AABB collision and sliding
+   * Resolves player movement with full 3-axis AABB collision and sliding
    */
   public movePlayer(
     currentPos: THREE.Vector3,
@@ -141,13 +149,15 @@ export class StationPhysics {
     const nextPos = currentPos.clone();
     let collided = false;
 
-    // Test axis by axis (X, then Z) for smooth wall sliding
+    // Test axis by axis (X, Y, Z) for smooth wall sliding and solid footing
     const testAxes = [
       new THREE.Vector3(desiredDelta.x, 0, 0),
+      new THREE.Vector3(0, desiredDelta.y, 0),
       new THREE.Vector3(0, 0, desiredDelta.z),
     ];
 
     for (const axisDelta of testAxes) {
+      if (axisDelta.lengthSq() === 0) continue;
       const candidatePos = nextPos.clone().add(axisDelta);
       let axisCollided = false;
 
@@ -183,13 +193,98 @@ export class StationPhysics {
       }
     }
 
-    // EVA outer world boundary guard (prevent player floating to infinity)
-    if (nextPos.z < -11.0) {
-      nextPos.x = THREE.MathUtils.clamp(nextPos.x, -7.5, 7.5);
-      nextPos.z = THREE.MathUtils.clamp(nextPos.z, -34.0, -11.0);
-      nextPos.y = THREE.MathUtils.clamp(nextPos.y, -1.0, 4.5);
+    // World boundary guards
+    if (nextPos.z < -11.0 && nextPos.z >= -55.0 && nextPos.y >= -10.0) {
+      // Exterior orbital station gantry bounds
+      nextPos.x = THREE.MathUtils.clamp(nextPos.x, -12.0, 12.0);
+      nextPos.z = THREE.MathUtils.clamp(nextPos.z, -48.0, -11.0);
+      nextPos.y = THREE.MathUtils.clamp(nextPos.y, -4.0, 8.0);
+    } else if (nextPos.z < -55.0 || nextPos.y < -10.0) {
+      // Lunar Base Alpha surface boundary guard (prevent walking off terrain)
+      nextPos.x = THREE.MathUtils.clamp(nextPos.x, -65.0, 65.0);
+      nextPos.z = THREE.MathUtils.clamp(nextPos.z, -160.0, -60.0);
+      nextPos.y = Math.max(-18.0, nextPos.y);
     }
 
     return { finalPos: nextPos, collided };
+  }
+
+  /**
+   * Resolves spacecraft flight collision against station modules, gantry, and surface terrain
+   */
+  public resolveSpacecraftCollision(
+    pos: THREE.Vector3,
+    vel: THREE.Vector3,
+    craftRadius: number = 2.2,
+    surfaceY: number = -18.0
+  ): {
+    newPos: THREE.Vector3;
+    newVel: THREE.Vector3;
+    collided: boolean;
+    surfaceContact: boolean;
+    obstacleName?: string;
+  } {
+    const newPos = pos.clone();
+    const newVel = vel.clone();
+    let collided = false;
+    let surfaceContact = false;
+    let obstacleName: string | undefined;
+
+    // 1. Surface Terrain & Landing Zone Collision (Floor Plane)
+    // Craft landing gear/hull sits at surfaceY + craftRadius
+    const groundFloor = surfaceY + craftRadius;
+    if (newPos.y <= groundFloor) {
+      newPos.y = groundFloor;
+      if (newVel.y < 0) {
+        newVel.y = 0;
+      }
+      surfaceContact = true;
+      collided = true;
+      obstacleName = "surface_terrain";
+    }
+
+    // 2. Station Module Obstacles (AABB vs Sphere)
+    for (const col of this.colliders) {
+      if (col.isTrigger) continue;
+
+      // Find closest point on collider AABB to spacecraft center
+      const closestX = Math.max(col.min.x, Math.min(newPos.x, col.max.x));
+      const closestY = Math.max(col.min.y, Math.min(newPos.y, col.max.y));
+      const closestZ = Math.max(col.min.z, Math.min(newPos.z, col.max.z));
+
+      const dx = newPos.x - closestX;
+      const dy = newPos.y - closestY;
+      const dz = newPos.z - closestZ;
+      const distSq = dx * dx + dy * dy + dz * dz;
+
+      if (distSq < craftRadius * craftRadius) {
+        collided = true;
+        obstacleName = col.name ?? "station_hull";
+
+        const dist = Math.sqrt(distSq);
+        const normal =
+          dist > 0.001
+            ? new THREE.Vector3(dx / dist, dy / dist, dz / dist)
+            : new THREE.Vector3(0, 1, 0);
+
+        // Push spacecraft out of obstacle volume
+        const penetration = craftRadius - dist;
+        newPos.addScaledVector(normal, penetration);
+
+        // Reflect velocity with elastic damping
+        const dot = newVel.dot(normal);
+        if (dot < 0) {
+          newVel.addScaledVector(normal, -1.45 * dot);
+        }
+      }
+    }
+
+    return {
+      newPos,
+      newVel,
+      collided,
+      surfaceContact,
+      obstacleName,
+    };
   }
 }

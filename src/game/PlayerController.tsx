@@ -31,11 +31,13 @@ export function PlayerController({
   const { camera, gl } = useThree();
 
   // Internal player state
-  const playerPosRef = useRef<THREE.Vector3>(new THREE.Vector3(0, 0, 9)); // Spawns in Command Deck beside briefing table
+  const playerPosRef = useRef<THREE.Vector3>(new THREE.Vector3(0, 0, 9));
   const velocityRef = useRef<THREE.Vector3>(new THREE.Vector3(0, 0, 0));
   const isGroundedRef = useRef<boolean>(true);
-  const yawRef = useRef<number>(0); // Facing North towards workshop and holo-table (negative Z)
+  const yawRef = useRef<number>(0);
   const pitchRef = useRef<number>(0);
+  const rollRef = useRef<number>(0);
+  const swayOffsetRef = useRef<THREE.Vector3>(new THREE.Vector3(0, 0, 0));
   const isPointerLockedRef = useRef<boolean>(false);
 
   // Input keys
@@ -57,6 +59,17 @@ export function PlayerController({
       target.removeFromParent();
     };
   }, [camera]);
+
+  // Synchronize player position when entering surface exploration
+  useEffect(() => {
+    if (gameState.controlMode === "SURFACE_EXPLORATION") {
+      playerPosRef.current.set(0, -18.0, -104.0);
+      velocityRef.current.set(0, 0, 0);
+      yawRef.current = Math.PI; // Face south towards Lunar Base habitat
+      pitchRef.current = 0;
+      isGroundedRef.current = true;
+    }
+  }, [gameState.controlMode]);
 
   // Pointer lock & keyboard event listeners
   useEffect(() => {
@@ -105,6 +118,11 @@ export function PlayerController({
       const invertY = gameState.settings?.invertY ? -1 : 1;
       yawRef.current -= e.movementX * sensitivity;
       pitchRef.current -= e.movementY * sensitivity * invertY;
+
+      // Weapon and tool sway offset
+      swayOffsetRef.current.x -= e.movementX * 0.00018;
+      swayOffsetRef.current.y += e.movementY * 0.00018 * invertY;
+      swayOffsetRef.current.clampLength(0, 0.045);
 
       // Clamp pitch (-85 deg to +85 deg)
       const maxPitch = (85 * Math.PI) / 180;
@@ -161,7 +179,8 @@ export function PlayerController({
       gameState.airlockOuterDoorOpen
     );
 
-    const isEva = playerPosRef.current.z < -11.0;
+    const isSurface = gameState.controlMode === "SURFACE_EXPLORATION";
+    const isEva = playerPosRef.current.z < -11.0 && !isSurface;
     const keys = keysRef.current;
 
     // Arrow keys camera rotation (accessible keyboard view controls)
@@ -193,9 +212,66 @@ export function PlayerController({
     const forward = new THREE.Vector3(-sinY, 0, -cosY);
     const right = new THREE.Vector3(cosY, 0, -sinY);
 
-    if (!isEva) {
+    if (isSurface) {
       // ======================================================================
-      // 1. INSIDE STATION (GRAVITY & WALKING)
+      // 0. LUNAR BASE ALPHA (SURFACE EXPLORATION - LOW GRAVITY 1.62 m/s²)
+      // ======================================================================
+      const desiredVelX = (forward.x * -moveInput.z + right.x * moveInput.x) * baseSpeed;
+      const desiredVelZ = (forward.z * -moveInput.z + right.z * moveInput.x) * baseSpeed;
+
+      velocityRef.current.x = desiredVelX;
+      velocityRef.current.z = desiredVelZ;
+
+      // Floaty Moon Jump
+      if (keys["Space"] && isGroundedRef.current) {
+        velocityRef.current.y = 3.8;
+        isGroundedRef.current = false;
+        soundManager.playJump();
+      }
+
+      // Lunar gravity: 1.62 m/s^2 (0.166 G)
+      const lunarGravity = 1.62;
+      velocityRef.current.y -= lunarGravity * dt;
+
+      // Desired movement delta
+      const deltaPos = new THREE.Vector3(
+        velocityRef.current.x * dt,
+        0,
+        velocityRef.current.z * dt
+      );
+
+      // Solve collision with lunar base obstacles
+      const { finalPos } = physics.movePlayer(playerPosRef.current, deltaPos);
+      playerPosRef.current.x = finalPos.x;
+      playerPosRef.current.z = finalPos.z;
+
+      // Solve Y ground plane (surface is at Y = -18.0)
+      playerPosRef.current.y += velocityRef.current.y * dt;
+      if (playerPosRef.current.y <= -18.0) {
+        playerPosRef.current.y = -18.0;
+        velocityRef.current.y = 0;
+        isGroundedRef.current = true;
+      }
+
+      // Head bobbing & footsteps with floaty stride
+      const speedMagnitude = Math.sqrt(
+        velocityRef.current.x * velocityRef.current.x +
+          velocityRef.current.z * velocityRef.current.z
+      );
+
+      if (speedMagnitude > 0.5 && isGroundedRef.current) {
+        bobbingTimerRef.current += dt * (isSprinting ? 11 : 7);
+        lastFootstepDistRef.current += speedMagnitude * dt;
+        if (lastFootstepDistRef.current >= (isSprinting ? 2.4 : 1.8)) {
+          soundManager.playFootstep();
+          lastFootstepDistRef.current = 0;
+        }
+      } else {
+        bobbingTimerRef.current = 0;
+      }
+    } else if (!isEva) {
+      // ======================================================================
+      // 1. INSIDE STATION (EARTH NORMAL GRAVITY & WALKING)
       // ======================================================================
       const desiredVelX = (forward.x * -moveInput.z + right.x * moveInput.x) * baseSpeed;
       const desiredVelZ = (forward.z * -moveInput.z + right.z * moveInput.x) * baseSpeed;
@@ -291,20 +367,34 @@ export function PlayerController({
       playerPosRef.current.copy(finalPos);
     }
 
-    // ========================================================================
-    // UPDATE CAMERA TRANSFORMS
-    // ========================================================================
+    // Dynamic acoustic environment: vacuum in zero-g EVA vs pressurized module
+    soundManager.setAcousticEnvironment(isEva);
+
+    // Dynamic FOV Lerp (75 deg walking to 84 deg sprinting)
+    const targetFov = isSprinting ? 84 : 75;
+    const persCam = camera as THREE.PerspectiveCamera;
+    if (persCam && persCam.isPerspectiveCamera && Math.abs(persCam.fov - targetFov) > 0.05) {
+      persCam.fov = THREE.MathUtils.lerp(persCam.fov, targetFov, dt * 6);
+      persCam.updateProjectionMatrix();
+    }
+
+    // Strafe banking roll tilt (0.75 to 1.5 deg on A/D)
+    const rollTarget = !isEva && isGroundedRef.current ? -moveInput.x * 0.02 : 0;
+    rollRef.current = THREE.MathUtils.lerp(rollRef.current, rollTarget, dt * 8);
+
+    // Dual-frequency procedural Sin/Cos head bobbing
     const eyeHeight = 1.65;
-    const headBob = Math.sin(bobbingTimerRef.current) * 0.035;
+    const verticalBob = Math.sin(bobbingTimerRef.current) * 0.032;
+    const lateralBob = Math.cos(bobbingTimerRef.current * 0.5) * 0.014;
 
     camera.position.set(
-      playerPosRef.current.x,
-      playerPosRef.current.y + eyeHeight + headBob,
+      playerPosRef.current.x + lateralBob,
+      playerPosRef.current.y + eyeHeight + verticalBob,
       playerPosRef.current.z
     );
 
-    // Apply Euler rotations (yaw around Y, pitch around X)
-    const euler = new THREE.Euler(pitchRef.current, yawRef.current, 0, "YXZ");
+    // Apply Euler rotations with strafe banking roll
+    const euler = new THREE.Euler(pitchRef.current, yawRef.current, rollRef.current, "YXZ");
     camera.quaternion.setFromEuler(euler);
 
     // Update Helmet Flashlight
@@ -320,9 +410,19 @@ export function PlayerController({
       flashlightRef.current.visible = gameState.flashlightOn;
     }
 
-    // Update Held Viewmodel Position
+    // Update Held Viewmodel Position with Inertia Sway Lag
     if (itemGroupRef.current) {
-      itemGroupRef.current.position.copy(camera.position);
+      swayOffsetRef.current.lerp(new THREE.Vector3(0, 0, 0), dt * 10);
+      const viewmodelPos = camera.position
+        .clone()
+        .add(
+          new THREE.Vector3(
+            swayOffsetRef.current.x,
+            swayOffsetRef.current.y,
+            0
+          ).applyQuaternion(camera.quaternion)
+        );
+      itemGroupRef.current.position.copy(viewmodelPos);
       itemGroupRef.current.quaternion.copy(camera.quaternion);
     }
 
@@ -334,84 +434,114 @@ export function PlayerController({
 
     const p = playerPosRef.current;
 
-    // 1. Briefing Table (Command Deck: [0, 0, 11])
-    const distToBriefing = p.distanceTo(new THREE.Vector3(0, 0, 11));
-    if (distToBriefing < 2.5) {
-      targetId = "briefing_table";
-      targetPrompt = "[E] Review Mission Briefing";
-    }
-
-    // 2. Left Workbench - Toolkit
-    const distToToolkit = p.distanceTo(new THREE.Vector3(-3.4, 0, 0.5));
-    if (distToToolkit < 2.0 && !gameState.inventory.includes("TOOLKIT")) {
-      targetId = "ws_toolkit";
-      targetPrompt = "[E] Pick up Aerospace Toolkit";
-    }
-
-    // 3. Right Workbench - Solar Wing
-    const distToSolar = p.distanceTo(new THREE.Vector3(3.4, 0, -0.2));
-    if (distToSolar < 2.0 && !gameState.inventory.includes("SOLAR_WING")) {
-      targetId = "ws_solar_wing";
-      targetPrompt = "[E] Pick up GaAs Solar Array (28W)";
-    }
-
-    // 4. Right Workbench - S-Band Antenna
-    const distToAntenna = p.distanceTo(new THREE.Vector3(3.4, 0, 1.2));
-    if (distToAntenna < 2.0 && !gameState.inventory.includes("SBAND_ANTENNA")) {
-      targetId = "ws_sband_antenna";
-      targetPrompt = "[E] Pick up S-Band Transceiver";
-    }
-
-    // 5. Airlock Console
-    const distToAirlockConsole = p.distanceTo(new THREE.Vector3(-1.85, 0, -8.0));
-    if (distToAirlockConsole < 2.4) {
-      targetId = "airlock_console";
-      if (gameState.airlockStatus === "PRESSURIZED") {
-        targetPrompt = "[E] Cycle Airlock (Depressurize to Vacuum)";
-      } else if (gameState.airlockStatus === "VACUUM") {
-        targetPrompt = "[E] Cycle Airlock (Repressurize to 1 atm)";
-      } else {
-        targetPrompt = "Airlock Cycling...";
+    if (isSurface) {
+      // 1. Landed Spacecraft on PAD-01 ([0, -16.2, -110.0])
+      const distToShuttle = p.distanceTo(new THREE.Vector3(0, -18.0, -110.0));
+      if (distToShuttle < 5.4) {
+        targetId = "board_spacecraft_surface";
+        targetPrompt = "[E] Enter Spacecraft Cockpit (Prepare for Ascent)";
       }
-    }
 
-    // 6. Damaged Satellite `AERO-3X`
-    const distToSatellite = p.distanceTo(new THREE.Vector3(0, 0, -22.0));
-    if (distToSatellite < 3.2) {
-      targetId = "satellite_repair";
-      if (!gameState.satellite.wingRemoved) {
-        targetPrompt = gameState.inventory.includes("TOOLKIT")
-          ? "[E] Detach Damaged Solar Wing"
-          : "Damaged Solar Wing (Requires Toolkit)";
-      } else if (!gameState.satellite.wingMounted) {
-        targetPrompt = gameState.inventory.includes("SOLAR_WING")
-          ? "[E] Mount Replacement GaAs Solar Wing"
-          : "Solar Mount Empty (Requires Solar Wing)";
-      } else if (!gameState.satellite.antennaMounted) {
-        targetPrompt = gameState.inventory.includes("SBAND_ANTENNA")
-          ? "[E] Install S-Band Transceiver Antenna"
-          : "Antenna Port Empty (Requires S-Band Antenna)";
-      } else if (!gameState.satellite.diagnosticRun) {
-        targetPrompt = "[E] Run Avionics Diagnostics";
-      } else {
-        targetPrompt = "AERO-3X Restored · Telemetry Active";
+      // 2. Lunar Base Alpha Habitat Module ([16.0, -18.0, -102.0])
+      const distToBase = p.distanceTo(new THREE.Vector3(16.0, -18.0, -102.0));
+      if (distToBase < 5.0) {
+        targetId = "lunar_base_terminal";
+        targetPrompt = "[E] Access Lunar Base Alpha Science Terminal";
       }
-    }
 
-    // 7. Life Support Recharging Station (Command Deck West Wall)
-    const distToLifeSupport = p.distanceTo(new THREE.Vector3(-4.3, 1.3, 8.5));
-    if (distToLifeSupport < 2.4) {
-      targetId = "life_support";
-      targetPrompt = "[E] Refill Suit Oxygen & Recharge Battery";
-    }
+      // 3. Communications Mast ([-14.0, -18.0, -100.0])
+      const distToMast = p.distanceTo(new THREE.Vector3(-14.0, -18.0, -100.0));
+      if (distToMast < 4.2) {
+        targetId = "lunar_comms_mast";
+        targetPrompt = "[E] Inspect Deep Space Relay Antenna";
+      }
 
-    // 8. Board Spacecraft Shuttle ORV-1 (Exterior Gantry Berth)
-    const distToSpacecraft = p.distanceTo(new THREE.Vector3(0, 0.8, -28.0));
-    if (distToSpacecraft < 4.2) {
-      targetId = "board_spacecraft";
-      targetPrompt = gameState.satellite.diagnosticRun
-        ? "[E] Enter Spacecraft Cockpit (Prepare for Flight)"
-        : "Orbital Shuttle Standby (Satellite Repair Required First)";
+      // 4. Collectible Lunar Core Geological Sample (CORE-GEO-01)
+      const distToSample = p.distanceTo(new THREE.Vector3(8.5, -18.0, -98.0));
+      if (distToSample < 3.2 && !gameState.lunarSampleCollected) {
+        targetId = "lunar_sample";
+        targetPrompt = "[E] Collect Lunar Regolith Core Sample (CORE-GEO-01)";
+      }
+    } else {
+      // 1. Briefing Table (Command Deck: [0, 0, 11])
+      const distToBriefing = p.distanceTo(new THREE.Vector3(0, 0, 11));
+      if (distToBriefing < 2.5) {
+        targetId = "briefing_table";
+        targetPrompt = "[E] Review Mission Briefing";
+      }
+
+      // 2. Left Workbench - Toolkit
+      const distToToolkit = p.distanceTo(new THREE.Vector3(-3.4, 0, 0.5));
+      if (distToToolkit < 2.0 && !gameState.inventory.includes("TOOLKIT")) {
+        targetId = "ws_toolkit";
+        targetPrompt = "[E] Pick up Aerospace Toolkit";
+      }
+
+      // 3. Right Workbench - Solar Wing
+      const distToSolar = p.distanceTo(new THREE.Vector3(3.4, 0, -0.2));
+      if (distToSolar < 2.0 && !gameState.inventory.includes("SOLAR_WING")) {
+        targetId = "ws_solar_wing";
+        targetPrompt = "[E] Pick up GaAs Solar Array (28W)";
+      }
+
+      // 4. Right Workbench - S-Band Antenna
+      const distToAntenna = p.distanceTo(new THREE.Vector3(3.4, 0, 1.2));
+      if (distToAntenna < 2.0 && !gameState.inventory.includes("SBAND_ANTENNA")) {
+        targetId = "ws_sband_antenna";
+        targetPrompt = "[E] Pick up S-Band Transceiver";
+      }
+
+      // 5. Airlock Console
+      const distToAirlockConsole = p.distanceTo(new THREE.Vector3(-1.85, 0, -8.0));
+      if (distToAirlockConsole < 2.4) {
+        targetId = "airlock_console";
+        if (gameState.airlockStatus === "PRESSURIZED") {
+          targetPrompt = "[E] Cycle Airlock (Depressurize to Vacuum)";
+        } else if (gameState.airlockStatus === "VACUUM") {
+          targetPrompt = "[E] Cycle Airlock (Repressurize to 1 atm)";
+        } else {
+          targetPrompt = "Airlock Cycling...";
+        }
+      }
+
+      // 6. Damaged Satellite `AERO-3X`
+      const distToSatellite = p.distanceTo(new THREE.Vector3(0, 0, -22.0));
+      if (distToSatellite < 3.2) {
+        targetId = "satellite_repair";
+        if (!gameState.satellite.wingRemoved) {
+          targetPrompt = gameState.inventory.includes("TOOLKIT")
+            ? "[E] Detach Damaged Solar Wing"
+            : "Damaged Solar Wing (Requires Toolkit)";
+        } else if (!gameState.satellite.wingMounted) {
+          targetPrompt = gameState.inventory.includes("SOLAR_WING")
+            ? "[E] Mount Replacement GaAs Solar Wing"
+            : "Solar Mount Empty (Requires Solar Wing)";
+        } else if (!gameState.satellite.antennaMounted) {
+          targetPrompt = gameState.inventory.includes("SBAND_ANTENNA")
+            ? "[E] Install S-Band Transceiver Antenna"
+            : "Antenna Port Empty (Requires S-Band Antenna)";
+        } else if (!gameState.satellite.diagnosticRun) {
+          targetPrompt = "[E] Run Avionics Diagnostics";
+        } else {
+          targetPrompt = "AERO-3X Restored · Telemetry Active";
+        }
+      }
+
+      // 7. Life Support Recharging Station (Command Deck West Wall)
+      const distToLifeSupport = p.distanceTo(new THREE.Vector3(-4.3, 1.3, 8.5));
+      if (distToLifeSupport < 2.4) {
+        targetId = "life_support";
+        targetPrompt = "[E] Refill Suit Oxygen & Recharge Battery";
+      }
+
+      // 8. Board Spacecraft Shuttle ORV-1 (Exterior Gantry Berth)
+      const distToSpacecraft = p.distanceTo(new THREE.Vector3(0, 0.8, -28.0));
+      if (distToSpacecraft < 4.2) {
+        targetId = "board_spacecraft";
+        targetPrompt = gameState.satellite.diagnosticRun
+          ? "[E] Enter Spacecraft Cockpit (Prepare for Flight)"
+          : "Orbital Shuttle Standby (Satellite Repair Required First)";
+      }
     }
 
     onSetInteractionPrompt(targetId, targetPrompt);

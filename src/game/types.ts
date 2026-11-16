@@ -2,7 +2,7 @@
 
 import * as THREE from "three";
 
-export type InventoryItemId = "TOOLKIT" | "SOLAR_WING" | "SBAND_ANTENNA";
+export type InventoryItemId = "TOOLKIT" | "SOLAR_WING" | "SBAND_ANTENNA" | "LUNAR_SAMPLE";
 
 export interface InventoryItem {
   id: InventoryItemId;
@@ -12,7 +12,7 @@ export interface InventoryItem {
   icon: string;
 }
 
-export type PlayerControlMode = "ASTRONAUT" | "SPACECRAFT_COCKPIT";
+export type PlayerControlMode = "ASTRONAUT" | "SPACECRAFT_COCKPIT" | "SURFACE_EXPLORATION";
 
 export type MissionStep =
   | "BRIEFING"
@@ -24,6 +24,9 @@ export type MissionStep =
   | "BOARD_SPACECRAFT"
   | "COCKPIT_ORBITAL_MANEUVER"
   | "APPROACH_DOCKING_PORT"
+  | "SURFACE_DESCENT"
+  | "SURFACE_LANDED"
+  | "EXPLORE_SURFACE"
   | "MISSION_COMPLETE"
   | "MISSION_FAILED";
 
@@ -54,6 +57,14 @@ export interface SpacecraftFlightState {
   alignmentAngleDeg: number;
   isDocked: boolean;
   dockingTargetPos: THREE.Vector3;
+  cameraViewMode: "COCKPIT" | "CHASE";
+  landingGearDeployed: boolean;
+  isLanded: boolean;
+  surfaceAltitudeMeters: number;
+  verticalSpeedMps: number;
+  landingTargetPos: THREE.Vector3;
+  distanceToLandingPad: number;
+  flightDestination: "ORBIT_GATEWAY" | "LUNAR_BASE_ALPHA";
 }
 
 export interface GameSettings {
@@ -80,6 +91,9 @@ export interface GameState {
   airlockOuterDoorOpen: boolean;
   satellite: SatelliteRepairState;
   spacecraft: SpacecraftFlightState;
+  lunarSampleCollected: boolean;
+  radiationLevelMsv: number;
+  surfaceCoordinates: { lat: string; lon: string };
   missionMetSeconds: number;
   score: number;
   paused: boolean;

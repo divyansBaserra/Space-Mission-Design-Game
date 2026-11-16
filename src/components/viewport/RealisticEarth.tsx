@@ -10,32 +10,67 @@ export interface RealisticEarthProps {
   rotationSpeed?: number;
   position?: [number, number, number];
   rotation?: [number, number, number];
+  sunPosition?: [number, number, number];
 }
 
 /**
- * Atmospheric Scattering Glow Shader
- * Produces realistic Rayleigh limb haze around Earth's horizon.
+ * Physically-Inspired Atmospheric Rayleigh Limb Scattering Shader
+ * Produces an authentic, gossamer cyan/blue atmospheric limb haze
+ * that naturally illuminates on the sunlit terminator and fades
+ * smoothly into the darkness of space on the night side.
+ * Zero faceted polygon lines or thick cartoon ribbons.
  */
-const AtmosphereShader = {
+const AtmosphericScatteringShader = {
   vertexShader: `
     varying vec3 vNormal;
-    varying vec3 vPosition;
+    varying vec3 vWorldNormal;
+    varying vec3 vViewPosition;
+
     void main() {
       vNormal = normalize(normalMatrix * normal);
-      vPosition = (modelViewMatrix * vec4(position, 1.0)).xyz;
-      gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      vWorldNormal = normalize((modelMatrix * vec4(normal, 0.0)).xyz);
+      vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+      vViewPosition = -mvPosition.xyz;
+      gl_Position = projectionMatrix * mvPosition;
     }
   `,
   fragmentShader: `
     varying vec3 vNormal;
-    varying vec3 vPosition;
-    uniform vec3 glowColor;
+    varying vec3 vWorldNormal;
+    varying vec3 vViewPosition;
+
+    uniform vec3 sunDirection;
+    uniform vec3 dayGlowColor;
+    uniform vec3 sunsetGlowColor;
     uniform float intensity;
+
     void main() {
-      vec3 viewDir = normalize(-vPosition);
-      float rim = 1.0 - max(dot(viewDir, vNormal), 0.0);
-      float alpha = pow(rim, 2.6) * intensity;
-      gl_FragColor = vec4(glowColor, alpha);
+      vec3 viewDir = normalize(vViewPosition);
+      vec3 norm = normalize(vNormal);
+      vec3 worldNorm = normalize(vWorldNormal);
+      vec3 sunDir = normalize(sunDirection);
+
+      // Limb Fresnel: bright at tangent glancing edges
+      float dotVN = clamp(dot(viewDir, norm), 0.0, 1.0);
+      float rim = 1.0 - dotVN;
+      // High-order exponential falloff creates a delicate, ultra-thin gossamer halo
+      float rimHaze = pow(rim, 4.2);
+
+      // Sun illumination angle on atmospheric layer
+      float sunDot = dot(worldNorm, sunDir);
+      // Soft terminator transition from daylight to deep night
+      float dayFactor = smoothstep(-0.2, 0.35, sunDot);
+
+      // Rayleigh sunset shift at glancing sun angles
+      float sunsetFactor = smoothstep(-0.15, 0.15, sunDot) * (1.0 - smoothstep(0.15, 0.5, sunDot));
+      vec3 scatterColor = mix(dayGlowColor, sunsetGlowColor, sunsetFactor * 0.45);
+
+      // Final atmospheric alpha: zero on dark side, soft ethereal glow on sunlit limb
+      float alpha = rimHaze * intensity * dayFactor;
+
+      if (alpha <= 0.002) discard;
+
+      gl_FragColor = vec4(scatterColor, alpha);
     }
   `,
 };
@@ -43,12 +78,13 @@ const AtmosphereShader = {
 /**
  * Photorealistic NASA Blue Marble Earth
  * Implements:
- * - Real 2048x1024 NASA Earth daylight map (continents & oceans)
- * - Terrestrial normal/bump map for mountains, continental shelves
- * - Specular reflectivity map (glossy water reflection, matte terrain)
- * - Independent rotating dynamic cloud sphere
+ * - 128x128 high-tessellation sphere (zero visible facets or kinks)
+ * - Authentic NASA Earth daylight map (continents & oceans)
+ * - Terrestrial normal/bump map for topographical relief
+ * - Specular reflectivity map for glossy oceans & matte landmasses
+ * - Independent rotating dynamic cloud sphere with soft transparency
  * - Authentic 23.44° axial tilt
- * - Rayleigh atmospheric limb glow shader
+ * - Physically-inspired Rayleigh limb scattering shader modulated by Sun vector
  */
 export function RealisticEarth({
   radius = 2.0,
@@ -56,10 +92,12 @@ export function RealisticEarth({
   rotationSpeed = 0.015,
   position = [0, 0, 0],
   rotation = [0, 0, 0],
+  sunPosition = [12, 3, 6],
 }: RealisticEarthProps) {
   const earthGroupRef = useRef<THREE.Group>(null);
   const globeRef = useRef<THREE.Mesh>(null);
   const cloudsRef = useRef<THREE.Mesh>(null);
+  const atmosphereRef = useRef<THREE.ShaderMaterial>(null);
 
   // Load NASA photorealistic texture suite via TextureLoader
   const textures = useMemo(() => {
@@ -79,37 +117,28 @@ export function RealisticEarth({
     return { day, normal, specular, clouds };
   }, []);
 
-  // Atmospheric glow shader material
+  // Sun direction vector for atmosphere lighting
+  const sunDirVector = useMemo(() => {
+    return new THREE.Vector3(...sunPosition).normalize();
+  }, [sunPosition]);
+
+  // Atmospheric scattering shader material
   const atmosphereMaterial = useMemo(() => {
     return new THREE.ShaderMaterial({
-      vertexShader: AtmosphereShader.vertexShader,
-      fragmentShader: AtmosphereShader.fragmentShader,
+      vertexShader: AtmosphericScatteringShader.vertexShader,
+      fragmentShader: AtmosphericScatteringShader.fragmentShader,
       uniforms: {
-        glowColor: { value: new THREE.Color("#38bdf8") },
-        intensity: { value: 0.75 },
-      },
-      blending: THREE.AdditiveBlending,
-      side: THREE.BackSide,
-      transparent: true,
-      depthWrite: false,
-    });
-  }, []);
-
-  // Inner limb atmosphere
-  const innerAtmosphereMaterial = useMemo(() => {
-    return new THREE.ShaderMaterial({
-      vertexShader: AtmosphereShader.vertexShader,
-      fragmentShader: AtmosphereShader.fragmentShader,
-      uniforms: {
-        glowColor: { value: new THREE.Color("#0284c7") },
-        intensity: { value: 0.4 },
+        sunDirection: { value: sunDirVector },
+        dayGlowColor: { value: new THREE.Color("#38bdf8") }, // Delicate cyan/blue Rayleigh
+        sunsetGlowColor: { value: new THREE.Color("#f59e0b") }, // Warm Rayleigh sunset amber
+        intensity: { value: 0.95 },
       },
       blending: THREE.AdditiveBlending,
       side: THREE.FrontSide,
       transparent: true,
       depthWrite: false,
     });
-  }, []);
+  }, [sunDirVector]);
 
   // Real Earth axial tilt in radians (23.44 degrees on Z)
   const axialTiltRad = (axialTiltDeg * Math.PI) / 180;
@@ -121,7 +150,7 @@ export function RealisticEarth({
     }
     if (cloudsRef.current) {
       // Clouds drift slightly faster due to atmospheric jet streams
-      cloudsRef.current.rotation.y += delta * (rotationSpeed * 1.35);
+      cloudsRef.current.rotation.y += delta * (rotationSpeed * 1.25);
     }
   });
 
@@ -129,17 +158,17 @@ export function RealisticEarth({
     <group position={position} rotation={rotation}>
       {/* Earth tilted axis container */}
       <group ref={earthGroupRef} rotation={[0, 0, -axialTiltRad]}>
-        {/* 1. Base Earth Globe (NASA Blue Marble + Normal + Specular) */}
+        {/* 1. Base Earth Globe (High-resolution 128x128 sphere) */}
         <mesh ref={globeRef} receiveShadow castShadow>
-          <sphereGeometry args={[radius, 64, 64]} />
+          <sphereGeometry args={[radius, 128, 128]} />
           {textures ? (
             <meshStandardMaterial
               map={textures.day}
               normalMap={textures.normal}
               normalScale={new THREE.Vector2(0.85, 0.85)}
               roughnessMap={textures.specular}
-              roughness={0.65}
-              metalness={0.1}
+              roughness={0.6}
+              metalness={0.12}
             />
           ) : (
             <meshStandardMaterial color="#0b264a" roughness={0.5} metalness={0.1} />
@@ -147,30 +176,24 @@ export function RealisticEarth({
         </mesh>
 
         {/* 2. Concentric Dynamic Cloud Sphere (NASA Cloud Formations) */}
-        <mesh ref={cloudsRef} scale={[1.008, 1.008, 1.008]}>
-          <sphereGeometry args={[radius, 64, 64]} />
+        <mesh ref={cloudsRef} scale={[1.006, 1.006, 1.006]}>
+          <sphereGeometry args={[radius, 128, 128]} />
           {textures && (
             <meshStandardMaterial
               map={textures.clouds}
               transparent
-              opacity={0.88}
-              roughness={1.0}
+              opacity={0.82}
+              roughness={0.9}
               metalness={0.0}
               depthWrite={false}
             />
           )}
         </mesh>
 
-        {/* 3. Inner Limb Soft Cyan Gradient */}
+        {/* 3. Physically realistic delicate Rayleigh limb atmospheric haze (Scale 1.012) */}
         <mesh scale={[1.012, 1.012, 1.012]}>
-          <sphereGeometry args={[radius, 48, 48]} />
-          <primitive object={innerAtmosphereMaterial} attach="material" />
-        </mesh>
-
-        {/* 4. Outer Atmospheric Rayleigh Halo (Additive Glow) */}
-        <mesh scale={[1.035, 1.035, 1.035]}>
-          <sphereGeometry args={[radius, 48, 48]} />
-          <primitive object={atmosphereMaterial} attach="material" />
+          <sphereGeometry args={[radius, 128, 128]} />
+          <primitive ref={atmosphereRef} object={atmosphereMaterial} attach="material" />
         </mesh>
       </group>
     </group>

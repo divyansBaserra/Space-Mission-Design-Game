@@ -50,7 +50,18 @@ const INITIAL_GAME_STATE: GameState = {
     alignmentAngleDeg: 0,
     isDocked: false,
     dockingTargetPos: new THREE.Vector3(0, 1.5, -11.2),
+    cameraViewMode: "COCKPIT",
+    landingGearDeployed: false,
+    isLanded: false,
+    surfaceAltitudeMeters: 18.0,
+    verticalSpeedMps: 0,
+    landingTargetPos: new THREE.Vector3(0, -18.0, -110.0),
+    distanceToLandingPad: 90.0,
+    flightDestination: "LUNAR_BASE_ALPHA",
   },
+  lunarSampleCollected: false,
+  radiationLevelMsv: 0.14,
+  surfaceCoordinates: { lat: "0.6740° N", lon: "23.4720° E" },
   missionMetSeconds: 0,
   score: 0,
   paused: false,
@@ -83,8 +94,51 @@ export function GameManager({ onReturnToHub }: GameManagerProps) {
           : "Cockpit active: Fly shuttle ORV-1 and align for docking.",
       }));
     };
+
+    const handleDevTouchdown = () => {
+      setGameState((prev) => ({
+        ...prev,
+        controlMode: "SPACECRAFT_COCKPIT",
+        step: "SURFACE_LANDED",
+        substepText:
+          "TOUCHDOWN CONFIRMED ON PAD-01! Press [H] to disembark onto Lunar Base Alpha.",
+        spacecraft: {
+          ...prev.spacecraft,
+          position: new THREE.Vector3(0, -16.2, -110.0),
+          velocity: new THREE.Vector3(0, 0, 0),
+          isLanded: true,
+          landingGearDeployed: true,
+          surfaceAltitudeMeters: 0,
+          verticalSpeedMps: 0,
+          distanceToLandingPad: 0,
+        },
+      }));
+    };
+
+    const handleDevSurface = () => {
+      setGameState((prev) => ({
+        ...prev,
+        controlMode: "SURFACE_EXPLORATION",
+        step: "EXPLORE_SURFACE",
+        substepText:
+          "Surface exploration active. Low lunar gravity (1.62 m/s²). Investigate base outpost.",
+        spacecraft: {
+          ...prev.spacecraft,
+          position: new THREE.Vector3(0, -16.2, -110.0),
+          velocity: new THREE.Vector3(0, 0, 0),
+          isLanded: true,
+        },
+      }));
+    };
+
     window.addEventListener("toggle-cockpit-mode", handleDevCockpit);
-    return () => window.removeEventListener("toggle-cockpit-mode", handleDevCockpit);
+    window.addEventListener("toggle-touchdown-mode", handleDevTouchdown);
+    window.addEventListener("toggle-surface-mode", handleDevSurface);
+    return () => {
+      window.removeEventListener("toggle-cockpit-mode", handleDevCockpit);
+      window.removeEventListener("toggle-touchdown-mode", handleDevTouchdown);
+      window.removeEventListener("toggle-surface-mode", handleDevSurface);
+    };
   }, []);
 
   // MET and Vitals timer loop
@@ -129,11 +183,15 @@ export function GameManager({ onReturnToHub }: GameManagerProps) {
           };
         }
 
+        const radJitter = (Math.random() - 0.5) * 0.02;
+        const nextRad = Math.max(0.08, Math.min(0.24, 0.14 + radJitter));
+
         return {
           ...prev,
           missionMetSeconds: nextMet,
           oxygenPercent: nextO2,
           suitPowerPercent: nextPwr,
+          radiationLevelMsv: nextRad,
         };
       });
     }, 1000);
@@ -151,6 +209,7 @@ export function GameManager({ onReturnToHub }: GameManagerProps) {
         position: new THREE.Vector3(0, 1.0, -28.0),
         velocity: new THREE.Vector3(0, 0, 0),
         dockingTargetPos: new THREE.Vector3(0, 1.5, -11.2),
+        landingTargetPos: new THREE.Vector3(0, -18.0, -110.0),
       },
     }));
     setShowBriefingModal(false);
@@ -199,11 +258,68 @@ export function GameManager({ onReturnToHub }: GameManagerProps) {
     });
   }, []);
 
-  // Disembark / Exit Cockpit back to astronaut mode
+  // Toggle Camera View Mode (Cockpit vs Chase)
+  const handleToggleCameraView = useCallback(() => {
+    setGameState((prev) => {
+      const nextView = prev.spacecraft.cameraViewMode === "COCKPIT" ? "CHASE" : "COCKPIT";
+      return {
+        ...prev,
+        spacecraft: {
+          ...prev.spacecraft,
+          cameraViewMode: nextView,
+        },
+      };
+    });
+  }, []);
+
+  // Toggle Landing Gear (Down vs Up)
+  const handleToggleLandingGear = useCallback(() => {
+    setGameState((prev) => {
+      const nextGear = !prev.spacecraft.landingGearDeployed;
+      return {
+        ...prev,
+        spacecraft: {
+          ...prev.spacecraft,
+          landingGearDeployed: nextGear,
+        },
+      };
+    });
+  }, []);
+
+  // Land Complete handler (PAD-01 Touchdown)
+  const handleLandComplete = useCallback(() => {
+    setGameState((prev) => ({
+      ...prev,
+      step: "SURFACE_LANDED",
+      substepText:
+        "TOUCHDOWN CONFIRMED ON PAD-01! Press [H] to disembark onto Lunar Base Alpha.",
+      spacecraft: {
+        ...prev.spacecraft,
+        isLanded: true,
+        surfaceAltitudeMeters: 0,
+        verticalSpeedMps: 0,
+      },
+    }));
+  }, []);
+
+  // Disembark / Exit Cockpit back to astronaut or surface exploration mode
   const handleExitCockpit = useCallback(() => {
     setGameState((prev) => {
       if (prev.controlMode !== "SPACECRAFT_COCKPIT") return prev;
       soundManager.playPickup();
+
+      // If landed on lunar surface, disembark onto lunar base
+      if (prev.spacecraft.isLanded) {
+        return {
+          ...prev,
+          controlMode: "SURFACE_EXPLORATION",
+          step: "EXPLORE_SURFACE",
+          substepText:
+            "Disembarked onto Lunar Base Alpha. Low lunar gravity (1.62 m/s²). Investigate base outpost.",
+        };
+      }
+
+      // Otherwise disembark onto station gantry
       return {
         ...prev,
         controlMode: "ASTRONAUT",
@@ -451,7 +567,55 @@ export function GameManager({ onReturnToHub }: GameManagerProps) {
             controlMode: "SPACECRAFT_COCKPIT",
             step: "COCKPIT_ORBITAL_MANEUVER",
             substepText:
-              "Systems online in ORV-1 cockpit! Maneuver into orbital position and align for docking.",
+              "Systems online in ORV-1 cockpit! Maneuver into orbital position or descend to Lunar Base Alpha.",
+          };
+        }
+
+        // 9. Re-board Shuttle ORV-1 from Lunar Surface (PAD-01)
+        if (targetId === "board_spacecraft_surface") {
+          soundManager.playEngineRoar();
+          return {
+            ...prev,
+            controlMode: "SPACECRAFT_COCKPIT",
+            step: "COCKPIT_ORBITAL_MANEUVER",
+            substepText:
+              "ORV-1 cockpit online! Fire ascent thrusters [Space/W] to liftoff and return to orbit.",
+          };
+        }
+
+        // 10. Lunar Base Alpha Habitat Science Terminal
+        if (targetId === "lunar_base_terminal") {
+          soundManager.playSuccessFanfare();
+          return {
+            ...prev,
+            score: prev.score + 500,
+            substepText:
+              "Lunar Base Alpha science terminal accessed! Research telemetry transmitted to orbit (+500 pts).",
+          };
+        }
+
+        // 11. Lunar Deep Space Comms Mast
+        if (targetId === "lunar_comms_mast") {
+          soundManager.playBeaconChime();
+          return {
+            ...prev,
+            substepText:
+              "High-gain S-band relay mast operational. Deep space communication link 100% nominal.",
+          };
+        }
+
+        // 12. Collect Lunar Geological Regolith Core Sample (CORE-GEO-01)
+        if (targetId === "lunar_sample" && !prev.lunarSampleCollected) {
+          soundManager.playPickup();
+          soundManager.playQuindarTone(true);
+          const nextInv: InventoryItemId[] = [...prev.inventory, "LUNAR_SAMPLE"];
+          return {
+            ...prev,
+            inventory: nextInv,
+            lunarSampleCollected: true,
+            score: prev.score + 750,
+            substepText:
+              "Lunar geological sample CORE-GEO-01 retrieved! (+750 pts). Return to ORV-1 or Habitat module.",
           };
         }
 
@@ -506,7 +670,13 @@ export function GameManager({ onReturnToHub }: GameManagerProps) {
       speed: number,
       distToDock: number,
       relVel: number,
-      alignAngle: number
+      alignAngle: number,
+      cameraViewMode: "COCKPIT" | "CHASE",
+      landingGearDeployed: boolean,
+      isLanded: boolean,
+      surfaceAltitudeMeters: number,
+      verticalSpeedMps: number,
+      distToPad: number
     ) => {
       setGameState((prev) => {
         if (prev.controlMode !== "SPACECRAFT_COCKPIT") return prev;
@@ -514,7 +684,15 @@ export function GameManager({ onReturnToHub }: GameManagerProps) {
         let nextStep = prev.step;
         let nextSubstep = prev.substepText;
 
-        if (prev.step === "COCKPIT_ORBITAL_MANEUVER" && distToDock < 15.0) {
+        if (isLanded) {
+          nextStep = "SURFACE_LANDED";
+          nextSubstep =
+            "TOUCHDOWN CONFIRMED ON PAD-01! Press [H] to disembark onto Lunar Base Alpha.";
+        } else if (distToPad < 35.0 && surfaceAltitudeMeters < 25.0) {
+          nextStep = "SURFACE_DESCENT";
+          nextSubstep =
+            "Descent profile active. Deploy landing gear [G] and descend to PAD-01 (<3.8 m/s).";
+        } else if (distToDock < 15.0 && pos.z > -40.0) {
           nextStep = "APPROACH_DOCKING_PORT";
           nextSubstep =
             "Align shuttle nose with Station Docking Port DOCK-01 (<2.5 m/s, <25° error).";
@@ -537,6 +715,12 @@ export function GameManager({ onReturnToHub }: GameManagerProps) {
             distanceToDockMeters: distToDock,
             relativeVelocityMps: relVel,
             alignmentAngleDeg: alignAngle,
+            cameraViewMode,
+            landingGearDeployed,
+            isLanded,
+            surfaceAltitudeMeters,
+            verticalSpeedMps,
+            distanceToLandingPad: distToPad,
           },
         };
       });
@@ -587,9 +771,12 @@ export function GameManager({ onReturnToHub }: GameManagerProps) {
         onPointerLockChange={setIsPointerLocked}
         onUpdateSpacecraft={handleUpdateSpacecraft}
         onDockComplete={handleDockComplete}
+        onLandComplete={handleLandComplete}
         onTogglePause={handleTogglePause}
         onEquipItem={handleEquipItem}
         onExitCockpit={handleExitCockpit}
+        onToggleCameraView={handleToggleCameraView}
+        onToggleLandingGear={handleToggleLandingGear}
       />
       <HUD
         gameState={gameState}
@@ -603,6 +790,8 @@ export function GameManager({ onReturnToHub }: GameManagerProps) {
         onEquipItem={handleEquipItem}
         onExitCockpit={handleExitCockpit}
         onManualDock={handleManualDock}
+        onToggleCameraView={handleToggleCameraView}
+        onToggleLandingGear={handleToggleLandingGear}
         onReturnToHub={onReturnToHub}
         onToggleFlashlight={handleToggleFlashlight}
       />

@@ -601,19 +601,47 @@ export default function SpaceMissionGame() {
 
   const logContainerRef = useRef<HTMLDivElement>(null);
 
-  // Load persistent save data on mount
+  // Load persistent save data on mount with defensive schema sanitization
   useEffect(() => {
     try {
       const saved = localStorage.getItem("smdg_career_data");
       if (saved) {
-        const parsed: CareerSaveData = JSON.parse(saved);
-        if (parsed.careerScore !== undefined) setCareerScore(parsed.careerScore);
-        if (parsed.credits !== undefined) setCareerCredits(parsed.credits);
-        if (Array.isArray(parsed.completedContracts)) setCompletedContracts(parsed.completedContracts);
-        if (Array.isArray(parsed.medalsEarned)) setMedalsEarned(parsed.medalsEarned);
+        const parsed = JSON.parse(saved);
+        if (
+          typeof parsed === "object" &&
+          parsed !== null &&
+          !Array.isArray(parsed)
+        ) {
+          if (
+            typeof parsed.careerScore === "number" &&
+            Number.isFinite(parsed.careerScore) &&
+            parsed.careerScore >= 0
+          ) {
+            setCareerScore(Math.floor(parsed.careerScore));
+          }
+          if (
+            typeof parsed.credits === "number" &&
+            Number.isFinite(parsed.credits) &&
+            parsed.credits >= 0
+          ) {
+            setCareerCredits(Math.floor(parsed.credits));
+          }
+          if (Array.isArray(parsed.completedContracts)) {
+            const cleanContracts = parsed.completedContracts
+              .filter((c: unknown): c is string => typeof c === "string")
+              .slice(0, 50);
+            setCompletedContracts(cleanContracts);
+          }
+          if (Array.isArray(parsed.medalsEarned)) {
+            const cleanMedals = parsed.medalsEarned
+              .filter((m: unknown): m is string => typeof m === "string")
+              .slice(0, 50);
+            setMedalsEarned(cleanMedals);
+          }
+        }
       }
     } catch {
-      // Ignore localStorage errors
+      // Ignore corrupted or tampered localStorage data
     }
   }, []);
 
@@ -1655,7 +1683,7 @@ export default function SpaceMissionGame() {
                 cursor: "pointer",
               }}
             >
-              📖 {showHangarGuide ? "Hide Guide" : "Show Guide"}
+              [GUIDE] {showHangarGuide ? "Hide Guide" : "Show Guide"}
             </button>
           </div>
 
@@ -1684,13 +1712,13 @@ export default function SpaceMissionGame() {
               >
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <span style={{ fontSize: "11px", fontWeight: 700, color: "#38bdf8", textTransform: "uppercase", letterSpacing: "0.06em" }}>
-                    🚀 How to Build Your Spacecraft
+                    How to Build Your Spacecraft
                   </span>
                   <button
                     onClick={() => setShowHangarGuide(false)}
-                    style={{ background: "transparent", border: "none", color: "var(--color-text-muted)", fontSize: "12px", cursor: "pointer" }}
+                    style={{ background: "transparent", border: "none", color: "var(--color-text-muted)", fontSize: "11px", cursor: "pointer", fontFamily: "var(--font-mono)" }}
                   >
-                    ✕
+                    [X]
                   </button>
                 </div>
                 <div style={{ fontSize: "10px", color: "var(--color-text-secondary)", lineHeight: 1.45 }}>
@@ -1724,7 +1752,7 @@ export default function SpaceMissionGame() {
                   }}
                   title="Balanced 3U Earth Observation setup"
                 >
-                  ⚡ 3U Earth Obs
+                  3U Earth Obs
                 </button>
                 <button
                   onClick={() => handleApplyPreset("DEEP_SPACE_6U")}
@@ -1741,7 +1769,7 @@ export default function SpaceMissionGame() {
                   }}
                   title="Deep space high-power 6U relay setup"
                 >
-                  🛰️ 6U Relay
+                  6U Relay
                 </button>
                 <button
                   onClick={() => handleApplyPreset("MINIMALIST_1U")}
@@ -1758,7 +1786,7 @@ export default function SpaceMissionGame() {
                   }}
                   title="Minimalist 1U scout science setup"
                 >
-                  🔬 1U Scout
+                  1U Scout
                 </button>
               </div>
             </div>
@@ -1913,7 +1941,7 @@ export default function SpaceMissionGame() {
               }}
             >
               <div style={{ fontSize: "11px", fontWeight: 700, color: launchReady ? "#22c55e" : "#ef4444", textTransform: "uppercase", letterSpacing: "0.05em" }}>
-                {launchReady ? "✓ Flight Ready for Launch" : "⚠️ Action Required for Clearance"}
+                {launchReady ? "Flight Ready for Launch" : "Action Required for Clearance"}
               </div>
               {launchReady ? (
                 <div style={{ fontSize: "10px", color: "var(--color-text-secondary)", lineHeight: 1.35 }}>

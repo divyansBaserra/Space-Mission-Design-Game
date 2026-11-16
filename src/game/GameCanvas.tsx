@@ -27,12 +27,21 @@ interface GameCanvasProps {
     speed: number,
     distToDock: number,
     relVel: number,
-    alignAngle: number
+    alignAngle: number,
+    cameraViewMode: "COCKPIT" | "CHASE",
+    landingGearDeployed: boolean,
+    isLanded: boolean,
+    surfaceAltitudeMeters: number,
+    verticalSpeedMps: number,
+    distToPad: number
   ) => void;
   onDockComplete: () => void;
+  onLandComplete?: () => void;
   onTogglePause?: () => void;
   onEquipItem?: (id: InventoryItemId) => void;
   onExitCockpit?: () => void;
+  onToggleCameraView?: () => void;
+  onToggleLandingGear?: () => void;
 }
 
 export function GameCanvas({
@@ -44,9 +53,12 @@ export function GameCanvas({
   onPointerLockChange,
   onUpdateSpacecraft,
   onDockComplete,
+  onLandComplete,
   onTogglePause,
   onEquipItem,
   onExitCockpit,
+  onToggleCameraView,
+  onToggleLandingGear,
 }: GameCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -88,10 +100,19 @@ export function GameCanvas({
       }}
     >
       <Canvas
-        camera={{ position: [0, 1.65, 9], fov: 72, near: 0.1, far: 500 }}
+        camera={{ position: [0, 1.65, 9], fov: 75, near: 0.1, far: 500 }}
         shadows={isShadowsEnabled}
         dpr={dprSetting}
-        gl={{ antialias: gameState.settings?.graphicsQuality !== "LOW", powerPreference: "high-performance" }}
+        gl={{
+          antialias: gameState.settings?.graphicsQuality !== "LOW",
+          powerPreference: "high-performance",
+          toneMapping: THREE.ACESFilmicToneMapping,
+          toneMappingExposure: 1.15,
+        }}
+        onCreated={({ gl }) => {
+          gl.toneMapping = THREE.ACESFilmicToneMapping;
+          gl.toneMappingExposure = 1.15;
+        }}
       >
         <Suspense fallback={null}>
           <StationEnvironment
@@ -110,10 +131,14 @@ export function GameCanvas({
           />
           <SpacecraftFlight
             gameState={gameState}
+            physics={physics}
             onUpdateSpacecraft={onUpdateSpacecraft}
             onDockComplete={onDockComplete}
+            onLandComplete={onLandComplete}
             onTogglePause={onTogglePause}
             onExitCockpit={onExitCockpit}
+            onToggleCameraView={onToggleCameraView}
+            onToggleLandingGear={onToggleLandingGear}
           />
         </Suspense>
       </Canvas>

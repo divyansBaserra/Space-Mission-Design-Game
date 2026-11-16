@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useRef, useMemo, Suspense } from "react";
-import { useFrame } from "@react-three/fiber";
+import { useFrame, useThree } from "@react-three/fiber";
 import { Stars, useGLTF } from "@react-three/drei";
 import * as THREE from "three";
 import { GameState, InventoryItemId } from "./types";
@@ -45,6 +45,58 @@ function StationModel({
   return <primitive object={cloned} position={position} rotation={rotation} scale={scale} />;
 }
 
+function SpaceDust({ count = 280 }: { count?: number }) {
+  const pointsRef = useRef<THREE.Points>(null);
+  const { camera } = useThree();
+
+  const [positions] = useMemo(() => {
+    const pos = new Float32Array(count * 3);
+    for (let i = 0; i < count; i++) {
+      pos[i * 3] = (Math.random() - 0.5) * 60;
+      pos[i * 3 + 1] = (Math.random() - 0.5) * 40;
+      pos[i * 3 + 2] = (Math.random() - 0.5) * 60;
+    }
+    return [pos];
+  }, [count]);
+
+  useFrame(() => {
+    if (!pointsRef.current) return;
+    const pos = pointsRef.current.geometry.attributes.position.array as Float32Array;
+    const cx = camera.position.x;
+    const cy = camera.position.y;
+    const cz = camera.position.z;
+
+    for (let i = 0; i < count; i++) {
+      const idx = i * 3;
+      if (pos[idx] - cx > 30) pos[idx] -= 60;
+      else if (pos[idx] - cx < -30) pos[idx] += 60;
+
+      if (pos[idx + 1] - cy > 20) pos[idx + 1] -= 40;
+      else if (pos[idx + 1] - cy < -20) pos[idx + 1] += 40;
+
+      if (pos[idx + 2] - cz > 30) pos[idx + 2] -= 60;
+      else if (pos[idx + 2] - cz < -30) pos[idx + 2] += 60;
+    }
+    pointsRef.current.geometry.attributes.position.needsUpdate = true;
+  });
+
+  return (
+    <points ref={pointsRef}>
+      <bufferGeometry>
+        <bufferAttribute attach="attributes-position" args={[positions, 3]} />
+      </bufferGeometry>
+      <pointsMaterial
+        size={0.065}
+        color="#38bdf8"
+        transparent
+        opacity={0.6}
+        blending={THREE.AdditiveBlending}
+        depthWrite={false}
+      />
+    </points>
+  );
+}
+
 export function StationEnvironment({
   gameState,
 }: StationEnvironmentProps) {
@@ -56,6 +108,17 @@ export function StationEnvironment({
   const outerDoorRightRef = useRef<THREE.Mesh>(null);
   const satBeaconRef = useRef<THREE.PointLight>(null);
   const holoSatRef = useRef<THREE.Group>(null);
+
+  // Lunar crater ground texture
+  const moonTexture = useMemo(() => {
+    if (typeof window === "undefined") return null;
+    const loader = new THREE.TextureLoader();
+    const tex = loader.load("/assets/textures/earth/moon.jpg");
+    tex.wrapS = THREE.RepeatWrapping;
+    tex.wrapT = THREE.RepeatWrapping;
+    tex.repeat.set(12, 12);
+    return tex;
+  }, []);
 
   // Frame animations
   useFrame((_, delta) => {
@@ -119,6 +182,7 @@ export function StationEnvironment({
       {/* EXTERIOR DEEP SPACE & EARTH ORBIT                                     */}
       {/* ==================================================================== */}
       <Stars radius={120} depth={60} count={4000} factor={4} saturation={0} fade speed={0.5} />
+      <SpaceDust count={280} />
 
       {/* Sun Directional Light (crisp space lighting) */}
       <directionalLight position={[25, 12, 10]} intensity={1.8} castShadow shadow-bias={-0.0001} />
@@ -130,6 +194,39 @@ export function StationEnvironment({
         position={[0, -76, 10]}
         rotationSpeed={0.012}
       />
+
+      {/* Real NASA International Space Station Superstructure (Mounted along Station Truss) */}
+      <Suspense fallback={null}>
+        <NASAModelObject
+          url="/assets/models/nasa/iss-station.glb"
+          position={[0, 16.5, 3.5]}
+          rotation={[0, 0, 0]}
+          scale={[0.7, 0.7, 0.7]}
+        />
+      </Suspense>
+
+      {/* Orbiting Asteroid Belt (Authentic NASA Asteroid 3D Models) */}
+      <group>
+        {[
+          { pos: [-42, 14, -55], scale: 0.007, rot: [0.4, 0.2, 0.1] },
+          { pos: [48, -10, -68], scale: 0.009, rot: [0.1, 0.8, 0.3] },
+          { pos: [-32, -14, -88], scale: 0.006, rot: [0.6, 0.1, 0.5] },
+          { pos: [36, 24, -98], scale: 0.008, rot: [0.2, 0.4, 0.9] },
+          { pos: [-20, 32, -35], scale: 0.005, rot: [0.7, 0.6, 0.2] },
+          { pos: [58, 12, -42], scale: 0.011, rot: [0.3, 0.9, 0.4] },
+          { pos: [15, -22, -125], scale: 0.012, rot: [0.5, 0.3, 0.7] },
+          { pos: [-45, -16, -115], scale: 0.008, rot: [0.8, 0.5, 0.2] },
+        ].map((ast, i) => (
+          <Suspense key={`asteroid-${i}`} fallback={null}>
+            <NASAModelObject
+              url="/assets/models/nasa/asteroid.glb"
+              position={ast.pos as [number, number, number]}
+              rotation={ast.rot as [number, number, number]}
+              scale={[ast.scale, ast.scale, ast.scale]}
+            />
+          </Suspense>
+        ))}
+      </group>
 
       {/* ==================================================================== */}
       {/* 1. COMMAND DECK / BRIDGE (X: [-4.5, 4.5], Z: [6, 16], Y: [0, 3])     */}
@@ -830,6 +927,145 @@ export function StationEnvironment({
       </group>
 
       {/* ==================================================================== */}
+      {/* 5. PLANETARY / LUNAR SURFACE LANDING ZONE (LUNAR BASE ALPHA)          */}
+      {/* Floor at Y = -18.0, Pad at [0, -18.0, -110.0]                         */}
+      {/* ==================================================================== */}
+      <group position={[0, -18.0, -110.0]}>
+        {/* Cratered Lunar Terrain Ground Plane */}
+        <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+          <planeGeometry args={[160, 160, 32, 32]} />
+          <meshStandardMaterial
+            map={moonTexture ?? undefined}
+            color={moonTexture ? "#ffffff" : "#64748b"}
+            roughness={0.92}
+            metalness={0.08}
+          />
+        </mesh>
+
+        {/* Illuminated Octagonal Surface Landing Pad (PAD-01) */}
+        <mesh position={[0, 0.08, 0]} rotation={[-Math.PI / 2, 0, Math.PI / 8]} receiveShadow>
+          <cylinderGeometry args={[9.5, 10.0, 0.15, 8]} />
+          <meshStandardMaterial color="#1e293b" metalness={0.7} roughness={0.4} />
+        </mesh>
+        {/* Landing Pad Inner Touchdown Circle */}
+        <mesh position={[0, 0.17, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+          <ringGeometry args={[5.2, 5.6, 32]} />
+          <meshBasicMaterial color="#38bdf8" />
+        </mesh>
+        {/* Landing Target Crosshair Marker */}
+        <mesh position={[0, 0.17, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+          <planeGeometry args={[7.5, 0.4]} />
+          <meshBasicMaterial color="#eab308" />
+        </mesh>
+        <mesh position={[0, 0.17, 0]} rotation={[-Math.PI / 2, 0, Math.PI / 2]}>
+          <planeGeometry args={[7.5, 0.4]} />
+          <meshBasicMaterial color="#eab308" />
+        </mesh>
+
+        {/* Perimeter Green/Amber Touchdown Guide Beacons */}
+        {[-8.5, 0, 8.5].map((x) =>
+          [-8.5, 8.5].map((z) => (
+            <group key={`pad-light-${x}-${z}`} position={[x, 0.35, z]}>
+              <mesh>
+                <cylinderGeometry args={[0.08, 0.12, 0.6, 8]} />
+                <meshStandardMaterial color="#334155" />
+              </mesh>
+              <mesh position={[0, 0.35, 0]}>
+                <sphereGeometry args={[0.12, 12, 12]} />
+                <meshBasicMaterial color="#22c55e" />
+              </mesh>
+              <pointLight position={[0, 0.5, 0]} intensity={1.2} distance={8} color="#22c55e" />
+            </group>
+          ))
+        )}
+
+        {/* Surface Base Habitat Module (NASA Base Station Model) */}
+        <Suspense fallback={null}>
+          <NASAModelObject
+            url="/assets/models/nasa/base-station.glb"
+            position={[16.0, 0.2, 8.0]}
+            rotation={[0, -0.6, 0]}
+            scale={[0.85, 0.85, 0.85]}
+          />
+        </Suspense>
+
+        {/* Surface Communication Mast & Beacon */}
+        <group position={[-14.0, 0, 10.0]}>
+          <mesh position={[0, 4.0, 0]}>
+            <cylinderGeometry args={[0.1, 0.2, 8.0, 8]} />
+            <meshStandardMaterial color="#64748b" metalness={0.8} roughness={0.3} />
+          </mesh>
+          <mesh position={[0, 8.2, 0]}>
+            <sphereGeometry args={[0.2, 12, 12]} />
+            <meshBasicMaterial color="#ef4444" />
+          </mesh>
+          <pointLight position={[0, 8.4, 0]} intensity={2.0} distance={25} color="#ef4444" />
+        </group>
+
+        {/* High-Intensity Lunar Surface Sun & Facility Floodlight */}
+        <directionalLight position={[-30, 45, 25]} intensity={2.8} color="#f8fafc" />
+        <pointLight position={[0, 14.0, 0]} intensity={2.4} distance={65} color="#e0f2fe" />
+
+        {/* Perimeter Blast Shields (Matching Starfield Lunar Base Reference) */}
+        {[-8, -4, 0, 4, 8].map((x) => (
+          <group key={`shield-${x}`} position={[x, 1.1, 14.0]}>
+            <mesh receiveShadow castShadow>
+              <boxGeometry args={[3.6, 2.0, 0.16]} />
+              <meshStandardMaterial color="#0284c7" metalness={0.7} roughness={0.3} />
+            </mesh>
+            {/* Support Strut */}
+            <mesh position={[0, -0.5, -0.45]} rotation={[0.4, 0, 0]}>
+              <cylinderGeometry args={[0.04, 0.04, 1.4, 8]} />
+              <meshStandardMaterial color="#334155" metalness={0.8} roughness={0.3} />
+            </mesh>
+          </group>
+        ))}
+
+        {/* Cryogenic Storage Tanks & Habitat Support (Matching Reference 6) */}
+        {[8.5, 11.8].map((x) => (
+          <group key={`tank-${x}`} position={[x, 2.8, 16.0]}>
+            <mesh receiveShadow castShadow>
+              <cylinderGeometry args={[1.1, 1.1, 5.2, 24]} />
+              <meshStandardMaterial color="#e2e8f0" metalness={0.7} roughness={0.25} />
+            </mesh>
+            <mesh position={[0, 2.6, 0]}>
+              <sphereGeometry args={[1.1, 24, 16]} />
+              <meshStandardMaterial color="#cbd5e1" metalness={0.7} roughness={0.25} />
+            </mesh>
+          </group>
+        ))}
+
+        {/* Collectible Lunar Geological Core Sample (CORE-GEO-01) */}
+        {!gameState.lunarSampleCollected && (
+          <group position={[8.5, 0.45, 12.0]}>
+            <mesh position={[0, -0.2, 0]}>
+              <cylinderGeometry args={[0.35, 0.45, 0.25, 8]} />
+              <meshStandardMaterial color="#334155" metalness={0.8} roughness={0.3} />
+            </mesh>
+            <mesh position={[0, 0.12, 0]} rotation={[0.4, 0.8, 0.2]}>
+              <dodecahedronGeometry args={[0.22, 1]} />
+              <meshStandardMaterial color="#94a3b8" roughness={0.7} metalness={0.4} />
+            </mesh>
+            <pointLight position={[0, 0.6, 0]} intensity={1.8} distance={8} color="#38bdf8" />
+            <mesh position={[0, 0.45, 0]}>
+              <sphereGeometry args={[0.04, 8, 8]} />
+              <meshBasicMaterial color="#38bdf8" />
+            </mesh>
+          </group>
+        )}
+
+        {/* Astronaut Outpost Crewmember on Surface (NASA Spacesuit Model) */}
+        <Suspense fallback={null}>
+          <NASAModelObject
+            url="/assets/models/nasa/astronaut-engine.glb"
+            position={[3.0, 0.05, 5.0]}
+            rotation={[0, -0.6, 0]}
+            scale={[0.024, 0.024, 0.024]}
+          />
+        </Suspense>
+      </group>
+
+      {/* ==================================================================== */}
       {/* 6. ORBITAL UTILITY SHUTTLE `ORV-1` (NASA Spacecraft Orbiter)         */}
       {/* ==================================================================== */}
       {/* DOCKED UTILITY SHUTTLE AT BERTH (when in Astronaut exploration mode) */}
@@ -850,6 +1086,20 @@ export function StationEnvironment({
         </group>
       )}
 
+      {/* SHUTTLE ON SURFACE LANDING PAD (when landed or in surface exploration mode) */}
+      {(gameState.controlMode === "SURFACE_EXPLORATION" ||
+        (gameState.controlMode !== "SPACECRAFT_COCKPIT" && gameState.spacecraft.isLanded)) && (
+        <group position={[0, -18.0 + 1.8, -110.0]}>
+          <NASAModelObject
+            url="/assets/models/nasa/space-shuttle-engine.glb"
+            position={[0, 0, 0]}
+            rotation={[0, Math.PI, 0]}
+            scale={[0.18, 0.18, 0.18]}
+          />
+          <pointLight position={[0, 1.2, 0]} intensity={1.2} distance={10} color="#38bdf8" />
+        </group>
+      )}
+
       {/* FLYING SHUTTLE IN SPACE (when in Cockpit Flight mode, external 3D mesh) */}
       {gameState.controlMode === "SPACECRAFT_COCKPIT" && (
         <group
@@ -866,12 +1116,19 @@ export function StationEnvironment({
             rotation={[0, Math.PI, 0]}
             scale={[0.18, 0.18, 0.18]}
           />
-          {/* Cyan Thruster Exhaust Plume when moving */}
-          {gameState.spacecraft.speedMps > 0.4 && (
-            <mesh position={[0, 0, 2.4]} rotation={[Math.PI / 2, 0, 0]}>
-              <coneGeometry args={[0.25, 1.2, 12]} />
-              <meshBasicMaterial color="#38bdf8" transparent opacity={0.8} />
-            </mesh>
+          {/* Glowing Blue Rocket Exhaust Plume when moving */}
+          {gameState.spacecraft.speedMps > 0.3 && (
+            <group position={[0, 0, 2.6]}>
+              <mesh rotation={[Math.PI / 2, 0, 0]}>
+                <coneGeometry args={[0.35, 1.8, 16]} />
+                <meshBasicMaterial color="#38bdf8" transparent opacity={0.85} />
+              </mesh>
+              <mesh rotation={[Math.PI / 2, 0, 0]} position={[0, 0, 0.4]}>
+                <coneGeometry args={[0.18, 1.0, 16]} />
+                <meshBasicMaterial color="#ffffff" transparent opacity={0.95} />
+              </mesh>
+              <pointLight position={[0, 0, 0.8]} intensity={2.5} distance={6} color="#38bdf8" />
+            </group>
           )}
         </group>
       )}

@@ -1,0 +1,5 @@
+# Robots.txt for NASA Space Mission Design Game
+User-agent: *
+Allow: /
+Disallow: /api/
+Sitemap: https://space-mission-design-game.pages.dev/sitemap.xml
