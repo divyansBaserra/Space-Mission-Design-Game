@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useEffect } from "react";
+import React, { useRef, useEffect, useMemo } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import { GameState } from "./types";
@@ -88,6 +88,33 @@ export function SpacecraftFlight({
   // Cockpit camera spring-damper lag and recoil vectors
   const camQuatRef = useRef<THREE.Quaternion>(new THREE.Quaternion());
   const camRecoilRef = useRef<THREE.Vector3>(new THREE.Vector3());
+
+  // Cockpit Multi-Function Display (MFD) dynamic instruments
+  const mfd = useMemo(() => {
+    if (typeof window === "undefined") {
+      return { pfdCanvas: null, pfdTexture: null, sysCanvas: null, sysTexture: null, radarCanvas: null, radarTexture: null };
+    }
+    const createMfd = (w: number, h: number) => {
+      const c = document.createElement("canvas");
+      c.width = w;
+      c.height = h;
+      const t = new THREE.CanvasTexture(c);
+      t.minFilter = THREE.LinearFilter;
+      t.magFilter = THREE.LinearFilter;
+      return { canvas: c, texture: t };
+    };
+    const pfd = createMfd(512, 384);
+    const sys = createMfd(384, 256);
+    const rad = createMfd(384, 256);
+    return {
+      pfdCanvas: pfd.canvas,
+      pfdTexture: pfd.texture,
+      sysCanvas: sys.canvas,
+      sysTexture: sys.texture,
+      radarCanvas: rad.canvas,
+      radarTexture: rad.texture,
+    };
+  }, []);
 
   // Sync state changes from props
   useEffect(() => {
@@ -522,6 +549,240 @@ export function SpacecraftFlight({
       verticalSpeed,
       distToPad
     );
+    // Render dynamic cockpit MFD screens when inside cockpit
+    if (cameraViewModeRef.current === "COCKPIT") {
+      // 1. Center Primary Flight Display (PFD)
+      if (mfd.pfdCanvas && mfd.pfdTexture) {
+        const ctx = mfd.pfdCanvas.getContext("2d");
+        if (ctx) {
+          const w = mfd.pfdCanvas.width;
+          const h = mfd.pfdCanvas.height;
+          ctx.fillStyle = "#02121e";
+          ctx.fillRect(0, 0, w, h);
+
+          // Artificial Horizon (Pitch & Roll)
+          ctx.save();
+          ctx.translate(w / 2, h / 2);
+          ctx.rotate(-rollRef.current);
+          const pitchShift = pitchRef.current * 160;
+
+          // Sky (Cyan-Blue) & Ground (Dark Slate)
+          ctx.fillStyle = "#0284c7";
+          ctx.fillRect(-w, -h + pitchShift, w * 2, h);
+          ctx.fillStyle = "#0f172a";
+          ctx.fillRect(-w, pitchShift, w * 2, h);
+
+          // Horizon Line
+          ctx.strokeStyle = "#38bdf8";
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.moveTo(-w, pitchShift);
+          ctx.lineTo(w, pitchShift);
+          ctx.stroke();
+
+          // Pitch Ladder rungs (+15, -15)
+          ctx.strokeStyle = "rgba(255, 255, 255, 0.75)";
+          ctx.lineWidth = 2;
+          ctx.font = "bold 14px monospace";
+          ctx.fillStyle = "#ffffff";
+          [-30, -15, 15, 30].forEach((deg) => {
+            const y = pitchShift - (deg / 180) * Math.PI * 160;
+            ctx.beginPath();
+            ctx.moveTo(-50, y);
+            ctx.lineTo(50, y);
+            ctx.stroke();
+            ctx.fillText(`${deg}°`, 58, y + 5);
+            ctx.fillText(`${deg}°`, -82, y + 5);
+          });
+          ctx.restore();
+
+          // Centered Boresight Reticle
+          ctx.strokeStyle = "#eab308";
+          ctx.lineWidth = 2.5;
+          ctx.strokeRect(w / 2 - 12, h / 2 - 12, 24, 24);
+          ctx.beginPath();
+          ctx.arc(w / 2, h / 2, 2, 0, Math.PI * 2);
+          ctx.fillStyle = "#eab308";
+          ctx.fill();
+
+          // Left Speed Tape
+          ctx.fillStyle = "rgba(15, 23, 42, 0.85)";
+          ctx.fillRect(10, 20, 80, h - 40);
+          ctx.strokeStyle = "#0284c7";
+          ctx.strokeRect(10, 20, 80, h - 40);
+          ctx.fillStyle = "#38bdf8";
+          ctx.font = "bold 12px monospace";
+          ctx.fillText("AIRSPEED", 16, 40);
+          ctx.fillStyle = "#f8fafc";
+          ctx.font = "bold 18px monospace";
+          ctx.fillText(`${speed.toFixed(1)}`, 20, 75);
+          ctx.font = "10px monospace";
+          ctx.fillText("M/S", 20, 92);
+
+          // Right Altitude Tape
+          ctx.fillStyle = "rgba(15, 23, 42, 0.85)";
+          ctx.fillRect(w - 90, 20, 80, h - 40);
+          ctx.strokeStyle = "#0284c7";
+          ctx.strokeRect(w - 90, 20, 80, h - 40);
+          ctx.fillStyle = "#38bdf8";
+          ctx.font = "bold 12px monospace";
+          ctx.fillText("ALTITUDE", w - 84, 40);
+          ctx.fillStyle = "#f8fafc";
+          ctx.font = "bold 18px monospace";
+          ctx.fillText(`${surfaceAlt.toFixed(0)}`, w - 84, 75);
+          ctx.font = "10px monospace";
+          ctx.fillText("M AGL", w - 84, 92);
+
+          // Top Heading Tape
+          const headingDeg = Math.round(((yawRef.current * 180) / Math.PI + 360) % 360);
+          ctx.fillStyle = "rgba(15, 23, 42, 0.9)";
+          ctx.fillRect(w / 2 - 60, 10, 120, 30);
+          ctx.strokeStyle = "#38bdf8";
+          ctx.strokeRect(w / 2 - 60, 10, 120, 30);
+          ctx.fillStyle = "#38bdf8";
+          ctx.font = "bold 14px monospace";
+          ctx.textAlign = "center";
+          ctx.fillText(`HDG ${headingDeg.toString().padStart(3, "0")}°`, w / 2, 30);
+          ctx.textAlign = "left";
+
+          mfd.pfdTexture.needsUpdate = true;
+        }
+      }
+
+      // 2. Left Subsystem & Propulsion MFD
+      if (mfd.sysCanvas && mfd.sysTexture) {
+        const ctx = mfd.sysCanvas.getContext("2d");
+        if (ctx) {
+          const w = mfd.sysCanvas.width;
+          const h = mfd.sysCanvas.height;
+          ctx.fillStyle = "#0b1320";
+          ctx.fillRect(0, 0, w, h);
+
+          ctx.fillStyle = "#38bdf8";
+          ctx.font = "bold 13px monospace";
+          ctx.fillText("SYS // PROPULSION & POWER", 16, 26);
+
+          // Propellant Tank Fill
+          ctx.fillStyle = "#94a3b8";
+          ctx.font = "11px monospace";
+          ctx.fillText("HYDRAZINE TANK (RCS + MAIN):", 16, 55);
+
+          ctx.fillStyle = "rgba(30, 41, 59, 0.8)";
+          ctx.fillRect(16, 62, w - 32, 22);
+          const propRatio = Math.max(0, propRef.current / 100);
+          ctx.fillStyle = propRatio > 0.3 ? "#22c55e" : propRatio > 0.15 ? "#f59e0b" : "#ef4444";
+          ctx.fillRect(18, 64, (w - 36) * propRatio, 18);
+          ctx.fillStyle = "#ffffff";
+          ctx.font = "bold 12px monospace";
+          ctx.fillText(`${propRef.current.toFixed(1)}%`, 24, 78);
+
+          // Delta-V Estimate
+          const deltaV = Math.round(propRatio * 850);
+          ctx.fillStyle = "#94a3b8";
+          ctx.fillText(`REMAINING ΔV: ${deltaV} M/S`, 16, 110);
+
+          // Electrical Bus
+          ctx.fillText(`MAIN BUS: 28.4 V // 100% NOMINAL`, 16, 134);
+          ctx.fillText(`REACTION WHEELS: ACTIVE [3/3]`, 16, 158);
+
+          // RCS Firing Matrix Visual
+          ctx.fillText("RCS THRUSTER MANIFOLD:", 16, 190);
+          const rcsAxes = [
+            { label: "+X", active: keysRef.current["KeyD"] },
+            { label: "-X", active: keysRef.current["KeyA"] },
+            { label: "+Y", active: keysRef.current["Space"] },
+            { label: "-Y", active: keysRef.current["ControlLeft"] || keysRef.current["KeyX"] },
+            { label: "+Z", active: keysRef.current["KeyW"] },
+            { label: "-Z", active: keysRef.current["KeyS"] },
+          ];
+          rcsAxes.forEach((ax, idx) => {
+            const bx = 16 + idx * 46;
+            ctx.fillStyle = ax.active ? "rgba(56, 189, 248, 0.3)" : "rgba(30, 41, 59, 0.6)";
+            ctx.fillRect(bx, 202, 38, 24);
+            ctx.strokeStyle = ax.active ? "#38bdf8" : "#475569";
+            ctx.strokeRect(bx, 202, 38, 24);
+            ctx.fillStyle = ax.active ? "#38bdf8" : "#94a3b8";
+            ctx.font = "bold 11px monospace";
+            ctx.fillText(ax.label, bx + 10, 218);
+          });
+
+          mfd.sysTexture.needsUpdate = true;
+        }
+      }
+
+      // 3. Right Tactical Proximity Radar MFD
+      if (mfd.radarCanvas && mfd.radarTexture) {
+        const ctx = mfd.radarCanvas.getContext("2d");
+        if (ctx) {
+          const w = mfd.radarCanvas.width;
+          const h = mfd.radarCanvas.height;
+          ctx.fillStyle = "#041512";
+          ctx.fillRect(0, 0, w, h);
+
+          ctx.fillStyle = "#34d399";
+          ctx.font = "bold 13px monospace";
+          ctx.fillText("TACTICAL PROXIMITY RADAR", 16, 26);
+
+          // Radar Scope Circle
+          const cx = w / 2;
+          const cy = h / 2 + 15;
+          const maxR = 85;
+
+          ctx.strokeStyle = "rgba(52, 211, 153, 0.25)";
+          ctx.lineWidth = 1;
+          [30, 60, maxR].forEach((r) => {
+            ctx.beginPath();
+            ctx.arc(cx, cy, r, 0, Math.PI * 2);
+            ctx.stroke();
+          });
+          // Radar Crosshair
+          ctx.beginPath();
+          ctx.moveTo(cx - maxR, cy);
+          ctx.lineTo(cx + maxR, cy);
+          ctx.moveTo(cx, cy - maxR);
+          ctx.lineTo(cx, cy + maxR);
+          ctx.stroke();
+
+          // Rotating Sweep Beam
+          const sweepAngle = (Date.now() * 0.0025) % (Math.PI * 2);
+          ctx.strokeStyle = "rgba(52, 211, 153, 0.75)";
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(cx, cy);
+          ctx.lineTo(cx + Math.cos(sweepAngle) * maxR, cy + Math.sin(sweepAngle) * maxR);
+          ctx.stroke();
+
+          // Relative Gateway-1 Docking Target Blip
+          const targetDistRatio = Math.min(1.0, distToDock / 50);
+          const targetRad = targetDistRatio * maxR;
+          const relAngle = Math.atan2(
+            gameState.spacecraft.dockingTargetPos.x - posRef.current.x,
+            gameState.spacecraft.dockingTargetPos.z - posRef.current.z
+          );
+          const bx = cx + Math.sin(relAngle) * targetRad;
+          const by = cy - Math.cos(relAngle) * targetRad;
+
+          // Target Diamond Marker
+          ctx.fillStyle = distToDock <= 15 ? "#22c55e" : "#eab308";
+          ctx.beginPath();
+          ctx.moveTo(bx, by - 6);
+          ctx.lineTo(bx + 6, by);
+          ctx.moveTo(bx + 6, by);
+          ctx.lineTo(bx, by + 6);
+          ctx.moveTo(bx, by + 6);
+          ctx.lineTo(bx - 6, by);
+          ctx.moveTo(bx - 6, by);
+          ctx.lineTo(bx, by - 6);
+          ctx.fill();
+
+          ctx.font = "bold 10px monospace";
+          ctx.fillText(`PORT DOCK-01 (${distToDock.toFixed(1)}m)`, 16, h - 30);
+          ctx.fillText(`CLOSING: ${relVel.toFixed(2)} M/S | ALIGN: ${alignmentAngleDeg.toFixed(1)}°`, 16, h - 14);
+
+          mfd.radarTexture.needsUpdate = true;
+        }
+      }
+    }
   });
 
   if (gameState.controlMode !== "SPACECRAFT_COCKPIT") return null;
@@ -601,7 +862,11 @@ export function SpacecraftFlight({
         {/* Left MFD: Attitude & Propulsion */}
         <mesh position={[-0.32, -0.28, -0.52]} rotation={[-0.45, 0, 0]}>
           <planeGeometry args={[0.26, 0.18]} />
-          <meshBasicMaterial color="#0369a1" />
+          {mfd.sysTexture ? (
+            <meshBasicMaterial map={mfd.sysTexture} />
+          ) : (
+            <meshBasicMaterial color="#0369a1" />
+          )}
         </mesh>
         {/* Left MFD Bezel */}
         <mesh position={[-0.32, -0.28, -0.522]} rotation={[-0.45, 0, 0]}>
@@ -612,13 +877,21 @@ export function SpacecraftFlight({
         {/* Center Primary Flight Display (PFD) HUD Screen */}
         <mesh position={[0, -0.25, -0.54]} rotation={[-0.45, 0, 0]}>
           <planeGeometry args={[0.34, 0.22]} />
-          <meshBasicMaterial color="#0284c7" />
+          {mfd.pfdTexture ? (
+            <meshBasicMaterial map={mfd.pfdTexture} />
+          ) : (
+            <meshBasicMaterial color="#0284c7" />
+          )}
         </mesh>
 
         {/* Right MFD: Docking Telemetry & Radar */}
         <mesh position={[0.32, -0.28, -0.52]} rotation={[-0.45, 0, 0]}>
           <planeGeometry args={[0.26, 0.18]} />
-          <meshBasicMaterial color="#0f766e" />
+          {mfd.radarTexture ? (
+            <meshBasicMaterial map={mfd.radarTexture} />
+          ) : (
+            <meshBasicMaterial color="#0f766e" />
+          )}
         </mesh>
         {/* Right MFD Bezel */}
         <mesh position={[0.32, -0.28, -0.522]} rotation={[-0.45, 0, 0]}>
