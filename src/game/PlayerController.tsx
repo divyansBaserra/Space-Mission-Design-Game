@@ -6,6 +6,7 @@ import * as THREE from "three";
 import { GameState, InventoryItemId } from "./types";
 import { StationPhysics } from "./physics";
 import { soundManager } from "./audio";
+import { AstronautBootDust, DustTriggerState } from "./AstronautBootDust";
 
 interface PlayerControllerProps {
   gameState: GameState;
@@ -54,6 +55,8 @@ export function PlayerController({
   const flashlightRef = useRef<THREE.SpotLight>(null);
   const flashlightTargetRef = useRef<THREE.Object3D>(new THREE.Object3D());
   const itemGroupRef = useRef<THREE.Group>(null);
+  const dustTriggerRef = useRef<DustTriggerState>({ jumpCount: 0, landCount: 0 });
+  const isMovingRef = useRef<boolean>(false);
 
   useEffect(() => {
     // Add flashlight target to scene
@@ -292,6 +295,7 @@ export function PlayerController({
       if (keys["Space"] && isGroundedRef.current) {
         velocityRef.current.y = 3.8;
         isGroundedRef.current = false;
+        dustTriggerRef.current.jumpCount++;
         soundManager.playJump();
       }
 
@@ -316,9 +320,13 @@ export function PlayerController({
       }
 
       // Solve Y ground plane (surface is at Y = -18.0)
+      const wasGrounded = isGroundedRef.current;
       playerPosRef.current.y += velocityRef.current.y * dt;
       if (playerPosRef.current.y <= -18.0) {
         playerPosRef.current.y = -18.0;
+        if (!wasGrounded && velocityRef.current.y < -0.6) {
+          dustTriggerRef.current.landCount++;
+        }
         velocityRef.current.y = 0;
         isGroundedRef.current = true;
       }
@@ -328,6 +336,7 @@ export function PlayerController({
         velocityRef.current.x * velocityRef.current.x +
           velocityRef.current.z * velocityRef.current.z
       );
+      isMovingRef.current = speedMagnitude > 0.4;
 
       if (speedMagnitude > 0.5 && isGroundedRef.current) {
         bobbingTimerRef.current += dt * (isSprinting ? 11 : 7);
@@ -762,6 +771,15 @@ export function PlayerController({
           </group>
         </group>
       )}
+
+      {/* Dynamic Regolith Boot Dust Kick Puffs in 1/6th Lunar Gravity */}
+      <AstronautBootDust
+        isSurface={gameState.controlMode === "SURFACE_EXPLORATION"}
+        playerPos={playerPosRef.current}
+        isGrounded={isGroundedRef.current}
+        isMoving={isMovingRef.current}
+        dustTriggerRef={dustTriggerRef}
+      />
     </>
   );
 }

@@ -134,6 +134,26 @@ export class StationPhysics {
     // Surface Radiation Shields
     this.addBox(-13.5, -18.0, -97.5, -10.5, -15.5, -94.5, "lunar_shield_l");
     this.addBox(10.5, -18.0, -97.5, 13.5, -15.5, -94.5, "lunar_shield_r");
+
+    // ========================================================================
+    // 6. LUNAR BASE ALPHA PERIMETER BOULDERS & CRATER RIM SCATTER
+    // ========================================================================
+    // West Rim Boulder
+    this.addBox(-13.5, -18.0, -119.0, -11.5, -16.6, -117.0, "lunar_boulder_w");
+    // Northwest Crater Rim Rock
+    this.addBox(-17.3, -18.0, -126.2, -14.7, -16.0, -123.8, "lunar_boulder_nw");
+    // North Crater Edge Megalith
+    this.addBox(-3.5, -18.0, -129.5, -0.5, -15.8, -126.5, "lunar_boulder_n");
+    // Northeast Ejecta Rock
+    this.addBox(12.8, -18.0, -127.2, 15.2, -16.3, -124.8, "lunar_boulder_ne");
+    // East Ridge Basalt Rock
+    this.addBox(17.6, -18.0, -117.3, 20.4, -16.1, -114.7, "lunar_boulder_e");
+    // Southeast Outcropping
+    this.addBox(13.9, -18.0, -99.0, 16.1, -16.5, -97.0, "lunar_boulder_se");
+    // Southwest Ejecta Boulder
+    this.addBox(-19.3, -18.0, -107.2, -16.7, -16.2, -104.8, "lunar_boulder_sw");
+    // South Perimeter Rock
+    this.addBox(-9.0, -18.0, -97.0, -7.0, -16.7, -95.0, "lunar_boulder_s");
   }
 
   private addBox(

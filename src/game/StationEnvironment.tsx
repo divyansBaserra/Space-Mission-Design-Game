@@ -1675,6 +1675,55 @@ export function StationEnvironment({
             scale={[0.024, 0.024, 0.024]}
           />
         </Suspense>
+
+        {/* ================================================================ */}
+        {/* LUNAR PERIMETER BOULDERS & CRATER EJECTA SCATTER                 */}
+        {/* ================================================================ */}
+        {[
+          { pos: [-12.5, 0.7, -8.0], scale: [1.8, 1.4, 1.6], rot: [0.3, 0.7, -0.2], col: "#475569" },
+          { pos: [-16.0, 1.0, -15.0], scale: [2.4, 2.0, 2.2], rot: [-0.4, 1.2, 0.5], col: "#334155" },
+          { pos: [-2.0, 1.1, -18.0], scale: [2.8, 2.2, 2.5], rot: [0.6, -0.8, 0.1], col: "#475569" },
+          { pos: [14.0, 0.85, -16.0], scale: [2.1, 1.7, 1.9], rot: [-0.2, 2.1, -0.4], col: "#334155" },
+          { pos: [19.0, 0.95, -6.0], scale: [2.5, 1.9, 2.2], rot: [0.8, 0.3, -0.6], col: "#475569" },
+          { pos: [15.0, 0.75, 12.0], scale: [1.9, 1.5, 1.7], rot: [-0.5, 1.6, 0.3], col: "#334155" },
+          { pos: [-18.0, 0.9, 4.0], scale: [2.2, 1.8, 2.0], rot: [0.4, -1.4, 0.2], col: "#475569" },
+          { pos: [-8.0, 0.65, 14.0], scale: [1.7, 1.3, 1.5], rot: [0.2, 0.9, -0.5], col: "#334155" },
+        ].map((b, i) => (
+          <group key={`lunar-boulder-${i}`} position={b.pos as [number, number, number]} rotation={b.rot as [number, number, number]}>
+            <mesh castShadow receiveShadow scale={b.scale as [number, number, number]}>
+              <dodecahedronGeometry args={[1.0, 1]} />
+              <meshStandardMaterial
+                color={b.col}
+                roughness={0.94}
+                metalness={0.12}
+                flatShading
+              />
+            </mesh>
+          </group>
+        ))}
+
+        {/* Smaller Secondary Regolith Pebble & Rock Scatter */}
+        {[
+          [-10.2, 0.15, -4.5, 0.35],
+          [-6.5, 0.12, -12.0, 0.28],
+          [5.8, 0.14, -14.2, 0.32],
+          [11.5, 0.12, -10.0, 0.26],
+          [16.2, 0.15, -2.5, 0.38],
+          [12.8, 0.12, 6.5, 0.3],
+          [-5.2, 0.14, 11.5, 0.34],
+          [-13.5, 0.12, 1.8, 0.25],
+        ].map(([rx, ry, rz, s], i) => (
+          <mesh
+            key={`lunar-pebble-${i}`}
+            position={[rx, ry, rz]}
+            rotation={[Math.sin(i), Math.cos(i), 0]}
+            scale={[s, s * 0.7, s * 0.9]}
+            receiveShadow
+          >
+            <dodecahedronGeometry args={[1.0, 0]} />
+            <meshStandardMaterial color="#64748b" roughness={0.96} metalness={0.08} flatShading />
+          </mesh>
+        ))}
       </group>
       </>
       )}
