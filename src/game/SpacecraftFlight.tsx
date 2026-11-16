@@ -6,6 +6,7 @@ import * as THREE from "three";
 import { GameState } from "./types";
 import { StationPhysics } from "./physics";
 import { soundManager } from "./audio";
+import { HypersonicPlasmaStreaks } from "./HypersonicPlasmaStreaks";
 
 interface SpacecraftFlightProps {
   gameState: GameState;
@@ -233,6 +234,7 @@ export function SpacecraftFlight({
 
     return () => {
       soundManager.stopThrusterRumble();
+      soundManager.updateHypersonicWind(0);
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
       window.removeEventListener("mousemove", handleMouseMove);
@@ -254,7 +256,10 @@ export function SpacecraftFlight({
 
   // Flight simulation loop
   useFrame((_, delta) => {
-    if (gameState.controlMode !== "SPACECRAFT_COCKPIT" || gameState.paused) return;
+    if (gameState.controlMode !== "SPACECRAFT_COCKPIT" || gameState.paused) {
+      soundManager.updateHypersonicWind(0);
+      return;
+    }
 
     const dt = Math.min(delta, 0.08);
     const keys = keysRef.current;
@@ -459,6 +464,14 @@ export function SpacecraftFlight({
 
       const lookTarget = posRef.current.clone().add(forward.clone().multiplyScalar(4.0));
       camera.lookAt(lookTarget);
+
+      if ("fov" in camera) {
+        const isBoosting = !!keys["ShiftLeft"] || !!keys["ShiftRight"];
+        const targetFov = isThrusting && isBoosting ? 82 : 70;
+        const pCam = camera as THREE.PerspectiveCamera;
+        pCam.fov = THREE.MathUtils.lerp(pCam.fov, targetFov, dt * 5);
+        pCam.updateProjectionMatrix();
+      }
     } else {
       // First-person cockpit view with spring-damper inertia lag & thrust recoil
       const targetRecoilZ = isThrusting ? 0.042 : 0.0;
@@ -480,6 +493,14 @@ export function SpacecraftFlight({
       // Spring-damper rotational slerp lag for authentic heavy vehicle feel
       camQuatRef.current.slerp(rotQuat, 1 - Math.exp(-dt * 20));
       camera.quaternion.copy(camQuatRef.current);
+
+      if ("fov" in camera) {
+        const isBoosting = !!keys["ShiftLeft"] || !!keys["ShiftRight"];
+        const targetFov = isThrusting && isBoosting ? 84 : isThrusting ? 76 : 72;
+        const pCam = camera as THREE.PerspectiveCamera;
+        pCam.fov = THREE.MathUtils.lerp(pCam.fov, targetFov, dt * 6);
+        pCam.updateProjectionMatrix();
+      }
     }
 
     // Audio RCS Solenoid valve burst on thruster activation
@@ -496,6 +517,9 @@ export function SpacecraftFlight({
     const toDock = dockingPortPos.clone().sub(posRef.current);
     const distToDock = toDock.length();
     const speed = velRef.current.length();
+
+    // Hypersonic ionization atmospheric & plasma wind roar
+    soundManager.updateHypersonicWind(speed);
 
     // Closing relative velocity towards docking port
     const relVel = -velRef.current.dot(toDock.clone().normalize());
@@ -787,11 +811,15 @@ export function SpacecraftFlight({
 
   if (gameState.controlMode !== "SPACECRAFT_COCKPIT") return null;
 
-  // Only render the cockpit interior geometry when in Cockpit view mode
-  if (cameraViewModeRef.current !== "COCKPIT") return null;
-
   return (
-    <group position={posRef.current}>
+    <>
+      <HypersonicPlasmaStreaks
+        gameState={gameState}
+        craftPosition={posRef.current}
+        craftVelocity={velRef.current}
+      />
+      {cameraViewModeRef.current === "COCKPIT" && (
+        <group position={posRef.current}>
       {/* 3D First-Person Cockpit Interior Geometry attached to vehicle */}
       <group
         rotation={[
@@ -941,5 +969,7 @@ export function SpacecraftFlight({
         <pointLight position={[0, 0, -0.4]} intensity={0.65} distance={2.5} color="#38bdf8" />
       </group>
     </group>
+      )}
+    </>
   );
 }

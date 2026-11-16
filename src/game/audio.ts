@@ -377,6 +377,65 @@ class SoundManager {
     this.rumbleOsc.frequency.setTargetAtTime(targetFreq, this.ctx.currentTime, 0.08);
   }
 
+  private plasmaNoiseNode: AudioBufferSourceNode | null = null;
+  private plasmaGain: GainNode | null = null;
+  private plasmaFilter: BiquadFilterNode | null = null;
+
+  /**
+   * Continuous hypersonic atmospheric ionization & thruster wind roar
+   */
+  public updateHypersonicWind(speedMps: number) {
+    if (!this.soundEnabled || this.volume <= 0) return;
+    const ctx = this.getContext();
+    if (!ctx) return;
+
+    const normalizedSpeed = Math.max(0, Math.min(1.0, (speedMps - 4.5) / 18.0));
+
+    if (normalizedSpeed > 0.05) {
+      if (!this.plasmaGain) {
+        try {
+          const bufferSize = ctx.sampleRate * 2;
+          const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+          const output = noiseBuffer.getChannelData(0);
+          for (let i = 0; i < bufferSize; i++) {
+            output[i] = Math.random() * 2 - 1;
+          }
+
+          const whiteNoise = ctx.createBufferSource();
+          whiteNoise.buffer = noiseBuffer;
+          whiteNoise.loop = true;
+
+          const filter = ctx.createBiquadFilter();
+          filter.type = "bandpass";
+          filter.frequency.setValueAtTime(600, ctx.currentTime);
+          filter.Q.setValueAtTime(1.8, ctx.currentTime);
+
+          const gain = ctx.createGain();
+          gain.gain.setValueAtTime(0, ctx.currentTime);
+
+          whiteNoise.connect(filter);
+          filter.connect(gain);
+          gain.connect(this.getDest() ?? ctx.destination);
+
+          whiteNoise.start();
+
+          this.plasmaNoiseNode = whiteNoise;
+          this.plasmaFilter = filter;
+          this.plasmaGain = gain;
+        } catch {}
+      }
+
+      if (this.plasmaGain && this.plasmaFilter) {
+        const targetGain = normalizedSpeed * 0.12 * this.volume;
+        const targetFreq = 400 + normalizedSpeed * 1200;
+        this.plasmaGain.gain.setTargetAtTime(targetGain, ctx.currentTime, 0.1);
+        this.plasmaFilter.frequency.setTargetAtTime(targetFreq, ctx.currentTime, 0.1);
+      }
+    } else if (this.plasmaGain) {
+      this.plasmaGain.gain.setTargetAtTime(0, ctx.currentTime, 0.2);
+    }
+  }
+
   /**
    * Short High-Frequency Burst for RCS Maneuvering (Q/E/A/D)
    */
