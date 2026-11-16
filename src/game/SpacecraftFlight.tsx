@@ -384,6 +384,16 @@ export function SpacecraftFlight({
     const surfaceAlt = Math.max(0, posRef.current.y - -16.2);
     const verticalSpeed = velRef.current.y;
 
+    // Lunar Powered Descent: Pulsing Radar Altimeter ping rate accelerates as altitude shrinks
+    if (surfaceAlt < 28.0 && surfaceAlt > 0.4 && !isLandedRef.current && posRef.current.z < -45) {
+      const now = Date.now();
+      const pingInterval = Math.max(80, Math.min(1200, surfaceAlt * 38));
+      if (now - lastRadarBeepRef.current > pingInterval) {
+        soundManager.playRadarBeep();
+        lastRadarBeepRef.current = now;
+      }
+    }
+
     // Proximity warning alarm when descending too fast near ground
     if (surfaceAlt < 14.0 && verticalSpeed < -3.6 && !isLandedRef.current) {
       const now = Date.now();

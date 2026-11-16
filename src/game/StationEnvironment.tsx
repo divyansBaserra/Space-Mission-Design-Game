@@ -7,6 +7,7 @@ import * as THREE from "three";
 import { GameState, InventoryItemId } from "./types";
 import { RealisticEarth } from "@/components/viewport/RealisticEarth";
 import { useNASAModel } from "./useNASAModel";
+import { LunarDustPlume } from "./LunarDustPlume";
 
 interface StationEnvironmentProps {
   gameState: GameState;
@@ -1468,7 +1469,9 @@ export function StationEnvironment({
       {/* 5. PLANETARY / LUNAR SURFACE LANDING ZONE (LUNAR BASE ALPHA) */}
       {/* Rendered when approaching lunar descent sector or landed on Moon */}
       {isNearMoon && (
-        <group position={[0, -18.0, -110.0]}>
+        <>
+          <LunarDustPlume gameState={gameState} />
+          <group position={[0, -18.0, -110.0]}>
           {/* Cratered Lunar Terrain Ground Plane */}
           <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
             <planeGeometry args={[160, 160, 32, 32]} />
@@ -1602,6 +1605,7 @@ export function StationEnvironment({
           />
         </Suspense>
       </group>
+      </>
       )}
 
       {/* ==================================================================== */}
