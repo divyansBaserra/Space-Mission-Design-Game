@@ -1067,6 +1067,50 @@ export default function SpaceMissionGame() {
   if (stage === "FIRST_PERSON_GAME") {
     return (
       <main style={{ position: "relative", width: "100vw", height: "100vh", overflow: "hidden", backgroundColor: "#06080c" }}>
+        {/* Floating GitHub Source Code Link for NASA Judges */}
+        <a
+          href="https://github.com/divyansBaserra/Space-Mission-Design-Game"
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            position: "fixed",
+            bottom: "16px",
+            right: "16px",
+            zIndex: 99999,
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "8px",
+            padding: "8px 14px",
+            backgroundColor: "rgba(15, 23, 42, 0.95)",
+            border: "1px solid rgba(56, 189, 248, 0.5)",
+            borderRadius: "6px",
+            color: "#38bdf8",
+            fontSize: "11px",
+            fontWeight: 700,
+            letterSpacing: "0.06em",
+            textDecoration: "none",
+            backdropFilter: "blur(8px)",
+            boxShadow: "0 4px 20px rgba(0, 0, 0, 0.6)",
+            pointerEvents: "auto",
+            transition: "all 0.2s ease",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = "rgba(56, 189, 248, 0.2)";
+            e.currentTarget.style.color = "#ffffff";
+            e.currentTarget.style.borderColor = "#38bdf8";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = "rgba(15, 23, 42, 0.95)";
+            e.currentTarget.style.color = "#38bdf8";
+            e.currentTarget.style.borderColor = "rgba(56, 189, 248, 0.5)";
+          }}
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z" />
+          </svg>
+          GITHUB SOURCE CODE &rarr;
+        </a>
+
         <GameManager onReturnToHub={() => setStage("MAIN_MENU")} />
       </main>
     );
@@ -1108,21 +1152,45 @@ export default function SpaceMissionGame() {
               </h1>
             </div>
 
-            <div style={{ display: "flex", gap: "var(--space-4)", backgroundColor: "rgba(12, 14, 18, 0.8)", padding: "8px 16px", border: "1px solid var(--color-border-subtle)" }}>
-              <div style={{ fontSize: "12px" }}>
-                <span style={{ color: "var(--color-text-muted)" }}>Flight Director Level: </span>
-                <strong className="font-mono" style={{ color: "var(--color-text-primary)" }}>{Math.floor(careerScore / 1000) + 1}</strong>
+            <div style={{ display: "flex", alignItems: "center", gap: "var(--space-3)" }}>
+              <div style={{ display: "flex", gap: "var(--space-4)", backgroundColor: "rgba(12, 14, 18, 0.8)", padding: "8px 16px", border: "1px solid var(--color-border-subtle)" }}>
+                <div style={{ fontSize: "12px" }}>
+                  <span style={{ color: "var(--color-text-muted)" }}>Flight Director Level: </span>
+                  <strong className="font-mono" style={{ color: "var(--color-text-primary)" }}>{Math.floor(careerScore / 1000) + 1}</strong>
+                </div>
+                <div style={{ width: "1px", height: "14px", backgroundColor: "var(--color-border-default)" }} />
+                <div style={{ fontSize: "12px" }}>
+                  <span style={{ color: "var(--color-text-muted)" }}>Score: </span>
+                  <strong className="font-mono" style={{ color: "var(--color-text-primary)" }}>{careerScore.toLocaleString()} pts</strong>
+                </div>
+                <div style={{ width: "1px", height: "14px", backgroundColor: "var(--color-border-default)" }} />
+                <div style={{ fontSize: "12px" }}>
+                  <span style={{ color: "var(--color-text-muted)" }}>Budget: </span>
+                  <strong className="font-mono" style={{ color: "var(--color-status-nominal)" }}>{careerCredits.toLocaleString()} Cr</strong>
+                </div>
               </div>
-              <div style={{ width: "1px", height: "14px", backgroundColor: "var(--color-border-default)" }} />
-              <div style={{ fontSize: "12px" }}>
-                <span style={{ color: "var(--color-text-muted)" }}>Score: </span>
-                <strong className="font-mono" style={{ color: "var(--color-text-primary)" }}>{careerScore.toLocaleString()} pts</strong>
-              </div>
-              <div style={{ width: "1px", height: "14px", backgroundColor: "var(--color-border-default)" }} />
-              <div style={{ fontSize: "12px" }}>
-                <span style={{ color: "var(--color-text-muted)" }}>Budget: </span>
-                <strong className="font-mono" style={{ color: "var(--color-status-nominal)" }}>{careerCredits.toLocaleString()} Cr</strong>
-              </div>
+
+              <a
+                href="https://github.com/divyansBaserra/Space-Mission-Design-Game"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  padding: "8px 14px",
+                  backgroundColor: "rgba(56, 189, 248, 0.12)",
+                  border: "1px solid #38bdf8",
+                  color: "#38bdf8",
+                  fontSize: "11px",
+                  fontWeight: 700,
+                  textDecoration: "none",
+                  borderRadius: "2px",
+                  letterSpacing: "0.05em",
+                }}
+              >
+                GITHUB REPO &rarr;
+              </a>
             </div>
           </div>
 
