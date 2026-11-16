@@ -87,12 +87,12 @@ export function PostProcessingEffects({ gameState }: PostProcessingProps) {
     const renderPass = new RenderPass(scene, camera);
     comp.addPass(renderPass);
 
-    // 2. Photonic Unreal Bloom Pass (Glowing thrusters, accretion disks, stars, HUD)
+    // 2. Photonic Unreal Bloom Pass (Glowing thrusters, engine exhaust, HUD avionics)
     const bloomPass = new UnrealBloomPass(
       new THREE.Vector2(size.width, size.height),
-      0.65, // strength
-      0.4,  // radius
-      0.72  // threshold
+      1.35, // strength (calibrated for authentic aerospace lens bloom)
+      0.5,  // radius
+      0.85  // threshold (isolates intense emissive thrusters and solar glare)
     );
     comp.addPass(bloomPass);
 
