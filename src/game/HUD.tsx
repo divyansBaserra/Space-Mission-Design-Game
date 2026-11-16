@@ -377,26 +377,120 @@ export function HUD({
               gap: "8px",
             }}
           >
-            {/* Flight Crosshair Diamond */}
+            {/* Flight Director Crosshair & Navball Vectors */}
             <div
               style={{
-                width: "24px",
-                height: "24px",
-                border: "1px solid rgba(56, 189, 248, 0.6)",
-                transform: "rotate(45deg)",
+                position: "relative",
+                width: "90px",
+                height: "90px",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
               }}
             >
+              {/* Outer Calibration Ring */}
               <div
                 style={{
-                  width: "4px",
-                  height: "4px",
-                  backgroundColor: "#38bdf8",
+                  position: "absolute",
+                  width: "80px",
+                  height: "80px",
                   borderRadius: "50%",
+                  border: "1px dashed rgba(56, 189, 248, 0.4)",
+                  boxShadow: "0 0 15px rgba(56, 189, 248, 0.15)",
                 }}
               />
+
+              {/* Pitch Ladder Level Lines */}
+              <div
+                style={{
+                  position: "absolute",
+                  width: "48px",
+                  height: "1px",
+                  backgroundColor: "rgba(56, 189, 248, 0.5)",
+                }}
+              />
+
+              {/* Central Boresight Chevron */}
+              <div
+                style={{
+                  width: "16px",
+                  height: "16px",
+                  border: "1.5px solid #00f3ff",
+                  transform: "rotate(45deg)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  boxShadow: "0 0 10px rgba(0, 243, 255, 0.5)",
+                }}
+              >
+                <div
+                  style={{
+                    width: "3px",
+                    height: "3px",
+                    backgroundColor: "#ffffff",
+                    borderRadius: "50%",
+                  }}
+                />
+              </div>
+
+              {/* Prograde Vector Marker */}
+              <div
+                style={{
+                  position: "absolute",
+                  top: "12px",
+                  right: "12px",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "4px",
+                  fontSize: "9px",
+                  fontWeight: 700,
+                  color: "#00f3ff",
+                  letterSpacing: "0.05em",
+                }}
+              >
+                <div
+                  style={{
+                    width: "8px",
+                    height: "8px",
+                    borderRadius: "50%",
+                    border: "1.5px solid #00f3ff",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <div style={{ width: "2px", height: "2px", backgroundColor: "#00f3ff" }} />
+                </div>
+                <span>PROGRADE</span>
+              </div>
+            </div>
+
+            {/* Flight Attitude Euler & G-Force Strip */}
+            <div
+              style={{
+                display: "flex",
+                gap: "12px",
+                fontSize: "10px",
+                fontFamily: "var(--font-mono, monospace)",
+                color: "#94a3b8",
+                backgroundColor: "rgba(15, 23, 42, 0.8)",
+                padding: "3px 10px",
+                border: "1px solid rgba(56, 189, 248, 0.2)",
+                backdropFilter: "blur(4px)",
+              }}
+            >
+              <span>
+                P: <strong style={{ color: "#f8fafc" }}>{((gameState.spacecraft.pitch * 180) / Math.PI).toFixed(0)}°</strong>
+              </span>
+              <span>
+                Y: <strong style={{ color: "#f8fafc" }}>{((gameState.spacecraft.yaw * 180) / Math.PI).toFixed(0)}°</strong>
+              </span>
+              <span>
+                R: <strong style={{ color: "#f8fafc" }}>{((gameState.spacecraft.roll * 180) / Math.PI).toFixed(0)}°</strong>
+              </span>
+              <span style={{ color: "#ffb700" }}>
+                G: <strong>{(1.0 + Math.min(3.5, gameState.spacecraft.speedMps * 0.02)).toFixed(2)} G</strong>
+              </span>
             </div>
 
             {/* Docking Proximity Warning / Latch Button */}

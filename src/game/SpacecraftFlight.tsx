@@ -83,6 +83,11 @@ export function SpacecraftFlight({
   const lastRadarBeepRef = useRef<number>(0);
   const lastAlarmTimeRef = useRef<number>(0);
   const lastImpactTimeRef = useRef<number>(0);
+  const lastRcsBurstTimeRef = useRef<number>(0);
+
+  // Cockpit camera spring-damper lag and recoil vectors
+  const camQuatRef = useRef<THREE.Quaternion>(new THREE.Quaternion());
+  const camRecoilRef = useRef<THREE.Vector3>(new THREE.Vector3());
 
   // Sync state changes from props
   useEffect(() => {
@@ -417,13 +422,35 @@ export function SpacecraftFlight({
       const lookTarget = posRef.current.clone().add(forward.clone().multiplyScalar(4.0));
       camera.lookAt(lookTarget);
     } else {
-      // First-person cockpit view with acoustic engine hull micro-vibration
-      camera.position.copy(posRef.current);
-      if (isThrusting) {
-        camera.position.x += (Math.random() - 0.5) * 0.005;
-        camera.position.y += (Math.random() - 0.5) * 0.005;
+      // First-person cockpit view with spring-damper inertia lag & thrust recoil
+      const targetRecoilZ = isThrusting ? 0.042 : 0.0;
+      camRecoilRef.current.z = THREE.MathUtils.lerp(camRecoilRef.current.z, targetRecoilZ, dt * 10);
+
+      // Camera vibration on high thrust
+      const shakeAmp = isThrusting ? 0.006 : 0.0008;
+      const shakeX = (Math.random() - 0.5) * shakeAmp;
+      const shakeY = (Math.random() - 0.5) * shakeAmp;
+
+      const cockpitEye = posRef.current
+        .clone()
+        .add(forward.clone().multiplyScalar(-camRecoilRef.current.z))
+        .add(right.clone().multiplyScalar(shakeX))
+        .add(up.clone().multiplyScalar(shakeY));
+
+      camera.position.copy(cockpitEye);
+
+      // Spring-damper rotational slerp lag for authentic heavy vehicle feel
+      camQuatRef.current.slerp(rotQuat, 1 - Math.exp(-dt * 20));
+      camera.quaternion.copy(camQuatRef.current);
+    }
+
+    // Audio RCS Solenoid valve burst on thruster activation
+    if (isThrusting) {
+      const now = Date.now();
+      if (now - lastRcsBurstTimeRef.current > 380) {
+        soundManager.playRcsBurst();
+        lastRcsBurstTimeRef.current = now;
       }
-      camera.quaternion.copy(rotQuat);
     }
 
     // Docking Telemetry to station port (0, 1.5, -11.2)
