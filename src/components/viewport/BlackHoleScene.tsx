@@ -48,7 +48,14 @@ export function BlackHoleScene() {
     return [positions, colors, speeds, radii];
   }, []);
 
-  // Frame animation loop for relativistic rotation
+  const particlesGeometry = useMemo(() => {
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute("position", new THREE.BufferAttribute(particlePositions, 3));
+    geo.setAttribute("color", new THREE.BufferAttribute(particleColors, 3));
+    return geo;
+  }, [particlePositions, particleColors]);
+
+  // Swirl individual relativistic particles around event horizon
   useFrame((_, delta) => {
     const dt = Math.min(delta, 0.05);
 
@@ -63,22 +70,23 @@ export function BlackHoleScene() {
     }
 
     // Swirl individual relativistic particles around event horizon
-    if (particlesRef.current) {
-      const pos = particlesRef.current.geometry.attributes.position.array as Float32Array;
-      const count = particleRadii.length;
+    if (particlesRef.current?.geometry?.attributes?.position) {
+      const attr = particlesRef.current.geometry.attributes.position as THREE.BufferAttribute;
+      const pos = attr.array as Float32Array;
+      if (pos && pos.length > 0) {
+        const count = particleRadii.length;
+        for (let i = 0; i < count; i++) {
+          const r = particleRadii[i];
+          const spd = particleSpeeds[i];
+          const x = pos[i * 3];
+          const z = pos[i * 3 + 2];
 
-      for (let i = 0; i < count; i++) {
-        const r = particleRadii[i];
-        const spd = particleSpeeds[i];
-        let x = pos[i * 3];
-        let z = pos[i * 3 + 2];
-
-        let angle = Math.atan2(z, x) + spd * dt;
-        pos[i * 3] = r * Math.cos(angle);
-        pos[i * 3 + 2] = r * Math.sin(angle);
+          const angle = Math.atan2(z, x) + spd * dt;
+          pos[i * 3] = r * Math.cos(angle);
+          pos[i * 3 + 2] = r * Math.sin(angle);
+        }
+        attr.needsUpdate = true;
       }
-
-      particlesRef.current.geometry.attributes.position.needsUpdate = true;
     }
   });
 
@@ -198,17 +206,7 @@ export function BlackHoleScene() {
       </group>
 
       {/* 5. RELATIVISTIC ACCRETION DUST PARTICLES (Swirling Keplerian Particle Field) */}
-      <points ref={particlesRef}>
-        <bufferGeometry>
-          <bufferAttribute
-            attach="attributes-position"
-            args={[particlePositions, 3]}
-          />
-          <bufferAttribute
-            attach="attributes-color"
-            args={[particleColors, 3]}
-          />
-        </bufferGeometry>
+      <points ref={particlesRef} geometry={particlesGeometry}>
         <pointsMaterial
           size={0.065}
           vertexColors

@@ -2,7 +2,7 @@
 
 import React, { useRef, useMemo } from "react";
 import { useFrame } from "@react-three/fiber";
-import { OrbitControls, Stars } from "@react-three/drei";
+import { Stars } from "@react-three/drei";
 import * as THREE from "three";
 import { RealisticEarth } from "./RealisticEarth";
 import { BlackHoleScene } from "./BlackHoleScene";
@@ -109,13 +109,13 @@ export function SpacecraftScene({
         <Stars radius={80} depth={50} count={3500} factor={4} saturation={0} fade speed={0.6} />
 
         {/* Orbital Lighting */}
-        <ambientLight intensity={isEclipse ? 0.08 : 0.35} />
-        {/* Sun light from +X direction */}
-        <directionalLight position={[12, 3, 6]} intensity={1.7} color="#ffffff" />
-        <directionalLight position={[-12, -3, -6]} intensity={0.06} color="#1e293b" />
+        <ambientLight intensity={isEclipse ? 0.12 : 0.65} />
+        {/* Sun light illuminating Earth facing camera angle */}
+        <directionalLight position={[7, 4, 11]} intensity={2.2} color="#ffffff" />
+        <directionalLight position={[-8, -3, -7]} intensity={0.15} color="#38bdf8" />
 
         {/* Central Photorealistic NASA Blue Marble Earth Globe */}
-        <RealisticEarth radius={earthRadius} rotationSpeed={0.03} sunPosition={[12, 3, 6]} />
+        <RealisticEarth radius={earthRadius} rotationSpeed={0.03} sunPosition={[7, 4, 11]} />
 
         <group ref={earthRef}>
           {/* Ground Station Markers on Globe */}
@@ -264,15 +264,19 @@ export function SpacecraftScene({
               <coneGeometry args={[0.02, 0.03, 12, 1, true]} />
               <meshStandardMaterial color="#64748b" metalness={0.9} roughness={0.2} side={THREE.DoubleSide} />
             </mesh>
+
+            {/* In-Flight Glowing Thruster Plume */}
+            {thrusterActive && (
+              <group position={[0, -0.18, 0]}>
+                <mesh rotation={[Math.PI, 0, 0]}>
+                  <coneGeometry args={[0.04, 0.12, 16]} />
+                  <meshBasicMaterial color="#38bdf8" transparent opacity={0.88} />
+                </mesh>
+                <pointLight color="#38bdf8" intensity={2.5} distance={1.8} />
+              </group>
+            )}
           </group>
         </group>
-
-        <OrbitControls
-          enablePan={false}
-          minDistance={3.2}
-          maxDistance={12}
-          autoRotate={false}
-        />
       </>
     );
   }
@@ -794,13 +798,6 @@ export function SpacecraftScene({
           </group>
         )}
       </group>
-
-      <OrbitControls
-        enablePan={false}
-        minDistance={2.2}
-        maxDistance={8.5}
-        autoRotate={false}
-      />
     </>
   );
 }

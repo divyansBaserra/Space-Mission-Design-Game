@@ -10,7 +10,7 @@ const securityHeaders = [
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: blob: https:",
       "font-src 'self' data:",
-      "connect-src 'self' ws: wss: https:",
+      "connect-src 'self' blob: ws: wss: https:",
       "worker-src 'self' blob:",
       "object-src 'none'",
       "base-uri 'self'",

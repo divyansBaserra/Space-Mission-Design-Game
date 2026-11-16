@@ -2,6 +2,7 @@
 
 import React, { Suspense } from "react";
 import { Canvas } from "@react-three/fiber";
+import { OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
 import { SpacecraftScene, SpacecraftSceneProps } from "./SpacecraftScene";
 
@@ -31,6 +32,16 @@ export default function SpacecraftCanvas(props: SpacecraftSceneProps) {
         <Suspense fallback={null}>
           <SpacecraftScene {...props} />
         </Suspense>
+        <OrbitControls
+          enablePan={false}
+          minDistance={isBlackHole ? 4.0 : isOrbit ? 3.2 : 1.4}
+          maxDistance={isBlackHole ? 22.0 : isOrbit ? 16.0 : 8.0}
+          enableDamping={true}
+          dampingFactor={0.05}
+          autoRotate={isBlackHole}
+          autoRotateSpeed={0.4}
+          makeDefault
+        />
       </Canvas>
     </div>
   );

@@ -546,8 +546,8 @@ function NasaJudgesGithubBanner() {
 // ============================================================================
 
 export default function SpaceMissionGame() {
-  // Navigation Stage: Boot directly into First-Person 3D Game
-  const [stage, setStage] = useState<GameStage>("FIRST_PERSON_GAME");
+  // Navigation Stage: Boot into Main Menu (Cinematic Interstellar Vista)
+  const [stage, setStage] = useState<GameStage>("MAIN_MENU");
   const [viewMode, setViewMode] = useState<"SPACECRAFT" | "ORBIT">("SPACECRAFT");
   const [mainMenuCosmicMode, setMainMenuCosmicMode] = useState<"BLACK_HOLE" | "ORBIT">("BLACK_HOLE");
   const [workshopActiveTab, setWorkshopActiveTab] = useState<"CHASSIS" | "SOLAR" | "BATTERY" | "PAYLOAD" | "PROPULSION" | "TELECOM">("CHASSIS");
@@ -557,6 +557,7 @@ export default function SpaceMissionGame() {
   const [contractFilter, setContractFilter] = useState<"ALL" | "LEO" | "POLAR" | "GEO">("ALL");
   const [showHangarGuide, setShowHangarGuide] = useState<boolean>(true);
   const [showWelcomeGuide, setShowWelcomeGuide] = useState<boolean>(false);
+  const [showConsoleFeed, setShowConsoleFeed] = useState<boolean>(false);
   const [mainMenuOrbitProgress, setMainMenuOrbitProgress] = useState<number>(0.25);
 
   // Career Progress
@@ -1013,6 +1014,61 @@ export default function SpaceMissionGame() {
       setBatteryEnergyWh((wh) => Math.min(activeBattery.capacityWh, wh + 2.5));
     }
   };
+
+  // Keyboard Event Handler for Interactive 3D Workshop (PUBG/Armored Core style shortcuts)
+  useEffect(() => {
+    if (stage !== "WORKSHOP") return;
+
+    const handleWorkshopKeyDown = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+
+      if (e.code === "KeyL" && launchReady) {
+        e.preventDefault();
+        soundManager.playEngineRoar();
+        startLaunchSequence();
+      } else if (e.code === "KeyF") {
+        e.preventDefault();
+        soundManager.playGearDeploy();
+        setSolarArrayDeployedInHangar((prev) => !prev);
+      } else if (e.code === "KeyR" && propulsionId !== "NONE") {
+        e.preventDefault();
+        soundManager.playThrusterPuff();
+        setHangarThrusterActive(true);
+        setTimeout(() => setHangarThrusterActive(false), 2000);
+      } else if (e.code === "KeyE") {
+        e.preventDefault();
+        soundManager.playFlashlight();
+        setHangarEclipseActive((prev) => !prev);
+      } else if (e.code === "Digit1") {
+        e.preventDefault();
+        soundManager.playEquip();
+        setWorkshopActiveTab("CHASSIS");
+      } else if (e.code === "Digit2") {
+        e.preventDefault();
+        soundManager.playEquip();
+        setWorkshopActiveTab("SOLAR");
+      } else if (e.code === "Digit3") {
+        e.preventDefault();
+        soundManager.playEquip();
+        setWorkshopActiveTab("BATTERY");
+      } else if (e.code === "Digit4") {
+        e.preventDefault();
+        soundManager.playEquip();
+        setWorkshopActiveTab("PAYLOAD");
+      } else if (e.code === "Digit5") {
+        e.preventDefault();
+        soundManager.playEquip();
+        setWorkshopActiveTab("PROPULSION");
+      } else if (e.code === "Digit6") {
+        e.preventDefault();
+        soundManager.playEquip();
+        setWorkshopActiveTab("TELECOM");
+      }
+    };
+
+    window.addEventListener("keydown", handleWorkshopKeyDown);
+    return () => window.removeEventListener("keydown", handleWorkshopKeyDown);
+  }, [stage, launchReady, propulsionId]);
 
   // Keyboard Event Handler for Active 3D Flight Simulation
   useEffect(() => {
@@ -1854,6 +1910,7 @@ export default function SpaceMissionGame() {
   // STAGE 2: MISSION SELECTION (Tactical Orbital Missions Map)
   // ============================================================================
   if (stage === "MISSION_SELECT") {
+    const selectedContract = MISSION_CONTRACTS.find((c) => c.id === activeContractId) || MISSION_CONTRACTS[0];
     const filteredContracts = MISSION_CONTRACTS.filter((c) => {
       if (contractFilter === "ALL") return true;
       if (contractFilter === "LEO") return c.orbitType.includes("LEO");
@@ -1864,56 +1921,48 @@ export default function SpaceMissionGame() {
 
     return (
       <main style={{ position: "relative", display: "flex", flexDirection: "column", height: "100vh", width: "100vw", backgroundColor: "#06080c", overflow: "hidden" }}>
-        {/* Fullscreen 3D Starfield & Orbital Earth Background */}
-        <div style={{ position: "absolute", inset: 0, zIndex: 0, opacity: 0.7, pointerEvents: "none" }}>
-          <SpacecraftViewport
-            busSize="3U"
-            viewMode="ORBIT"
-            solarArrayType="DUAL_WING"
-            solarArrayDeployed={true}
-            payloadType="IMAGER"
-            antennaType="SBAND"
-            hasPropulsion={true}
-            thrusterActive={false}
-            isEclipse={false}
-            orbitAltitudeKm={600}
-            orbitProgress={0.4}
-          />
-        </div>
-
-        <header style={{ position: "relative", zIndex: 10, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 var(--space-6)", height: "52px", borderBottom: "1px solid rgba(56, 189, 248, 0.2)", backgroundColor: "rgba(10, 15, 26, 0.95)", backdropFilter: "blur(8px)" }}>
+        {/* Tactical Command Header */}
+        <header style={{ position: "relative", zIndex: 20, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 var(--space-6)", height: "54px", borderBottom: "1px solid rgba(56, 189, 248, 0.25)", backgroundColor: "rgba(10, 15, 26, 0.96)", backdropFilter: "blur(12px)" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "var(--space-3)" }}>
             <button
               onClick={() => {
                 soundManager.playEquip();
                 setStage("MAIN_MENU");
               }}
-              style={{ padding: "6px 12px", fontSize: "11px", fontWeight: 600, color: "#38bdf8", backgroundColor: "rgba(56, 189, 248, 0.12)", border: "1px solid #38bdf8", borderRadius: "2px", cursor: "pointer" }}
+              style={{ padding: "6px 14px", fontSize: "11px", fontWeight: 700, color: "#38bdf8", backgroundColor: "rgba(56, 189, 248, 0.12)", border: "1px solid #38bdf8", borderRadius: "3px", cursor: "pointer", letterSpacing: "0.05em" }}
             >
-              ← Main Menu
+              ← MAIN MENU
             </button>
-            <div style={{ width: "1px", height: "14px", backgroundColor: "rgba(255, 255, 255, 0.15)" }} />
-            <h1 style={{ fontSize: "13px", fontWeight: 700, letterSpacing: "0.08em", color: "#f8fafc", textTransform: "uppercase" }}>
-              Orbital Flight Contracts // Career Operations
-            </h1>
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-            <div className="font-mono" style={{ fontSize: "11px", color: "var(--color-status-nominal)" }}>
-              Budget: {careerCredits.toLocaleString()} Cr
+            <div style={{ width: "1px", height: "16px", backgroundColor: "rgba(255, 255, 255, 0.2)" }} />
+            <div>
+              <div style={{ fontSize: "12px", fontWeight: 800, letterSpacing: "0.08em", color: "#f8fafc", textTransform: "uppercase" }}>
+                TACTICAL STAR COMMAND OPERATIONS // FLIGHT CONTRACTS
+              </div>
+              <div style={{ fontSize: "10px", color: "#38bdf8", fontFamily: "var(--font-mono)" }}>
+                NASA LSP FLIGHT DISPATCH · 3D ORBITAL TRAJECTORY MAPPING
+              </div>
             </div>
-            <div style={{ width: "1px", height: "12px", backgroundColor: "rgba(255, 255, 255, 0.15)" }} />
-            <div className="font-mono" style={{ fontSize: "11px", color: "#38bdf8" }}>
-              {completedContracts.length} / {MISSION_CONTRACTS.length} Completed
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "6px", backgroundColor: "rgba(34, 197, 94, 0.12)", border: "1px solid rgba(34, 197, 94, 0.3)", padding: "4px 10px", borderRadius: "3px" }}>
+              <span style={{ fontSize: "10px", color: "#94a3b8", fontWeight: 600 }}>FLIGHT DIRECTOR BUDGET:</span>
+              <span className="font-mono" style={{ fontSize: "12px", color: "#22c55e", fontWeight: 700 }}>{careerCredits.toLocaleString()} Cr</span>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: "6px", backgroundColor: "rgba(56, 189, 248, 0.12)", border: "1px solid rgba(56, 189, 248, 0.3)", padding: "4px 10px", borderRadius: "3px" }}>
+              <span style={{ fontSize: "10px", color: "#94a3b8", fontWeight: 600 }}>CLEARANCE:</span>
+              <span className="font-mono" style={{ fontSize: "12px", color: "#38bdf8", fontWeight: 700 }}>{completedContracts.length} / {MISSION_CONTRACTS.length} CLEARED</span>
             </div>
           </div>
         </header>
 
-        <div style={{ position: "relative", zIndex: 10, flex: 1, overflowY: "auto", padding: "var(--space-8)", display: "flex", flexDirection: "column", alignItems: "center" }}>
-          <div style={{ maxWidth: "980px", width: "100%", display: "flex", flexDirection: "column", gap: "20px" }}>
+        {/* 2-Pane Command Operations Center */}
+        <div style={{ display: "grid", gridTemplateColumns: "480px 1fr", flex: 1, height: "calc(100vh - 54px)", overflow: "hidden" }}>
+          {/* LEFT PANE: Mission Feed */}
+          <div style={{ backgroundColor: "rgba(10, 15, 26, 0.96)", borderRight: "1px solid rgba(56, 189, 248, 0.2)", display: "flex", flexDirection: "column", height: "100%", overflowY: "auto", padding: "16px 20px", gap: "14px", position: "relative", zIndex: 10 }}>
             {/* Quick-Launch 3D Piloted Shuttle Mission Callout Banner */}
             <div
               style={{
-                padding: "14px 20px",
+                padding: "12px 16px",
                 backgroundColor: "rgba(12, 74, 110, 0.4)",
                 border: "1.5px solid #38bdf8",
                 borderRadius: "4px",
@@ -1921,17 +1970,17 @@ export default function SpaceMissionGame() {
                 justifyContent: "space-between",
                 alignItems: "center",
                 backdropFilter: "blur(12px)",
-                boxShadow: "0 0 20px rgba(56, 189, 248, 0.25)",
+                boxShadow: "0 0 16px rgba(56, 189, 248, 0.2)",
               }}
             >
-              <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
-                <span style={{ fontSize: "24px" }}>🚀</span>
+              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                <span style={{ fontSize: "20px" }}>🚀</span>
                 <div>
-                  <div style={{ fontSize: "13px", fontWeight: 700, color: "#ffffff", letterSpacing: "0.04em" }}>
-                    LAUNCH DIRECT 3D PILOTED SHUTTLE MISSION (ORV-1 6-DOF FLIGHT)
+                  <div style={{ fontSize: "12px", fontWeight: 700, color: "#ffffff", letterSpacing: "0.04em" }}>
+                    PILOT SHUTTLE ORV-1 DIRECTLY
                   </div>
-                  <div style={{ fontSize: "11px", color: "#38bdf8", marginTop: "2px" }}>
-                    6-DOF Cockpit Piloting · Gateway-1 Gantry Mooring · Atmospheric Entry · Lunar Base Alpha Landing
+                  <div style={{ fontSize: "10px", color: "#38bdf8", marginTop: "1px" }}>
+                    6-DOF Cockpit Flight · Gateway-1 Mooring
                   </div>
                 </div>
               </div>
@@ -1941,37 +1990,28 @@ export default function SpaceMissionGame() {
                   setStage("FLIGHT_SIM_GAME");
                 }}
                 style={{
-                  padding: "10px 20px",
+                  padding: "6px 12px",
                   backgroundColor: "#0284c7",
                   border: "1px solid #38bdf8",
                   color: "#ffffff",
-                  fontSize: "12px",
+                  fontSize: "11px",
                   fontWeight: 700,
                   borderRadius: "3px",
                   cursor: "pointer",
-                  letterSpacing: "0.05em",
-                  boxShadow: "0 0 14px rgba(56, 189, 248, 0.4)",
+                  letterSpacing: "0.04em",
                   whiteSpace: "nowrap",
                 }}
               >
-                PILOT SHUTTLE NOW →
+                PILOT NOW →
               </button>
             </div>
 
-            {/* Header & Filter Controls */}
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", borderBottom: "1px solid rgba(255, 255, 255, 0.1)", paddingBottom: "16px" }}>
-              <div>
-                <div className="font-mono" style={{ fontSize: "11px", color: "#38bdf8", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" }}>
-                  NASA LSP // FLIGHT OPERATIONS DISPATCH
-                </div>
-                <h2 style={{ fontSize: "24px", fontWeight: 700, color: "#f8fafc", marginTop: "4px" }}>Active Orbital Flight Contracts</h2>
-                <p style={{ fontSize: "12px", color: "#94a3b8", marginTop: "2px" }}>
-                  Select an authorized space flight contract to review mission parameters and configure your satellite in the Workshop.
-                </p>
+            {/* Filter Pills */}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div style={{ fontSize: "11px", fontWeight: 700, color: "#38bdf8", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                Select Active Contract:
               </div>
-
-              {/* Interactive Category Filter Pills */}
-              <div style={{ display: "flex", gap: "6px", backgroundColor: "rgba(15, 23, 42, 0.8)", padding: "4px", border: "1px solid rgba(255, 255, 255, 0.1)", borderRadius: "4px" }}>
+              <div style={{ display: "flex", gap: "4px", backgroundColor: "rgba(15, 23, 42, 0.8)", padding: "3px", border: "1px solid rgba(255, 255, 255, 0.1)", borderRadius: "4px" }}>
                 {(["ALL", "LEO", "POLAR", "GEO"] as const).map((tag) => (
                   <button
                     key={tag}
@@ -1980,8 +2020,8 @@ export default function SpaceMissionGame() {
                       setContractFilter(tag);
                     }}
                     style={{
-                      padding: "5px 12px",
-                      fontSize: "11px",
+                      padding: "4px 10px",
+                      fontSize: "10px",
                       fontWeight: 700,
                       backgroundColor: contractFilter === tag ? "#0284c7" : "transparent",
                       color: contractFilter === tag ? "#ffffff" : "#94a3b8",
@@ -1991,108 +2031,260 @@ export default function SpaceMissionGame() {
                       letterSpacing: "0.04em",
                     }}
                   >
-                    {tag === "ALL" ? "ALL MISSIONS" : tag}
+                    {tag === "ALL" ? "ALL" : tag}
                   </button>
                 ))}
               </div>
             </div>
 
-            {/* Tactical Mission Cards Grid */}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "18px" }}>
+            {/* Contract Dossier Cards */}
+            <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
               {filteredContracts.map((c) => {
                 const isUnlocked = careerScore >= c.requiredCareerScore || c.id === "LEO_SSO_600KM";
                 const isDone = completedContracts.includes(c.id);
+                const isSelected = activeContractId === c.id;
 
                 return (
                   <div
                     key={c.id}
+                    onClick={() => {
+                      soundManager.playEquip();
+                      setActiveContractId(c.id);
+                    }}
                     style={{
-                      padding: "20px 22px",
+                      padding: "14px 16px",
                       display: "flex",
                       flexDirection: "column",
-                      gap: "14px",
+                      gap: "10px",
                       opacity: isUnlocked ? 1.0 : 0.5,
-                      backgroundColor: "rgba(15, 23, 42, 0.88)",
-                      border: isDone ? "1px solid #22c55e" : isUnlocked ? "1px solid rgba(56, 189, 248, 0.35)" : "1px solid rgba(255, 255, 255, 0.08)",
+                      backgroundColor: isSelected ? "rgba(14, 116, 144, 0.22)" : "rgba(15, 23, 42, 0.85)",
+                      border: isSelected ? "1.5px solid #38bdf8" : isDone ? "1px solid #22c55e" : "1px solid rgba(255, 255, 255, 0.1)",
                       borderRadius: "4px",
-                      boxShadow: isUnlocked ? "0 10px 30px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255,255,255,0.05)" : "none",
-                      backdropFilter: "blur(10px)",
+                      boxShadow: isSelected ? "0 0 16px rgba(56, 189, 248, 0.3)" : "none",
+                      cursor: isUnlocked ? "pointer" : "not-allowed",
                       position: "relative",
-                      overflow: "hidden",
+                      transition: "all 0.15s ease",
                     }}
                   >
                     {/* Top Orbit Tag & Difficulty Stars */}
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
                       <div>
                         <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
-                          <span className="font-mono" style={{ fontSize: "10px", padding: "2px 6px", backgroundColor: "rgba(56, 189, 248, 0.15)", border: "1px solid rgba(56, 189, 248, 0.3)", color: "#38bdf8", fontWeight: 700, borderRadius: "2px" }}>
+                          <span className="font-mono" style={{ fontSize: "10px", padding: "2px 6px", backgroundColor: isSelected ? "#0284c7" : "rgba(56, 189, 248, 0.15)", border: "1px solid rgba(56, 189, 248, 0.3)", color: isSelected ? "#ffffff" : "#38bdf8", fontWeight: 700, borderRadius: "2px" }}>
                             {c.code}
                           </span>
                           <span className="font-mono" style={{ fontSize: "10px", color: "#94a3b8" }}>
                             {c.orbitType} · {c.altitudeKm} KM
                           </span>
+                          {isSelected && (
+                            <span style={{ fontSize: "9px", padding: "2px 6px", backgroundColor: "rgba(34, 197, 94, 0.2)", border: "1px solid #22c55e", color: "#22c55e", fontWeight: 700, borderRadius: "2px" }}>
+                              ACTIVE TARGET
+                            </span>
+                          )}
                         </div>
-                        <h3 style={{ fontSize: "16px", fontWeight: 700, color: "#f8fafc", marginTop: "6px" }}>{c.title}</h3>
-                        <div style={{ fontSize: "11px", color: "var(--color-status-telemetry)", fontWeight: 600 }}>{c.agency}</div>
+                        <h3 style={{ fontSize: "14px", fontWeight: 700, color: "#f8fafc", marginTop: "4px" }}>{c.title}</h3>
+                        <div style={{ fontSize: "10px", color: "var(--color-status-telemetry)", fontWeight: 600 }}>{c.agency}</div>
                       </div>
-                      <span className="font-mono" style={{ fontSize: "13px", color: "#fbbf24", letterSpacing: "2px" }}>
+                      <span className="font-mono" style={{ fontSize: "12px", color: "#fbbf24", letterSpacing: "1px" }}>
                         {c.difficultyStars}
                       </span>
                     </div>
 
-                    {/* Narrative Description */}
-                    <p style={{ fontSize: "11px", color: "#94a3b8", lineHeight: 1.5, flex: 1, margin: 0 }}>
-                      {c.narrative}
-                    </p>
-
                     {/* Telemetry Stats & Rewards Pills */}
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "6px", backgroundColor: "rgba(30, 41, 59, 0.4)", padding: "8px 10px", borderRadius: "3px", border: "1px solid rgba(255, 255, 255, 0.05)" }}>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "4px", backgroundColor: "rgba(30, 41, 59, 0.4)", padding: "6px 8px", borderRadius: "3px", border: "1px solid rgba(255, 255, 255, 0.05)" }}>
                       <div>
-                        <div style={{ fontSize: "9px", color: "#64748b", fontWeight: 700 }}>ORBIT ALTITUDE</div>
-                        <div className="font-mono" style={{ fontSize: "12px", color: "#f8fafc", fontWeight: 600 }}>{c.altitudeKm} km</div>
+                        <div style={{ fontSize: "8px", color: "#64748b", fontWeight: 700 }}>ORBIT ALT</div>
+                        <div className="font-mono" style={{ fontSize: "11px", color: "#f8fafc", fontWeight: 600 }}>{c.altitudeKm} km</div>
                       </div>
                       <div>
-                        <div style={{ fontSize: "9px", color: "#64748b", fontWeight: 700 }}>SCIENCE TARGET</div>
-                        <div className="font-mono" style={{ fontSize: "12px", color: "#38bdf8", fontWeight: 600 }}>{c.scienceTargetMb} Mb</div>
+                        <div style={{ fontSize: "8px", color: "#64748b", fontWeight: 700 }}>SCIENCE TARGET</div>
+                        <div className="font-mono" style={{ fontSize: "11px", color: "#38bdf8", fontWeight: 600 }}>{c.scienceTargetMb} Mb</div>
                       </div>
                       <div>
-                        <div style={{ fontSize: "9px", color: "#64748b", fontWeight: 700 }}>CONTRACT REWARD</div>
-                        <div className="font-mono" style={{ fontSize: "12px", color: "#22c55e", fontWeight: 700 }}>+{c.rewardCredits.toLocaleString()} Cr</div>
+                        <div style={{ fontSize: "8px", color: "#64748b", fontWeight: 700 }}>REWARD</div>
+                        <div className="font-mono" style={{ fontSize: "11px", color: "#22c55e", fontWeight: 700 }}>+{c.rewardCredits.toLocaleString()} Cr</div>
                       </div>
                     </div>
 
-                    {/* Action Button */}
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: "6px", borderTop: "1px solid rgba(255, 255, 255, 0.08)" }}>
+                    {/* Bottom Actions */}
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: "4px", borderTop: "1px solid rgba(255, 255, 255, 0.06)" }}>
                       <span className="font-mono" style={{ fontSize: "10px", color: isDone ? "#22c55e" : isUnlocked ? "#38bdf8" : "#64748b", fontWeight: 600 }}>
-                        {isDone ? "STATUS: CONTRACT COMPLETED" : isUnlocked ? "STATUS: AUTHORIZED FOR FLIGHT" : `REQUIRES ${c.requiredCareerScore} CAREER PTS`}
+                        {isDone ? "STATUS: COMPLETED" : isUnlocked ? "CLEARANCE: GRANTED" : `LOCKED: ${c.requiredCareerScore} PTS`}
                       </span>
 
                       <button
                         disabled={!isUnlocked}
-                        onClick={() => {
+                        onClick={(e) => {
+                          e.stopPropagation();
                           soundManager.playEquip();
                           setActiveContractId(c.id);
                           setStage("WORKSHOP");
                         }}
                         style={{
-                          padding: "8px 18px",
-                          backgroundColor: isUnlocked ? "#0284c7" : "transparent",
-                          border: isUnlocked ? "1px solid #38bdf8" : "1px solid rgba(255, 255, 255, 0.1)",
+                          padding: "6px 14px",
+                          backgroundColor: isSelected ? "#0284c7" : "transparent",
+                          border: isSelected ? "1px solid #38bdf8" : "1px solid rgba(56, 189, 248, 0.4)",
                           color: isUnlocked ? "#ffffff" : "#64748b",
-                          fontSize: "11px",
+                          fontSize: "10px",
                           fontWeight: 700,
                           cursor: isUnlocked ? "pointer" : "not-allowed",
                           letterSpacing: "0.04em",
                           borderRadius: "2px",
-                          transition: "all 0.15s ease",
                         }}
                       >
-                        {isDone ? "RECONFIGURE SPACECRAFT →" : "ACCEPT & ENTER WORKSHOP →"}
+                        {isDone ? "RECONFIGURE →" : "BUILD & FLY →"}
                       </button>
                     </div>
                   </div>
                 );
               })}
+            </div>
+          </div>
+
+          {/* RIGHT PANE: 3D Holographic Orbit Globe & Tactical Dossier */}
+          <div style={{ position: "relative", width: "100%", height: "100%", backgroundColor: "#06080c" }}>
+            {/* Interactive 3D Orbit Globe Viewport */}
+            <div style={{ position: "absolute", inset: 0 }}>
+              <SpacecraftViewport
+                busSize="3U"
+                viewMode="ORBIT"
+                solarArrayType="DUAL_WING"
+                solarArrayDeployed={true}
+                payloadType="IMAGER"
+                antennaType="SBAND"
+                hasPropulsion={true}
+                thrusterActive={false}
+                isEclipse={false}
+                orbitAltitudeKm={selectedContract.altitudeKm}
+                orbitProgress={0.35}
+              />
+            </div>
+
+            {/* Top-Right Holographic Orbital Parameters HUD */}
+            <div
+              style={{
+                position: "absolute",
+                top: "16px",
+                right: "20px",
+                zIndex: 10,
+                width: "360px",
+                backgroundColor: "rgba(10, 15, 26, 0.9)",
+                border: "1px solid rgba(56, 189, 248, 0.4)",
+                borderRadius: "6px",
+                padding: "16px 18px",
+                backdropFilter: "blur(12px)",
+                boxShadow: "0 10px 30px rgba(0,0,0,0.8)",
+                display: "flex",
+                flexDirection: "column",
+                gap: "10px",
+              }}
+            >
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid rgba(56, 189, 248, 0.2)", paddingBottom: "6px" }}>
+                <span className="font-mono" style={{ fontSize: "11px", fontWeight: 700, color: "#38bdf8" }}>
+                  MISSION INTEL // {selectedContract.code}
+                </span>
+                <span className="font-mono" style={{ fontSize: "10px", color: "#fbbf24" }}>
+                  {selectedContract.orbitType}
+                </span>
+              </div>
+
+              <div>
+                <h2 style={{ fontSize: "15px", fontWeight: 700, color: "#ffffff" }}>{selectedContract.title}</h2>
+                <p style={{ fontSize: "11px", color: "#94a3b8", marginTop: "4px", lineHeight: 1.45 }}>
+                  {selectedContract.narrative}
+                </p>
+              </div>
+
+              {/* Orbital Mechanics Parameters Grid */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", backgroundColor: "rgba(15, 23, 42, 0.6)", padding: "10px", borderRadius: "4px", border: "1px solid rgba(255, 255, 255, 0.06)" }}>
+                <div>
+                  <div style={{ fontSize: "9px", color: "#64748b", fontWeight: 700 }}>ORBIT ALTITUDE</div>
+                  <div className="font-mono" style={{ fontSize: "12px", color: "#f8fafc", fontWeight: 700 }}>{selectedContract.altitudeKm} km</div>
+                </div>
+                <div>
+                  <div style={{ fontSize: "9px", color: "#64748b", fontWeight: 700 }}>INCLINATION</div>
+                  <div className="font-mono" style={{ fontSize: "12px", color: "#f8fafc", fontWeight: 700 }}>{selectedContract.inclinationDeg}°</div>
+                </div>
+                <div>
+                  <div style={{ fontSize: "9px", color: "#64748b", fontWeight: 700 }}>ORBITAL PERIOD</div>
+                  <div className="font-mono" style={{ fontSize: "12px", color: "#38bdf8", fontWeight: 700 }}>{selectedContract.periodMin} min</div>
+                </div>
+                <div>
+                  <div style={{ fontSize: "9px", color: "#64748b", fontWeight: 700 }}>ECLIPSE SHADOW</div>
+                  <div className="font-mono" style={{ fontSize: "12px", color: "#f59e0b", fontWeight: 700 }}>{selectedContract.eclipseMin} min/orbit</div>
+                </div>
+              </div>
+
+              {/* Mission Objectives Checklist */}
+              <div>
+                <div style={{ fontSize: "10px", fontWeight: 700, color: "#38bdf8", textTransform: "uppercase", marginBottom: "4px" }}>
+                  Key Directives:
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: "4px", fontSize: "10px", color: "#cbd5e1" }}>
+                  {selectedContract.objectives.map((obj, i) => (
+                    <div key={i} style={{ display: "flex", gap: "6px", alignItems: "flex-start" }}>
+                      <span style={{ color: "#22c55e", fontWeight: 700 }}>✓</span>
+                      <span>{obj}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Bottom-Right Tactical Launch Command Dock */}
+            <div
+              style={{
+                position: "absolute",
+                bottom: "20px",
+                right: "20px",
+                zIndex: 10,
+                display: "flex",
+                gap: "10px",
+                alignItems: "center",
+              }}
+            >
+              <button
+                onClick={() => {
+                  soundManager.playRadioStatic(200);
+                  soundManager.playQuindarTone(true);
+                }}
+                style={{
+                  padding: "12px 18px",
+                  backgroundColor: "rgba(15, 23, 42, 0.85)",
+                  border: "1px solid rgba(56, 189, 248, 0.4)",
+                  color: "#38bdf8",
+                  fontSize: "11px",
+                  fontWeight: 700,
+                  borderRadius: "4px",
+                  cursor: "pointer",
+                  letterSpacing: "0.04em",
+                  backdropFilter: "blur(8px)",
+                }}
+              >
+                📻 HEAR RADIO BRIEFING
+              </button>
+
+              <button
+                onClick={() => {
+                  soundManager.playQuindarTone(true);
+                  setActiveContractId(selectedContract.id);
+                  setStage("WORKSHOP");
+                }}
+                style={{
+                  padding: "12px 26px",
+                  backgroundColor: "#0284c7",
+                  border: "1.5px solid #38bdf8",
+                  color: "#ffffff",
+                  fontSize: "12px",
+                  fontWeight: 800,
+                  borderRadius: "4px",
+                  cursor: "pointer",
+                  letterSpacing: "0.06em",
+                  boxShadow: "0 0 20px rgba(56, 189, 248, 0.5)",
+                }}
+              >
+                ACCEPT CONTRACT &amp; ENTER 3D WORKSHOP →
+              </button>
             </div>
           </div>
         </div>
@@ -2805,7 +2997,7 @@ export default function SpaceMissionGame() {
           </aside>
 
           {/* Right 3D Visualizer & Live Verification Matrix */}
-          <div style={{ display: "grid", gridTemplateRows: "1fr 230px", height: "100%", overflow: "hidden" }}>
+          <div style={{ display: "grid", gridTemplateRows: "1fr 240px", height: "100%", overflow: "hidden" }}>
             <div style={{ position: "relative", width: "100%", height: "100%", backgroundColor: "var(--color-surface-sunken)" }}>
               {/* Floating Tactical Hangar Toolbar */}
               <div style={{ position: "absolute", top: "var(--space-3)", left: "var(--space-4)", zIndex: 10, display: "flex", gap: "6px", flexWrap: "wrap", alignItems: "center" }}>
@@ -2891,6 +3083,10 @@ export default function SpaceMissionGame() {
                 >
                   [ECLIPSE: {hangarEclipseActive ? "SHADOW" : "SUNLIGHT"}]
                 </button>
+
+                <div style={{ padding: "4px 8px", backgroundColor: "rgba(15, 23, 42, 0.8)", border: "1px solid rgba(56, 189, 248, 0.3)", borderRadius: "3px", fontSize: "10px", color: "#38bdf8", fontFamily: "var(--font-mono)" }}>
+                  [DRAG 3D MODEL TO ROTATE 360° · SCROLL TO ZOOM]
+                </div>
               </div>
 
               <SpacecraftViewport
@@ -2995,6 +3191,35 @@ export default function SpaceMissionGame() {
                   </div>
                 </div>
               </div>
+
+              {/* Bottom Launch & Verification Action Strip */}
+              <div style={{ marginTop: "10px", display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: "8px", borderTop: "1px solid rgba(255,255,255,0.08)" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <span className={`status-dot ${launchReady ? "status-dot-nominal" : "status-dot-critical"}`} />
+                  <span className="font-mono" style={{ fontSize: "11px", fontWeight: 700, color: launchReady ? "#22c55e" : "#ef4444" }}>
+                    {launchReady ? "FLIGHT CERTIFIED // ALL JPL CML 4 MARGINS VERIFIED NOMINAL" : "FLIGHT REJECTED // RESOLVE MARGIN WARNINGS TO CLEAR LAUNCH"}
+                  </span>
+                </div>
+                <button
+                  disabled={!launchReady}
+                  onClick={startLaunchSequence}
+                  style={{
+                    padding: "8px 24px",
+                    backgroundColor: launchReady ? "#0284c7" : "rgba(100, 116, 139, 0.2)",
+                    border: `1.5px solid ${launchReady ? "#38bdf8" : "rgba(100, 116, 139, 0.4)"}`,
+                    color: launchReady ? "#ffffff" : "#64748b",
+                    fontSize: "11px",
+                    fontWeight: 800,
+                    borderRadius: "4px",
+                    cursor: launchReady ? "pointer" : "not-allowed",
+                    letterSpacing: "0.06em",
+                    boxShadow: launchReady ? "0 0 18px rgba(56, 189, 248, 0.45)" : "none",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {launchReady ? "PROCEED TO LAUNCH COUNTDOWN →" : "RESOLVE WARNINGS TO LAUNCH"}
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -3083,27 +3308,52 @@ export default function SpaceMissionGame() {
   // ============================================================================
   if (stage === "SPACE_GAMEPLAY") {
     return (
-      <main style={{ display: "flex", flexDirection: "column", height: "100vh", width: "100vw", overflow: "hidden", backgroundColor: "var(--color-canvas)" }}>
+      <main style={{ display: "flex", flexDirection: "column", height: "100vh", width: "100vw", overflow: "hidden", backgroundColor: "#06080c" }}>
         {/* Header */}
-        <header style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 var(--space-5)", height: "48px", borderBottom: "1px solid var(--color-border-subtle)", backgroundColor: "var(--color-surface-1)" }}>
+        <header style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 var(--space-5)", height: "50px", borderBottom: "1px solid rgba(56, 189, 248, 0.25)", backgroundColor: "rgba(10, 15, 26, 0.94)", backdropFilter: "blur(12px)", position: "relative", zIndex: 20 }}>
           <div style={{ display: "flex", alignItems: "center", gap: "var(--space-3)" }}>
-            <h1 style={{ fontSize: "var(--text-sm)", fontWeight: 600 }}>{contract.code} {"//"} Flight Control Center</h1>
-            <div style={{ width: "1px", height: "12px", backgroundColor: "var(--color-border-default)" }} />
-            <span style={{ fontSize: "11px", color: "var(--color-text-muted)" }}>{contract.orbitType} · {contract.altitudeKm} km</span>
+            <h1 style={{ fontSize: "var(--text-sm)", fontWeight: 700, color: "#ffffff" }}>{contract.code} {"//"} Flight Control Center</h1>
+            <div style={{ width: "1px", height: "12px", backgroundColor: "rgba(255, 255, 255, 0.2)" }} />
+            <span style={{ fontSize: "11px", color: "#38bdf8", fontFamily: "var(--font-mono)" }}>{contract.orbitType} · {contract.altitudeKm} km</span>
+            <div style={{ display: "flex", alignItems: "center", gap: "6px", marginLeft: "10px", padding: "2px 8px", backgroundColor: "rgba(15, 23, 42, 0.8)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "3px" }}>
+              <span className={`status-dot ${fatalBlackout ? "status-dot-critical" : safeModeActive ? "status-dot-caution" : "status-dot-nominal"}`} />
+              <span className="font-mono" style={{ fontSize: "10px", fontWeight: 700, color: fatalBlackout ? "#ef4444" : safeModeActive ? "#fbbf24" : "#22c55e" }}>
+                {fatalBlackout ? "BLACKOUT" : safeModeActive ? "SAFE MODE" : operatingMode}
+              </span>
+            </div>
           </div>
 
-          <div style={{ display: "flex", alignItems: "center", gap: "var(--space-2)" }}>
-            <span className={`status-dot ${fatalBlackout ? "status-dot-critical" : safeModeActive ? "status-dot-caution" : "status-dot-nominal"}`} />
-            <span className="font-mono" style={{ fontSize: "11px", color: "var(--color-text-secondary)" }}>
-              {fatalBlackout ? "BLACKOUT" : safeModeActive ? "SAFE MODE" : operatingMode}
+          {/* Quick Mission Objective Bar */}
+          <div style={{ display: "flex", alignItems: "center", gap: "10px", backgroundColor: "rgba(15, 23, 42, 0.8)", padding: "4px 12px", borderRadius: "4px", border: "1px solid rgba(56, 189, 248, 0.2)" }}>
+            <span style={{ fontSize: "10px", color: "#94a3b8", fontWeight: 600 }}>DOWNLINK:</span>
+            <span className="font-mono" style={{ fontSize: "11px", color: "#38bdf8", fontWeight: 700 }}>
+              {dataDownlinkedMb.toFixed(0)} / {contract.scienceTargetMb} Mb ({scienceCompletionPercent.toFixed(0)}%)
             </span>
+            <div style={{ width: "60px", height: "5px", backgroundColor: "rgba(255,255,255,0.1)", borderRadius: "3px", overflow: "hidden" }}>
+              <div style={{ width: `${Math.min(100, scienceCompletionPercent)}%`, height: "100%", backgroundColor: scienceCompletionPercent >= 100 ? "#22c55e" : "#38bdf8" }} />
+            </div>
+          </div>
+
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <button
+              onClick={() => setShowConsoleFeed(!showConsoleFeed)}
+              style={{ padding: "4px 10px", fontSize: "10px", fontWeight: 700, backgroundColor: showConsoleFeed ? "#0284c7" : "rgba(15, 23, 42, 0.8)", color: showConsoleFeed ? "#ffffff" : "#38bdf8", border: "1px solid rgba(56, 189, 248, 0.4)", borderRadius: "3px", cursor: "pointer" }}
+            >
+              CONSOLE ({telemetryLogs.length})
+            </button>
+            <button
+              onClick={handleEndMission}
+              style={{ padding: "4px 10px", fontSize: "10px", fontWeight: 700, backgroundColor: "rgba(239, 68, 68, 0.2)", color: "#f87171", border: "1px solid rgba(239, 68, 68, 0.4)", borderRadius: "3px", cursor: "pointer" }}
+            >
+              END FLIGHT
+            </button>
           </div>
         </header>
 
-        {/* Space Operations Viewport Split */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 400px", flex: 1, overflow: "hidden" }}>
+        {/* Space Operations Fullscreen Viewport Container */}
+        <div style={{ position: "relative", flex: 1, overflow: "hidden" }}>
           {/* Main 3D Orbital Canvas */}
-          <div style={{ position: "relative", width: "100%", height: "100%", backgroundColor: "var(--color-surface-sunken)" }}>
+          <div style={{ position: "absolute", inset: 0, width: "100%", height: "100%", backgroundColor: "#06080c" }}>
             {/* Top-Left Status Overlay */}
             <div style={{ position: "absolute", top: "var(--space-3)", left: "var(--space-4)", zIndex: 10, display: "flex", alignItems: "center", gap: "var(--space-3)", backgroundColor: "rgba(18, 21, 27, 0.85)", padding: "4px 8px", border: "1px solid var(--color-border-subtle)" }}>
               <div style={{ display: "flex", gap: "1px" }}>
@@ -3408,8 +3658,9 @@ export default function SpaceMissionGame() {
             </div>
           </div>
 
-          {/* Right Flight Director Console */}
-          <aside style={{ borderLeft: "1px solid var(--color-border-subtle)", backgroundColor: "var(--color-surface-1)", display: "flex", flexDirection: "column", overflow: "hidden" }}>
+          {/* Right Flight Director Console Drawer */}
+          {showConsoleFeed && (
+            <aside style={{ position: "absolute", top: 0, right: 0, bottom: 0, width: "380px", zIndex: 30, borderLeft: "1px solid rgba(56, 189, 248, 0.3)", backgroundColor: "rgba(10, 15, 26, 0.95)", backdropFilter: "blur(14px)", boxShadow: "-10px 0 30px rgba(0,0,0,0.8)", display: "flex", flexDirection: "column", overflow: "hidden" }}>
             {/* Player Agency Flight Commands (Interactive Mission Flight Cockpit) */}
             <div style={{ padding: "var(--space-4)", borderBottom: "1px solid var(--color-border-subtle)", display: "flex", flexDirection: "column", gap: "var(--space-3)", backgroundColor: "var(--color-surface-1)" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -3733,10 +3984,89 @@ export default function SpaceMissionGame() {
               </div>
             </div>
           </aside>
-        </div>
-      </main>
-    );
-  }
+        )}
+
+        {/* Mission Victory Modal Overlay */}
+        {scienceCompletionPercent >= 100 && (
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              zIndex: 40,
+              backgroundColor: "rgba(0, 0, 0, 0.8)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              backdropFilter: "blur(8px)",
+            }}
+          >
+            <div
+              style={{
+                width: "480px",
+                backgroundColor: "rgba(10, 15, 26, 0.96)",
+                border: "2px solid #22c55e",
+                borderRadius: "8px",
+                padding: "24px 28px",
+                display: "flex",
+                flexDirection: "column",
+                gap: "16px",
+                boxShadow: "0 0 50px rgba(34, 197, 94, 0.4)",
+                textAlign: "center",
+              }}
+            >
+              <div style={{ fontSize: "40px" }}>🏆</div>
+              <div>
+                <div className="font-mono" style={{ fontSize: "11px", color: "#22c55e", fontWeight: 700, letterSpacing: "0.1em" }}>
+                  MISSION OBJECTIVE ACCOMPLISHED!
+                </div>
+                <h2 style={{ fontSize: "20px", fontWeight: 800, color: "#ffffff", marginTop: "4px" }}>
+                  {contract.title}
+                </h2>
+                <p style={{ fontSize: "12px", color: "#94a3b8", marginTop: "6px", lineHeight: 1.5 }}>
+                  All primary science telemetry packets delivered successfully. Design verified compliant under NASA JPL CML 4 standards.
+                </p>
+              </div>
+
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", backgroundColor: "rgba(15, 23, 42, 0.8)", padding: "12px", borderRadius: "4px", border: "1px solid rgba(255, 255, 255, 0.1)" }}>
+                <div>
+                  <div style={{ fontSize: "9px", color: "#64748b", fontWeight: 700 }}>SCIENCE DOWNLINKED</div>
+                  <div className="font-mono" style={{ fontSize: "14px", color: "#38bdf8", fontWeight: 800 }}>
+                    {dataDownlinkedMb.toFixed(0)} Mb
+                  </div>
+                </div>
+                <div>
+                  <div style={{ fontSize: "9px", color: "#64748b", fontWeight: 700 }}>CREDITS EARNED</div>
+                  <div className="font-mono" style={{ fontSize: "14px", color: "#22c55e", fontWeight: 800 }}>
+                    +{contract.rewardCredits.toLocaleString()} Cr
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ display: "flex", gap: "10px", justifyContent: "center" }}>
+                <button
+                  onClick={handleEndMission}
+                  style={{
+                    padding: "10px 24px",
+                    backgroundColor: "#0284c7",
+                    border: "1.5px solid #38bdf8",
+                    color: "#ffffff",
+                    fontSize: "12px",
+                    fontWeight: 700,
+                    borderRadius: "4px",
+                    cursor: "pointer",
+                    boxShadow: "0 0 16px rgba(56, 189, 248, 0.4)",
+                  }}
+                >
+                  RETURN TO MISSION DISPATCH →
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </main>
+  );
+}
 
   // ============================================================================
   // STAGE: FLIGHT ACADEMY & AEROSPACE ENGINEERING REFERENCE MANUAL
