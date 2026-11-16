@@ -6,18 +6,20 @@
 
 Developed for the **NASA Space Apps Challenge 2026**
 
-[![Live Demo](https://img.shields.io/badge/Live_Demo-Vercel_Production-000000?style=flat-square&logo=vercel)](https://space-mission-design-game.vercel.app)
+[![Live Demo](https://img.shields.io/badge/Live_Demo-Vercel_Production-000000?style=flat-square&logo=vercel)](https://space-mission-design-game-i023rdwwh.vercel.app)
 [![Next.js](https://img.shields.io/badge/Framework-Next.js_16_Turbopack-000000?style=flat-square&logo=next.js)](https://nextjs.org)
 [![TypeScript](https://img.shields.io/badge/Language-TypeScript_5.9_Strict-3178C6?style=flat-square&logo=typescript)](https://www.typescriptlang.org)
 [![Three.js](https://img.shields.io/badge/Graphics-Three.js_/_R3F-000000?style=flat-square&logo=three.js)](https://threejs.org)
 [![Tests](https://img.shields.io/badge/Test_Suite-351_Passed-2ea44f?style=flat-square)](https://bun.sh)
-[![License](https://img.shields.io/badge/License-CC0_1.0_Universal-lightgrey?style=flat-square)](./ASSET_CREDITS.md)
+[![License](https://img.shields.io/badge/License-MIT-lightgrey?style=flat-square)](./LICENSE)
 
 <br />
 
 <img src="./screen.png" alt="Space Mission Design Game - Viewport & Mission Operations Console" width="100%" style="border-radius: 8px; border: 1px solid #30363d;" />
 
 </div>
+
+> **Live Production Simulator**: [https://space-mission-design-game-i023rdwwh.vercel.app](https://space-mission-design-game-i023rdwwh.vercel.app)
 
 ---
 
