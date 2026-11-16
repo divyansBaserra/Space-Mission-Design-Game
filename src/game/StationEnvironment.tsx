@@ -655,9 +655,29 @@ export function StationEnvironment({
       <Stars radius={120} depth={60} count={4000} factor={4} saturation={0} fade speed={0.5} />
       <SpaceDust count={280} />
 
-      {/* Sun Directional Light (crisp space lighting) */}
-      <directionalLight position={[25, 12, 10]} intensity={1.8} castShadow shadow-bias={-0.0001} />
-      <ambientLight intensity={0.12} />
+      {/* Deep Space Sunlight: Extreme Directional Contrast & Blinding Specular Highlights */}
+      <directionalLight
+        position={[45, 28, 20]}
+        intensity={2.8}
+        color="#fffaf0"
+        castShadow
+        shadow-mapSize-width={2048}
+        shadow-mapSize-height={2048}
+        shadow-bias={-0.00012}
+        shadow-camera-near={0.5}
+        shadow-camera-far={120}
+        shadow-camera-left={-25}
+        shadow-camera-right={25}
+        shadow-camera-top={25}
+        shadow-camera-bottom={-25}
+      />
+      {/* Deep Space Vacuum Ambient Light: Near zero for authentic pitch-black shadows */}
+      <ambientLight intensity={0.035} />
+
+      {/* Planetary Albedo Bounce Light: Earth blue scatter illuminating underside of spacecraft & station */}
+      {!isSurface && (
+        <directionalLight position={[0, -10, 5]} intensity={0.38} color="#38bdf8" />
+      )}
 
       {/* Photorealistic NASA Blue Marble Earth */}
       {!isSurface ? (
@@ -1555,9 +1575,27 @@ export function StationEnvironment({
           <pointLight position={[0, 8.4, 0]} intensity={2.0} distance={25} color="#ef4444" />
         </group>
 
-        {/* High-Intensity Lunar Surface Sun & Facility Floodlight */}
-        <directionalLight position={[-30, 45, 25]} intensity={2.8} color="#f8fafc" />
-        <pointLight position={[0, 14.0, 0]} intensity={2.4} distance={65} color="#e0f2fe" />
+        {/* High-Intensity Lunar Surface Sun with High-Resolution Shadow Maps */}
+        <directionalLight
+          position={[-35, 50, 25]}
+          intensity={3.2}
+          color="#fffdf7"
+          castShadow
+          shadow-mapSize-width={2048}
+          shadow-mapSize-height={2048}
+          shadow-bias={-0.0001}
+          shadow-camera-near={1.0}
+          shadow-camera-far={160}
+          shadow-camera-left={-40}
+          shadow-camera-right={40}
+          shadow-camera-top={40}
+          shadow-camera-bottom={-40}
+        />
+        {/* Regolith Diffuse Albedo Bounce Light: Charcoal-gray upward scatter from lunar ground */}
+        <directionalLight position={[0, -1, 0]} intensity={0.28} color="#94a3b8" />
+        {/* Earthrise Blue Albedo Ambient Vista Light */}
+        <directionalLight position={[60, 95, -160]} intensity={0.24} color="#60a5fa" />
+        <pointLight position={[0, 14.0, 0]} intensity={2.0} distance={65} color="#e0f2fe" />
 
         {/* Perimeter Blast Shields (Matching Starfield Lunar Base Reference) */}
         {[-8, -4, 0, 4, 8].map((x) => (
