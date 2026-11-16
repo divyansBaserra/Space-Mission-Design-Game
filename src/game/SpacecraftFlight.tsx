@@ -126,6 +126,47 @@ export function SpacecraftFlight({
     };
   }, []);
 
+  // Procedural micro-scratch and dust roughness map for cockpit canopy glass
+  const glassTexture = useMemo(() => {
+    if (typeof window === "undefined") return null;
+    const canvas = document.createElement("canvas");
+    canvas.width = 512;
+    canvas.height = 512;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return null;
+
+    ctx.fillStyle = "#161616";
+    ctx.fillRect(0, 0, 512, 512);
+
+    // Fine linear micro-scratches along canopy wiper arc
+    ctx.strokeStyle = "rgba(200, 200, 200, 0.16)";
+    ctx.lineWidth = 0.75;
+    for (let i = 0; i < 85; i++) {
+      ctx.beginPath();
+      const x = Math.random() * 512;
+      const y = Math.random() * 512;
+      const len = 12 + Math.random() * 40;
+      const angle = Math.PI / 4 + (Math.random() - 0.5) * 0.35;
+      ctx.moveTo(x, y);
+      ctx.lineTo(x + Math.cos(angle) * len, y + Math.sin(angle) * len);
+      ctx.stroke();
+    }
+
+    // Micro-meteoroid dust pitting
+    ctx.fillStyle = "rgba(230, 230, 230, 0.24)";
+    for (let i = 0; i < 160; i++) {
+      const px = Math.random() * 512;
+      const py = Math.random() * 512;
+      ctx.fillRect(px, py, 1.2, 1.2);
+    }
+
+    const tex = new THREE.CanvasTexture(canvas);
+    tex.wrapS = THREE.RepeatWrapping;
+    tex.wrapT = THREE.RepeatWrapping;
+    tex.repeat.set(2, 2);
+    return tex;
+  }, []);
+
   // Sync state changes from props
   useEffect(() => {
     if (gameState.spacecraft.cameraViewMode) {
@@ -958,18 +999,51 @@ export function SpacecraftFlight({
           <meshStandardMaterial color="#0f172a" metalness={0.8} roughness={0.3} />
         </mesh>
 
-        {/* Optical Glass Canopy Shield with PBR Refraction */}
+        {/* Optical Glass Canopy Shield with PBR Refraction & Micro-Scratch Texture */}
         <mesh position={[0, 0.32, -0.52]} rotation={[0.45, 0, 0]}>
           <planeGeometry args={[1.28, 0.65]} />
           <meshPhysicalMaterial
             color="#e0f2fe"
             transparent
+            opacity={0.22}
+            roughness={0.12}
+            roughnessMap={glassTexture ?? undefined}
+            metalness={0.06}
+            transmission={0.92}
+            ior={1.52}
+            thickness={0.85}
+            reflectivity={0.68}
+            clearcoat={0.6}
+            clearcoatRoughness={0.12}
+            side={THREE.DoubleSide}
+          />
+        </mesh>
+
+        {/* Left Canopy Quarter-Glass Pane */}
+        <mesh position={[-0.62, 0.28, -0.42]} rotation={[0.38, -0.52, 0.12]}>
+          <planeGeometry args={[0.42, 0.58]} />
+          <meshPhysicalMaterial
+            color="#e0f2fe"
+            transparent
             opacity={0.18}
-            roughness={0.06}
-            metalness={0.1}
-            transmission={0.94}
-            ior={1.46}
-            reflectivity={0.6}
+            roughness={0.12}
+            roughnessMap={glassTexture ?? undefined}
+            transmission={0.92}
+            ior={1.52}
+            side={THREE.DoubleSide}
+          />
+        </mesh>
+        {/* Right Canopy Quarter-Glass Pane */}
+        <mesh position={[0.62, 0.28, -0.42]} rotation={[0.38, 0.52, -0.12]}>
+          <planeGeometry args={[0.42, 0.58]} />
+          <meshPhysicalMaterial
+            color="#e0f2fe"
+            transparent
+            opacity={0.18}
+            roughness={0.12}
+            roughnessMap={glassTexture ?? undefined}
+            transmission={0.92}
+            ior={1.52}
             side={THREE.DoubleSide}
           />
         </mesh>
