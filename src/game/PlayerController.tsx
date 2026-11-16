@@ -81,9 +81,18 @@ export function PlayerController({
     }
   }, [gameState.controlMode]);
 
-  // Clean reset on mission restart
+  // Clean reset on mission restart or Hangar Mode initialization
   useEffect(() => {
-    if (gameState.step === "BRIEFING" && gameState.missionMetSeconds === 0) {
+    if (gameState.step === "HANGAR_ASSEMBLY" && gameState.missionMetSeconds <= 1) {
+      playerPosRef.current.set(0, 0, 3.2);
+      velocityRef.current.set(0, 0, 0);
+      yawRef.current = Math.PI; // Face north towards central assembly berth (Z = 0.5)
+      pitchRef.current = 0;
+      rollRef.current = 0;
+      isGroundedRef.current = true;
+      camera.position.set(0, 1.65, 3.2);
+      camera.rotation.set(0, Math.PI, 0);
+    } else if (gameState.step === "BRIEFING" && gameState.missionMetSeconds === 0) {
       playerPosRef.current.set(0, 0, 9);
       velocityRef.current.set(0, 0, 0);
       yawRef.current = 0;
@@ -129,10 +138,26 @@ export function PlayerController({
         onEquipItem?.("SBAND_ANTENNA");
       }
 
-      // Flashlight toggle
+      // Flashlight toggle or Hangar Solar Deployment toggle
       if (e.code === "KeyF") {
+        if (gameState.step === "HANGAR_ASSEMBLY") {
+          onInteract("hangar_solar_toggle");
+          return;
+        }
         onToggleFlashlight();
         soundManager.playFlashlight();
+      }
+
+      // Hangar Quick Actions
+      if (gameState.step === "HANGAR_ASSEMBLY") {
+        if (e.code === "KeyR") {
+          onInteract("hangar_static_fire");
+          return;
+        }
+        if (e.code === "KeyL") {
+          onInteract("hangar_launch");
+          return;
+        }
       }
 
       // Interaction key
@@ -590,6 +615,58 @@ export function PlayerController({
         targetPrompt = gameState.satellite.diagnosticRun
           ? "[E] Enter Spacecraft Cockpit (Prepare for Flight)"
           : "Orbital Shuttle Standby (Satellite Repair Required First)";
+      }
+
+      // 9. HANGAR SANDBOX STATIONS (Workstations around Assembly Bay)
+      if (gameState.step === "HANGAR_ASSEMBLY" || p.z < 6.0) {
+        // Station 1: Chassis Selection Workstation ([-3.7, 0, -1.8])
+        const distChassisWs = p.distanceTo(new THREE.Vector3(-3.5, 0, -1.8));
+        if (distChassisWs < 2.2) {
+          targetId = "hangar_chassis";
+          targetPrompt = `[E] Cycle Spacecraft Chassis (Current: ${gameState.hangarCraft?.chassis || "3U"})`;
+        }
+
+        // Station 2: Solar Array Workstation ([3.7, 0, -1.8])
+        const distSolarWs = p.distanceTo(new THREE.Vector3(3.5, 0, -1.8));
+        if (distSolarWs < 2.2) {
+          targetId = "hangar_solar";
+          targetPrompt = `[E] Cycle Solar Arrays (Current: ${gameState.hangarCraft?.solar || "SINGLE_WING"})`;
+        }
+
+        // Station 3: Propulsion Workstation ([3.7, 0, 1.8])
+        const distPropWs = p.distanceTo(new THREE.Vector3(3.5, 0, 1.8));
+        if (distPropWs < 2.2) {
+          targetId = "hangar_propulsion";
+          targetPrompt = `[E] Cycle Propulsion Engine (Current: ${gameState.hangarCraft?.propulsion || "HYDRAZINE"})`;
+        }
+
+        // Station 4: Science Payload Workstation ([-3.7, 0, 1.8])
+        const distPayloadWs = p.distanceTo(new THREE.Vector3(-3.5, 0, 1.8));
+        if (distPayloadWs < 2.2) {
+          targetId = "hangar_payload";
+          targetPrompt = `[E] Cycle Mission Payload (Current: ${gameState.hangarCraft?.payload || "IMAGER"})`;
+        }
+
+        // Station 5: Telecom Relay Workstation ([-3.7, 0, 3.8])
+        const distTelecomWs = p.distanceTo(new THREE.Vector3(-3.5, 0, 3.8));
+        if (distTelecomWs < 2.2) {
+          targetId = "hangar_telecom";
+          targetPrompt = `[E] Cycle Telecom Transceiver (Current: ${gameState.hangarCraft?.telecom || "SBAND"})`;
+        }
+
+        // Station 6: Static Fire Propulsion Stand ([0, 0, 2.2])
+        const distStaticFire = p.distanceTo(new THREE.Vector3(0, 0, 2.2));
+        if (distStaticFire < 2.0) {
+          targetId = "hangar_static_fire";
+          targetPrompt = "[E / R] Static-Fire Thruster Test Plume";
+        }
+
+        // Station 7: Departure / Launch Airlock Gate ([0, 0, -4.6])
+        const distLaunchGate = p.distanceTo(new THREE.Vector3(0, 0, -4.6));
+        if (distLaunchGate < 2.4) {
+          targetId = "hangar_launch";
+          targetPrompt = "[E / L] Launch Spacecraft to 3D Orbit";
+        }
       }
     }
 

@@ -22,6 +22,8 @@ interface HUDProps {
   onToggleFlashlight?: () => void;
   onToggleControlsOverlay?: () => void;
   onToggleSector?: () => void;
+  onSelectFlightContract?: (contractId: string) => void;
+  onInteractHangar?: (targetId: string) => void;
 }
 
 export function HUD({
@@ -42,6 +44,8 @@ export function HUD({
   onToggleFlashlight,
   onToggleControlsOverlay,
   onToggleSector,
+  onSelectFlightContract,
+  onInteractHangar,
 }: HUDProps) {
   const [hasEntered, setHasEntered] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
@@ -671,6 +675,45 @@ export function HUD({
                   </div>
                 </div>
               )}
+
+              {/* Tactical In-Cockpit Flight Contract Selector Dock */}
+              <div
+                style={{
+                  display: "flex",
+                  gap: "6px",
+                  marginTop: "6px",
+                  pointerEvents: "auto",
+                  flexWrap: "wrap",
+                }}
+              >
+                {[
+                  { id: "ARC_600", label: "ARC-600", name: "LEO Sentinel" },
+                  { id: "ISS_400", label: "ISS-400", name: "Gateway Docking" },
+                  { id: "LUN_PAD1", label: "LUN-PAD1", name: "Lunar Touchdown" },
+                  { id: "RET_100", label: "RET-100", name: "Atmosphere Entry" },
+                ].map((contract) => {
+                  const isSelected = (gameState.activeFlightContract || "ARC_600") === contract.id;
+                  return (
+                    <button
+                      key={contract.id}
+                      onClick={() => onSelectFlightContract?.(contract.id)}
+                      style={{
+                        padding: "3px 8px",
+                        backgroundColor: isSelected ? "rgba(2, 132, 199, 0.45)" : "rgba(30, 41, 59, 0.7)",
+                        border: isSelected ? "1px solid #38bdf8" : "1px solid rgba(255, 255, 255, 0.15)",
+                        color: isSelected ? "#38bdf8" : "#94a3b8",
+                        fontSize: "9px",
+                        fontWeight: isSelected ? 700 : 500,
+                        cursor: "pointer",
+                        borderRadius: "2px",
+                        transition: "all 0.15s ease",
+                      }}
+                    >
+                      <span style={{ fontWeight: 700 }}>[{contract.label}]</span> {contract.name}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
             {/* Right Cluster: Disembark & Cockpit Flight Controls Legend */}
@@ -835,6 +878,162 @@ export function HUD({
                 <span>Shift Sprint</span>
                 <span>Space Moon Jump</span>
                 <span>E Interact</span>
+              </div>
+            </div>
+          </>
+        ) : gameState.step === "HANGAR_ASSEMBLY" ? (
+          /* 3D SPACECRAFT CONSTRUCTION HANGAR // ASSEMBLY SANDBOX HUD */
+          <>
+            {/* Left Cluster: Live Spacecraft Telemetry Specs */}
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: "6px",
+                backgroundColor: "rgba(18, 22, 28, 0.92)",
+                border: "1px solid rgba(56, 189, 248, 0.3)",
+                padding: "10px 14px",
+                minWidth: "240px",
+                backdropFilter: "blur(6px)",
+                pointerEvents: "auto",
+              }}
+            >
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "10px", color: "#64748b", borderBottom: "1px solid rgba(255,255,255,0.08)", paddingBottom: "4px" }}>
+                <span>MODULAR SPACECRAFT STATS</span>
+                <span style={{ color: "#38bdf8", fontWeight: 700 }}>VERIFIED JPL CML-4</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "11px" }}>
+                <span style={{ color: "#94a3b8" }}>CHASSIS BUS:</span>
+                <span className="font-mono" style={{ color: "#f8fafc", fontWeight: 700 }}>
+                  {gameState.hangarCraft?.chassis || "3U"}
+                </span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "11px" }}>
+                <span style={{ color: "#94a3b8" }}>SOLAR ARRAY:</span>
+                <span className="font-mono" style={{ color: "#38bdf8", fontWeight: 700 }}>
+                  {gameState.hangarCraft?.solar || "SINGLE_WING"} ({gameState.hangarCraft?.solarDeployed ? "DEPLOYED" : "FOLDED"})
+                </span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "11px" }}>
+                <span style={{ color: "#94a3b8" }}>PROPULSION:</span>
+                <span className="font-mono" style={{ color: "#f59e0b", fontWeight: 700 }}>
+                  {gameState.hangarCraft?.propulsion || "HYDRAZINE"}
+                </span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "11px" }}>
+                <span style={{ color: "#94a3b8" }}>PAYLOAD / RF:</span>
+                <span className="font-mono" style={{ color: "#a855f7", fontWeight: 700 }}>
+                  {gameState.hangarCraft?.payload || "IMAGER"} / {gameState.hangarCraft?.telecom || "SBAND"}
+                </span>
+              </div>
+            </div>
+
+            {/* Center Cluster: Fast Engineering Cycle & Launch Controls */}
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: "6px",
+                backgroundColor: "rgba(18, 22, 28, 0.92)",
+                border: "1px solid rgba(255, 255, 255, 0.15)",
+                padding: "8px 16px",
+                backdropFilter: "blur(6px)",
+                pointerEvents: "auto",
+                alignItems: "center",
+              }}
+            >
+              <div style={{ fontSize: "10px", color: "#38bdf8", fontWeight: 700, letterSpacing: "0.06em" }}>
+                3D HANGAR QUICK ACTIONS &amp; FLIGHT LAUNCH
+              </div>
+              <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", justifyContent: "center" }}>
+                <button
+                  onClick={() => onInteractHangar?.("hangar_chassis")}
+                  style={{
+                    padding: "5px 10px",
+                    backgroundColor: "rgba(30, 41, 59, 0.8)",
+                    border: "1px solid rgba(56, 189, 248, 0.4)",
+                    color: "#f8fafc",
+                    fontSize: "10px",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                  }}
+                >
+                  [CHASSIS: {gameState.hangarCraft?.chassis || "3U"}]
+                </button>
+                <button
+                  onClick={() => onInteractHangar?.("hangar_solar_toggle")}
+                  style={{
+                    padding: "5px 10px",
+                    backgroundColor: gameState.hangarCraft?.solarDeployed ? "rgba(14, 116, 144, 0.8)" : "rgba(30, 41, 59, 0.8)",
+                    border: "1px solid rgba(56, 189, 248, 0.4)",
+                    color: "#f8fafc",
+                    fontSize: "10px",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                  }}
+                >
+                  [F] {gameState.hangarCraft?.solarDeployed ? "WINGS: DEPLOYED" : "WINGS: FOLDED"}
+                </button>
+                <button
+                  onClick={() => onInteractHangar?.("hangar_static_fire")}
+                  style={{
+                    padding: "5px 10px",
+                    backgroundColor: gameState.hangarCraft?.isThrusterFiring ? "rgba(220, 38, 38, 0.9)" : "rgba(180, 83, 9, 0.8)",
+                    border: "1px solid #f59e0b",
+                    color: "#fef3c7",
+                    fontSize: "10px",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                    boxShadow: gameState.hangarCraft?.isThrusterFiring ? "0 0 15px #ef4444" : "none",
+                  }}
+                >
+                  [R] {gameState.hangarCraft?.isThrusterFiring ? "PLUME FIRING!" : "TEST THRUSTER PLUME"}
+                </button>
+                <button
+                  onClick={() => onInteractHangar?.("hangar_launch")}
+                  style={{
+                    padding: "5px 12px",
+                    backgroundColor: "rgba(22, 101, 52, 0.9)",
+                    border: "1px solid #22c55e",
+                    color: "#86efac",
+                    fontSize: "10px",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                    boxShadow: "0 0 12px rgba(34, 197, 94, 0.4)",
+                  }}
+                >
+                  [L] LAUNCH TO 3D FLIGHT SIM →
+                </button>
+              </div>
+            </div>
+
+            {/* Right Cluster: Movement & Interaction Keyguide */}
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: "6px",
+                pointerEvents: "auto",
+              }}
+            >
+              <div
+                style={{
+                  backgroundColor: "rgba(18, 22, 28, 0.9)",
+                  border: "1px solid rgba(255, 255, 255, 0.12)",
+                  padding: "8px 12px",
+                  fontSize: "10px",
+                  color: "#94a3b8",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "4px",
+                }}
+              >
+                <div style={{ color: "#38bdf8", fontWeight: 700 }}>HANGAR CONTROLS</div>
+                <div>WASD · Walk around bays</div>
+                <div>[E] · Interact at console</div>
+                <div>[F] · Toggle solar wings</div>
+                <div>[R] · Static fire thrusters</div>
+                <div>[L] · Launch to 3D orbit</div>
               </div>
             </div>
           </>

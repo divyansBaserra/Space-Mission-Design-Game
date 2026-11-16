@@ -97,6 +97,464 @@ function SpaceDust({ count = 280 }: { count?: number }) {
   );
 }
 
+function WorkstationConsole({
+  position,
+  rotation,
+  title,
+  subtitle,
+  themeColor,
+  iconType,
+}: {
+  position: [number, number, number];
+  rotation: [number, number, number];
+  title: string;
+  subtitle: string;
+  themeColor: string;
+  iconType: "CHASSIS" | "SOLAR" | "PROPULSION" | "PAYLOAD" | "TELECOM";
+}) {
+  return (
+    <group position={position} rotation={rotation}>
+      {/* Console Desk Pedestal */}
+      <mesh position={[0, 0.45, 0]} castShadow receiveShadow>
+        <boxGeometry args={[0.9, 0.9, 0.6]} />
+        <meshStandardMaterial color="#1e293b" roughness={0.5} metalness={0.5} />
+      </mesh>
+      {/* Upper Sloped Surface */}
+      <mesh position={[0, 0.95, 0]} rotation={[-Math.PI / 4, 0, 0]}>
+        <boxGeometry args={[0.85, 0.05, 0.45]} />
+        <meshStandardMaterial color="#0f172a" roughness={0.3} metalness={0.6} />
+      </mesh>
+      {/* Holographic Interactive Display Screen */}
+      <mesh position={[0, 1.45, 0]}>
+        <planeGeometry args={[0.7, 0.45]} />
+        <meshBasicMaterial color={themeColor} transparent opacity={0.35} side={THREE.DoubleSide} />
+      </mesh>
+      {/* Holographic Wireframe Icon */}
+      <group position={[0, 1.45, 0.02]} scale={[0.15, 0.15, 0.15]}>
+        {iconType === "CHASSIS" && (
+          <mesh>
+            <boxGeometry args={[1, 2, 1]} />
+            <meshBasicMaterial color={themeColor} wireframe />
+          </mesh>
+        )}
+        {iconType === "SOLAR" && (
+          <mesh>
+            <boxGeometry args={[2.5, 1, 0.1]} />
+            <meshBasicMaterial color={themeColor} wireframe />
+          </mesh>
+        )}
+        {iconType === "PROPULSION" && (
+          <mesh rotation={[Math.PI, 0, 0]}>
+            <coneGeometry args={[0.8, 1.5, 8]} />
+            <meshBasicMaterial color={themeColor} wireframe />
+          </mesh>
+        )}
+        {iconType === "PAYLOAD" && (
+          <mesh>
+            <cylinderGeometry args={[0.8, 0.8, 1.2, 8]} />
+            <meshBasicMaterial color={themeColor} wireframe />
+          </mesh>
+        )}
+        {iconType === "TELECOM" && (
+          <mesh>
+            <sphereGeometry args={[1.0, 8, 8, 0, Math.PI * 2, 0, Math.PI / 2]} />
+            <meshBasicMaterial color={themeColor} wireframe side={THREE.DoubleSide} />
+          </mesh>
+        )}
+      </group>
+      <pointLight position={[0, 1.5, 0.1]} intensity={0.8} distance={2.5} color={themeColor} />
+    </group>
+  );
+}
+
+function HangarSandboxBay({ gameState }: { gameState: GameState }) {
+  const craft = gameState.hangarCraft || {
+    chassis: "3U",
+    solar: "SINGLE_WING",
+    solarDeployed: true,
+    propulsion: "HYDRAZINE",
+    payload: "IMAGER",
+    telecom: "SBAND",
+    isThrusterFiring: false,
+  };
+
+  const levitateGroupRef = useRef<THREE.Group>(null);
+  const thrusterPlumeRef = useRef<THREE.Group>(null);
+
+  useFrame(({ clock }) => {
+    const t = clock.getElapsedTime();
+    if (levitateGroupRef.current) {
+      levitateGroupRef.current.position.y = 1.35 + Math.sin(t * 1.5) * 0.04;
+      levitateGroupRef.current.rotation.y = t * 0.25;
+    }
+    if (thrusterPlumeRef.current && craft.isThrusterFiring) {
+      thrusterPlumeRef.current.scale.set(
+        1.0 + Math.random() * 0.3,
+        1.0 + Math.random() * 0.5,
+        1.0 + Math.random() * 0.3
+      );
+    }
+  });
+
+  return (
+    <group position={[0, 0, 0.5]}>
+      {/* 1. CENTRAL MAGNETIC RIG PEDESTAL */}
+      <group position={[0, 0, 0]}>
+        <mesh position={[0, 0.2, 0]} castShadow receiveShadow>
+          <cylinderGeometry args={[1.2, 1.4, 0.4, 24]} />
+          <meshStandardMaterial color="#0f172a" roughness={0.4} metalness={0.7} />
+        </mesh>
+        {/* Glowing Magnetic Emitter Rings */}
+        <mesh position={[0, 0.41, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+          <ringGeometry args={[0.7, 1.15, 32]} />
+          <meshBasicMaterial color="#38bdf8" side={THREE.DoubleSide} />
+        </mesh>
+        <mesh position={[0, 0.42, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+          <ringGeometry args={[0.3, 0.55, 32]} />
+          <meshBasicMaterial color="#0284c7" side={THREE.DoubleSide} />
+        </mesh>
+        <pointLight position={[0, 0.8, 0]} intensity={1.8} distance={4} color="#38bdf8" />
+
+        {/* 4 Angled Mag-Lev Projectors */}
+        {[0, Math.PI / 2, Math.PI, (3 * Math.PI) / 2].map((angle, i) => (
+          <group key={`mag-proj-${i}`} position={[Math.cos(angle) * 1.25, 0.25, Math.sin(angle) * 1.25]} rotation={[0, -angle, 0.3]}>
+            <mesh>
+              <boxGeometry args={[0.18, 0.35, 0.25]} />
+              <meshStandardMaterial color="#334155" metalness={0.8} roughness={0.2} />
+            </mesh>
+            <mesh position={[0, 0.18, 0]}>
+              <cylinderGeometry args={[0.06, 0.08, 0.06, 12]} />
+              <meshBasicMaterial color="#38bdf8" />
+            </mesh>
+          </group>
+        ))}
+      </group>
+
+      {/* 2. LEVITATING MODULAR SPACECRAFT */}
+      <group ref={levitateGroupRef} position={[0, 1.35, 0]}>
+        {/* Chassis Model */}
+        {craft.chassis === "1U" && (
+          <group scale={[0.9, 0.9, 0.9]}>
+            <mesh castShadow>
+              <boxGeometry args={[0.5, 0.5, 0.5]} />
+              <meshStandardMaterial color="#d97706" metalness={0.9} roughness={0.2} />
+            </mesh>
+            {[-0.26, 0.26].map((x) =>
+              [-0.26, 0.26].map((z) => (
+                <mesh key={`r1u-${x}-${z}`} position={[x, 0, z]}>
+                  <boxGeometry args={[0.04, 0.52, 0.04]} />
+                  <meshStandardMaterial color="#94a3b8" metalness={0.9} roughness={0.1} />
+                </mesh>
+              ))
+            )}
+            <Suspense fallback={null}>
+              <NASAModelObject
+                url="/assets/models/nasa/cubesat-1-ru-generic.glb"
+                position={[0, 0, 0]}
+                scale={[0.012, 0.012, 0.012]}
+              />
+            </Suspense>
+          </group>
+        )}
+
+        {craft.chassis === "3U" && (
+          <group scale={[0.85, 0.85, 0.85]}>
+            <mesh castShadow>
+              <boxGeometry args={[0.45, 1.35, 0.45]} />
+              <meshStandardMaterial color="#d97706" metalness={0.85} roughness={0.25} />
+            </mesh>
+            {[-0.23, 0.23].map((x) =>
+              [-0.23, 0.23].map((z) => (
+                <mesh key={`r3u-${x}-${z}`} position={[x, 0, z]}>
+                  <boxGeometry args={[0.04, 1.38, 0.04]} />
+                  <meshStandardMaterial color="#94a3b8" metalness={0.9} roughness={0.1} />
+                </mesh>
+              ))
+            )}
+            <Suspense fallback={null}>
+              <NASAModelObject
+                url="/assets/models/nasa/cubesat-icecube.glb"
+                position={[0, 0, 0]}
+                scale={[0.016, 0.016, 0.016]}
+              />
+            </Suspense>
+          </group>
+        )}
+
+        {craft.chassis === "6U" && (
+          <group scale={[0.8, 0.8, 0.8]}>
+            <mesh castShadow>
+              <boxGeometry args={[0.9, 1.35, 0.45]} />
+              <meshStandardMaterial color="#1e293b" metalness={0.7} roughness={0.3} />
+            </mesh>
+            <mesh position={[0, 0, 0.23]}>
+              <planeGeometry args={[0.86, 1.3]} />
+              <meshStandardMaterial color="#eab308" metalness={0.9} roughness={0.2} />
+            </mesh>
+            {[-0.46, 0.46].map((x) =>
+              [-0.23, 0.23].map((z) => (
+                <mesh key={`r6u-${x}-${z}`} position={[x, 0, z]}>
+                  <boxGeometry args={[0.04, 1.38, 0.04]} />
+                  <meshStandardMaterial color="#64748b" metalness={0.85} roughness={0.2} />
+                </mesh>
+              ))
+            )}
+          </group>
+        )}
+
+        {craft.chassis === "ORBITER" && (
+          <group position={[0, -0.3, 0]} scale={[0.08, 0.08, 0.08]}>
+            <Suspense fallback={null}>
+              <NASAModelObject
+                url="/assets/models/nasa/space-shuttle-a.glb"
+                position={[0, 0, 0]}
+                rotation={[0, Math.PI, 0]}
+                scale={[1, 1, 1]}
+              />
+            </Suspense>
+          </group>
+        )}
+
+        {/* Solar Wing Assemblies (Single or Dual Wings) */}
+        {craft.solar === "SINGLE_WING" && (
+          <group
+            position={[-0.45, 0, 0]}
+            rotation={[0, 0, craft.solarDeployed ? 0 : Math.PI / 2]}
+            scale={[craft.solarDeployed ? 1 : 0.25, 1, 1]}
+          >
+            <mesh position={[-0.55, 0, 0]}>
+              <boxGeometry args={[1.1, 0.8, 0.03]} />
+              <meshStandardMaterial color="#1e3a8a" metalness={0.85} roughness={0.15} />
+            </mesh>
+            <mesh position={[-0.55, 0, 0.02]}>
+              <planeGeometry args={[1.05, 0.74]} />
+              <meshBasicMaterial color="#0284c7" />
+            </mesh>
+            <Suspense fallback={null}>
+              <NASAModelObject
+                url="/assets/models/nasa/satellite-wing.glb"
+                position={[-0.6, 0, 0]}
+                scale={[0.015, 0.015, 0.015]}
+              />
+            </Suspense>
+          </group>
+        )}
+
+        {craft.solar === "DUAL_WING" && (
+          <>
+            {/* Left Wing */}
+            <group
+              position={[-0.45, 0, 0]}
+              rotation={[0, 0, craft.solarDeployed ? 0 : Math.PI / 2]}
+              scale={[craft.solarDeployed ? 1 : 0.25, 1, 1]}
+            >
+              <mesh position={[-0.55, 0, 0]}>
+                <boxGeometry args={[1.1, 0.8, 0.03]} />
+                <meshStandardMaterial color="#1e3a8a" metalness={0.85} roughness={0.15} />
+              </mesh>
+              <mesh position={[-0.55, 0, 0.02]}>
+                <planeGeometry args={[1.05, 0.74]} />
+                <meshBasicMaterial color="#0284c7" />
+              </mesh>
+            </group>
+            {/* Right Wing */}
+            <group
+              position={[0.45, 0, 0]}
+              rotation={[0, 0, craft.solarDeployed ? 0 : -Math.PI / 2]}
+              scale={[craft.solarDeployed ? 1 : 0.25, 1, 1]}
+            >
+              <mesh position={[0.55, 0, 0]}>
+                <boxGeometry args={[1.1, 0.8, 0.03]} />
+                <meshStandardMaterial color="#1e3a8a" metalness={0.85} roughness={0.15} />
+              </mesh>
+              <mesh position={[0.55, 0, 0.02]}>
+                <planeGeometry args={[1.05, 0.74]} />
+                <meshBasicMaterial color="#0284c7" />
+              </mesh>
+            </group>
+          </>
+        )}
+
+        {/* Propulsion Thruster Nozzles & Exhaust Plume */}
+        {craft.propulsion !== "NONE" && (
+          <group position={[0, -0.72, 0]}>
+            <mesh rotation={[Math.PI, 0, 0]}>
+              <coneGeometry args={[0.16, 0.28, 16]} />
+              <meshStandardMaterial color="#475569" metalness={0.9} roughness={0.2} />
+            </mesh>
+            {craft.isThrusterFiring && (
+              <group ref={thrusterPlumeRef} position={[0, -0.4, 0]}>
+                <pointLight intensity={3.5} distance={6} color="#38bdf8" />
+                <mesh rotation={[Math.PI, 0, 0]}>
+                  <cylinderGeometry args={[0.04, 0.22, 0.75, 16]} />
+                  <meshBasicMaterial color="#e0f2fe" />
+                </mesh>
+                <mesh rotation={[Math.PI, 0, 0]}>
+                  <cylinderGeometry args={[0.08, 0.35, 0.85, 16]} />
+                  <meshBasicMaterial color="#38bdf8" transparent opacity={0.65} />
+                </mesh>
+              </group>
+            )}
+          </group>
+        )}
+
+        {/* Payload Module on Top (+Y) */}
+        {craft.payload === "IMAGER" && (
+          <group position={[0, 0.75, 0]}>
+            <mesh>
+              <cylinderGeometry args={[0.14, 0.16, 0.24, 16]} />
+              <meshStandardMaterial color="#1e293b" metalness={0.8} roughness={0.3} />
+            </mesh>
+            <mesh position={[0, 0.125, 0]}>
+              <circleGeometry args={[0.12, 16]} />
+              <meshStandardMaterial color="#38bdf8" metalness={0.9} roughness={0.05} />
+            </mesh>
+          </group>
+        )}
+        {craft.payload === "LIDAR" && (
+          <group position={[0, 0.75, 0]}>
+            <mesh>
+              <cylinderGeometry args={[0.15, 0.15, 0.22, 6]} />
+              <meshStandardMaterial color="#f59e0b" metalness={0.8} roughness={0.2} />
+            </mesh>
+            <mesh position={[0, 0.12, 0]}>
+              <circleGeometry args={[0.11, 6]} />
+              <meshBasicMaterial color="#ef4444" />
+            </mesh>
+          </group>
+        )}
+        {craft.payload === "PLASMA" && (
+          <group position={[0, 0.75, 0]}>
+            <mesh position={[0.2, 0.2, 0]} rotation={[0, 0, -0.6]}>
+              <cylinderGeometry args={[0.015, 0.015, 0.6, 8]} />
+              <meshStandardMaterial color="#94a3b8" metalness={0.9} />
+            </mesh>
+            <mesh position={[-0.2, 0.2, 0]} rotation={[0, 0, 0.6]}>
+              <cylinderGeometry args={[0.015, 0.015, 0.6, 8]} />
+              <meshStandardMaterial color="#94a3b8" metalness={0.9} />
+            </mesh>
+          </group>
+        )}
+
+        {/* Telecom Transceiver */}
+        {craft.telecom === "XBAND" && (
+          <group position={[0, 0.72, -0.25]} rotation={[-Math.PI / 4, 0, 0]}>
+            <mesh>
+              <sphereGeometry args={[0.24, 16, 12, 0, Math.PI * 2, 0, Math.PI / 2]} />
+              <meshStandardMaterial color="#f8fafc" metalness={0.6} roughness={0.2} side={THREE.DoubleSide} />
+            </mesh>
+            <mesh position={[0, 0.12, 0]}>
+              <cylinderGeometry args={[0.015, 0.015, 0.2, 8]} />
+              <meshStandardMaterial color="#d97706" />
+            </mesh>
+          </group>
+        )}
+        {craft.telecom === "SBAND" && (
+          <mesh position={[0.25, 0.4, 0.24]} rotation={[0, 0, 0]}>
+            <boxGeometry args={[0.16, 0.16, 0.04]} />
+            <meshStandardMaterial color="#eab308" metalness={0.9} roughness={0.15} />
+          </mesh>
+        )}
+
+        {/* Floating Holographic Specification Rings */}
+        <mesh position={[0, 0, 0]} rotation={[Math.PI / 2, 0, 0]}>
+          <ringGeometry args={[1.5, 1.54, 32]} />
+          <meshBasicMaterial color="#38bdf8" transparent opacity={0.35} side={THREE.DoubleSide} />
+        </mesh>
+      </group>
+
+      {/* 3. WORKSTATION CONSOLES AROUND THE HANGAR */}
+      {/* Console 1: Chassis Selection Bay */}
+      <WorkstationConsole
+        position={[-3.7, 0, -1.8]}
+        rotation={[0, Math.PI / 2, 0]}
+        title="CHASSIS WORKSTATION"
+        subtitle={`Current: ${craft.chassis}`}
+        themeColor="#38bdf8"
+        iconType="CHASSIS"
+      />
+
+      {/* Console 2: Solar Array Bay */}
+      <WorkstationConsole
+        position={[3.7, 0, -1.8]}
+        rotation={[0, -Math.PI / 2, 0]}
+        title="SOLAR WORKSTATION"
+        subtitle={`Current: ${craft.solar} (${craft.solarDeployed ? "DEPLOYED" : "FOLDED"})`}
+        themeColor="#38bdf8"
+        iconType="SOLAR"
+      />
+
+      {/* Console 3: Propulsion Bay */}
+      <WorkstationConsole
+        position={[3.7, 0, 1.8]}
+        rotation={[0, -Math.PI / 2, 0]}
+        title="PROPULSION WORKSTATION"
+        subtitle={`Current: ${craft.propulsion}`}
+        themeColor="#f59e0b"
+        iconType="PROPULSION"
+      />
+
+      {/* Console 4: Science Payload Bay */}
+      <WorkstationConsole
+        position={[-3.7, 0, 1.8]}
+        rotation={[0, Math.PI / 2, 0]}
+        title="PAYLOAD WORKSTATION"
+        subtitle={`Current: ${craft.payload}`}
+        themeColor="#a855f7"
+        iconType="PAYLOAD"
+      />
+
+      {/* Console 5: Telecom Relay Bay */}
+      <WorkstationConsole
+        position={[-3.7, 0, 3.8]}
+        rotation={[0, Math.PI / 2, 0]}
+        title="TELECOM WORKSTATION"
+        subtitle={`Current: ${craft.telecom}`}
+        themeColor="#10b981"
+        iconType="TELECOM"
+      />
+
+      {/* Console 6: Static Fire Propulsion Stand */}
+      <group position={[0, 0, 2.2]}>
+        <mesh position={[0, 0.45, 0]} castShadow>
+          <boxGeometry args={[0.7, 0.9, 0.5]} />
+          <meshStandardMaterial color="#1e293b" roughness={0.5} metalness={0.6} />
+        </mesh>
+        <mesh position={[0, 0.95, 0]} rotation={[-Math.PI / 4, 0, 0]}>
+          <boxGeometry args={[0.65, 0.05, 0.4]} />
+          <meshStandardMaterial color="#0f172a" roughness={0.3} metalness={0.7} />
+        </mesh>
+        <mesh position={[0, 1.05, -0.05]}>
+          <cylinderGeometry args={[0.08, 0.08, 0.06, 16]} />
+          <meshStandardMaterial
+            color={craft.isThrusterFiring ? "#ef4444" : "#dc2626"}
+            emissive="#ef4444"
+            emissiveIntensity={craft.isThrusterFiring ? 0.9 : 0.4}
+          />
+        </mesh>
+        <pointLight position={[0, 1.3, 0]} intensity={craft.isThrusterFiring ? 2.5 : 0.6} color="#ef4444" distance={3} />
+      </group>
+
+      {/* Console 7: Departure / Launch Airlock Gate */}
+      <group position={[0, 0, -4.6]}>
+        <mesh position={[-1.2, 1.5, 0]}>
+          <boxGeometry args={[0.2, 3.0, 0.2]} />
+          <meshBasicMaterial color="#22c55e" />
+        </mesh>
+        <mesh position={[1.2, 1.5, 0]}>
+          <boxGeometry args={[0.2, 3.0, 0.2]} />
+          <meshBasicMaterial color="#22c55e" />
+        </mesh>
+        <mesh position={[0, 2.8, 0]}>
+          <boxGeometry args={[2.4, 0.2, 0.2]} />
+          <meshBasicMaterial color="#22c55e" />
+        </mesh>
+        <pointLight position={[0, 2.2, 0]} intensity={1.5} distance={5} color="#22c55e" />
+      </group>
+    </group>
+  );
+}
+
 export function StationEnvironment({
   gameState,
 }: StationEnvironmentProps) {
@@ -603,6 +1061,9 @@ export function StationEnvironment({
           />
         </Suspense>
       </group>
+
+      {/* 3D Modular Spacecraft Hangar & Construction Rig */}
+      <HangarSandboxBay gameState={gameState} />
 
       {/* Partition Wall to Airlock (Z = -5, Doorway [-1.1, 1.1]) */}
       <mesh position={[-2.85, 1.5, -5]}>

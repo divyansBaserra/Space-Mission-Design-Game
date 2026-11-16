@@ -31,6 +31,8 @@ import {
 
 type GameStage =
   | "FIRST_PERSON_GAME"
+  | "FLIGHT_SIM_GAME"
+  | "HANGAR_GAME"
   | "MAIN_MENU"
   | "MISSION_SELECT"
   | "MISSION_BRIEFING"
@@ -1259,7 +1261,35 @@ export default function SpaceMissionGame() {
         {/* Prominent Glowing NASA Evaluation Top Banner */}
         <NasaJudgesGithubBanner />
 
-        <GameManager onReturnToHub={() => setStage("MAIN_MENU")} />
+        <GameManager gameMode="ORBITAL_REPAIR" onReturnToHub={() => setStage("MAIN_MENU")} />
+      </main>
+    );
+  }
+
+  // ============================================================================
+  // STAGE 0B: 3D PILOTED FLIGHT SIMULATOR (Shuttle ORV-1 6-DOF Flight Sim)
+  // ============================================================================
+  if (stage === "FLIGHT_SIM_GAME") {
+    return (
+      <main style={{ position: "relative", width: "100vw", height: "100vh", overflow: "hidden", backgroundColor: "#06080c" }}>
+        {/* Prominent Glowing NASA Evaluation Top Banner */}
+        <NasaJudgesGithubBanner />
+
+        <GameManager gameMode="FLIGHT_SIM" onReturnToHub={() => setStage("MAIN_MENU")} />
+      </main>
+    );
+  }
+
+  // ============================================================================
+  // STAGE 0C: 3D SPACECRAFT CONSTRUCTION HANGAR & ASSEMBLY SANDBOX
+  // ============================================================================
+  if (stage === "HANGAR_GAME") {
+    return (
+      <main style={{ position: "relative", width: "100vw", height: "100vh", overflow: "hidden", backgroundColor: "#06080c" }}>
+        {/* Prominent Glowing NASA Evaluation Top Banner */}
+        <NasaJudgesGithubBanner />
+
+        <GameManager gameMode="HANGAR_SANDBOX" onReturnToHub={() => setStage("MAIN_MENU")} />
       </main>
     );
   }
@@ -1423,57 +1453,59 @@ export default function SpaceMissionGame() {
             <button
               onClick={() => {
                 soundManager.playEquip();
-                setStage("MISSION_SELECT");
+                setStage("FLIGHT_SIM_GAME");
               }}
               style={{
-                padding: "14px 20px",
-                backgroundColor: "rgba(15, 23, 42, 0.85)",
-                border: "1px solid rgba(255, 255, 255, 0.15)",
-                color: "var(--color-text-primary)",
-                fontWeight: 600,
-                fontSize: "var(--text-xs)",
+                padding: "16px 20px",
+                backgroundColor: "rgba(15, 23, 42, 0.9)",
+                border: "1px solid #38bdf8",
+                color: "#38bdf8",
+                fontWeight: 700,
+                fontSize: "var(--text-sm)",
                 textAlign: "left",
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "center",
                 transition: "all var(--duration-fast)",
                 backdropFilter: "blur(8px)",
+                boxShadow: "0 4px 18px rgba(56, 189, 248, 0.12)",
                 cursor: "pointer",
               }}
             >
               <div>
-                <div style={{ fontSize: "12px", fontWeight: 600, color: "#f8fafc" }}>2. FLIGHT CONTRACTS &amp; CAREER</div>
-                <div style={{ fontSize: "10px", color: "var(--color-text-muted)", marginTop: "2px" }}>4 Active NASA Orbital Flight Missions</div>
+                <div style={{ fontSize: "13px", fontWeight: 700, color: "#ffffff" }}>2. FLIGHT CONTRACTS &amp; CAREER (3D PILOTED FLIGHT SIM)</div>
+                <div style={{ fontSize: "11px", color: "#38bdf8", fontWeight: 500, marginTop: "2px" }}>Fly Shuttle ORV-1 · LEO Orbit, Gateway-1 Docking &amp; Lunar Touchdown</div>
               </div>
-              <span>→</span>
+              <span style={{ fontSize: "18px" }}>→</span>
             </button>
 
             <button
               onClick={() => {
                 soundManager.playEquip();
-                setActiveContractId("LEO_SSO_600KM");
-                setStage("WORKSHOP");
+                setStage("HANGAR_GAME");
               }}
               style={{
-                padding: "14px 20px",
-                backgroundColor: "rgba(15, 23, 42, 0.85)",
-                border: "1px solid rgba(255, 255, 255, 0.15)",
-                color: "var(--color-text-secondary)",
-                fontSize: "var(--text-xs)",
-                fontWeight: 500,
+                padding: "16px 20px",
+                backgroundColor: "rgba(15, 23, 42, 0.9)",
+                border: "1px solid #10b981",
+                color: "#10b981",
+                fontWeight: 700,
+                fontSize: "var(--text-sm)",
                 textAlign: "left",
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "center",
+                transition: "all var(--duration-fast)",
                 backdropFilter: "blur(8px)",
+                boxShadow: "0 4px 18px rgba(16, 185, 129, 0.12)",
                 cursor: "pointer",
               }}
             >
               <div>
-                <div style={{ fontSize: "12px", fontWeight: 600, color: "#f8fafc" }}>3. SPACECRAFT DESIGN WORKSHOP</div>
-                <div style={{ fontSize: "10px", color: "var(--color-text-muted)", marginTop: "2px" }}>Interactive PUBG-Style Vehicle Builder</div>
+                <div style={{ fontSize: "13px", fontWeight: 700, color: "#ffffff" }}>3. SPACECRAFT HANGAR (3D ZERO-G ASSEMBLY SANDBOX)</div>
+                <div style={{ fontSize: "11px", color: "#10b981", fontWeight: 500, marginTop: "2px" }}>Modular Construction Bay · Thruster Static-Fire &amp; 3D Orbital Launch</div>
               </div>
-              <span>→</span>
+              <span style={{ fontSize: "18px" }}>→</span>
             </button>
 
             <button

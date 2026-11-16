@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback, useMemo } from "react";
 import * as THREE from "three";
 import { GameCanvas } from "./GameCanvas";
 import { HUD } from "./HUD";
-import { GameState, InventoryItemId, GameSettings } from "./types";
+import { GameState, InventoryItemId, GameSettings, GameMode } from "./types";
 import { StationPhysics } from "./physics";
 import { soundManager } from "./audio";
 
@@ -68,16 +68,48 @@ const INITIAL_GAME_STATE: GameState = {
   showControlsOverlay: false,
   interactionTarget: null,
   interactionPrompt: null,
+  hangarCraft: {
+    chassis: "3U",
+    solar: "SINGLE_WING",
+    solarDeployed: true,
+    propulsion: "HYDRAZINE",
+    payload: "IMAGER",
+    telecom: "SBAND",
+    isThrusterFiring: false,
+  },
+  activeFlightContract: "ARC_600",
 };
 
 interface GameManagerProps {
   onReturnToHub?: () => void;
+  gameMode?: GameMode;
 }
 
-export function GameManager({ onReturnToHub }: GameManagerProps) {
+export function GameManager({ onReturnToHub, gameMode = "ORBITAL_REPAIR" }: GameManagerProps) {
   const physics = useMemo(() => new StationPhysics(), []);
 
-  const [gameState, setGameState] = useState<GameState>(INITIAL_GAME_STATE);
+  const [gameState, setGameState] = useState<GameState>(() => {
+    if (gameMode === "FLIGHT_SIM") {
+      return {
+        ...INITIAL_GAME_STATE,
+        controlMode: "SPACECRAFT_COCKPIT",
+        step: "COCKPIT_ORBITAL_MANEUVER",
+        substepText:
+          "3D PILOTED FLIGHT SIMULATOR · Fly Shuttle ORV-1 in LEO Orbit · Select contracts or fly freely.",
+        activeFlightContract: "ARC_600",
+      };
+    }
+    if (gameMode === "HANGAR_SANDBOX") {
+      return {
+        ...INITIAL_GAME_STATE,
+        controlMode: "ASTRONAUT",
+        step: "HANGAR_ASSEMBLY",
+        substepText:
+          "3D SPACECRAFT ASSEMBLY HANGAR · Approach workstations [E] or use controls to build & test.",
+      };
+    }
+    return INITIAL_GAME_STATE;
+  });
   const [isPointerLocked, setIsPointerLocked] = useState<boolean>(false);
   const [showBriefingModal, setShowBriefingModal] = useState<boolean>(false);
 
@@ -677,6 +709,140 @@ export function GameManager({ onReturnToHub }: GameManagerProps) {
           };
         }
 
+        // ====================================================================
+        // 13. HANGAR SANDBOX STATIONS
+        // ====================================================================
+        // Station 1: Chassis Selection
+        if (targetId === "hangar_chassis") {
+          const cycle: Record<string, "1U" | "3U" | "6U" | "ORBITER"> = {
+            "1U": "3U",
+            "3U": "6U",
+            "6U": "ORBITER",
+            "ORBITER": "1U",
+          };
+          const nextChassis = cycle[prev.hangarCraft.chassis] || "3U";
+          soundManager.playEquip();
+          return {
+            ...prev,
+            hangarCraft: { ...prev.hangarCraft, chassis: nextChassis },
+            substepText: `Chassis updated to [${nextChassis}]. Mass and internal bus volume recalculated.`,
+          };
+        }
+
+        // Station 2: Solar Array Bay
+        if (targetId === "hangar_solar") {
+          const cycle: Record<string, "BODY_MOUNTED" | "SINGLE_WING" | "DUAL_WING"> = {
+            "BODY_MOUNTED": "SINGLE_WING",
+            "SINGLE_WING": "DUAL_WING",
+            "DUAL_WING": "BODY_MOUNTED",
+          };
+          const nextSolar = cycle[prev.hangarCraft.solar] || "SINGLE_WING";
+          soundManager.playGearDeploy();
+          return {
+            ...prev,
+            hangarCraft: { ...prev.hangarCraft, solar: nextSolar },
+            substepText: `Solar array architecture changed to [${nextSolar}]. Generation budget adjusted.`,
+          };
+        }
+
+        // Station 2B: Solar Deployment Actuator Toggle
+        if (targetId === "hangar_solar_toggle") {
+          const nextDeployed = !prev.hangarCraft.solarDeployed;
+          soundManager.playGearDeploy();
+          return {
+            ...prev,
+            hangarCraft: { ...prev.hangarCraft, solarDeployed: nextDeployed },
+            substepText: nextDeployed
+              ? "Solar wing deployment test: ACTUATORS EXTENDED (100% illumination)."
+              : "Solar wing deployment test: ACTUATORS RETRACTED (Stowed inside fairing envelope).",
+          };
+        }
+
+        // Station 3: Propulsion Bay
+        if (targetId === "hangar_propulsion") {
+          const cycle: Record<string, "NONE" | "COLD_GAS" | "HYDRAZINE" | "ION"> = {
+            "NONE": "COLD_GAS",
+            "COLD_GAS": "HYDRAZINE",
+            "HYDRAZINE": "ION",
+            "ION": "NONE",
+          };
+          const nextProp = cycle[prev.hangarCraft.propulsion] || "HYDRAZINE";
+          soundManager.playThrusterPuff();
+          return {
+            ...prev,
+            hangarCraft: { ...prev.hangarCraft, propulsion: nextProp },
+            substepText: `Propulsion engine updated to [${nextProp}]. Specific impulse & Delta-V recalculated.`,
+          };
+        }
+
+        // Station 4: Science Payload Bay
+        if (targetId === "hangar_payload") {
+          const cycle: Record<string, "IMAGER" | "PLASMA" | "LIDAR" | "RADAR"> = {
+            "IMAGER": "PLASMA",
+            "PLASMA": "LIDAR",
+            "LIDAR": "RADAR",
+            "RADAR": "IMAGER",
+          };
+          const nextPayload = cycle[prev.hangarCraft.payload] || "IMAGER";
+          soundManager.playEquip();
+          return {
+            ...prev,
+            hangarCraft: { ...prev.hangarCraft, payload: nextPayload },
+            substepText: `Science payload set to [${nextPayload}]. Sensor power draw and link rates updated.`,
+          };
+        }
+
+        // Station 5: Telecom Relay Bay
+        if (targetId === "hangar_telecom") {
+          const cycle: Record<string, "UHF" | "SBAND" | "XBAND"> = {
+            "UHF": "SBAND",
+            "SBAND": "XBAND",
+            "XBAND": "UHF",
+          };
+          const nextTelecom = cycle[prev.hangarCraft.telecom] || "SBAND";
+          soundManager.playBeaconChime();
+          return {
+            ...prev,
+            hangarCraft: { ...prev.hangarCraft, telecom: nextTelecom },
+            substepText: `Telecom transceiver set to [${nextTelecom}]. Link margin & downlink bandwidth updated.`,
+          };
+        }
+
+        // Station 6: Static Fire Propulsion Stand
+        if (targetId === "hangar_static_fire") {
+          soundManager.playEngineRoar();
+          setTimeout(() => {
+            setGameState((s) => ({
+              ...s,
+              hangarCraft: { ...s.hangarCraft, isThrusterFiring: false },
+            }));
+          }, 2400);
+          return {
+            ...prev,
+            hangarCraft: { ...prev.hangarCraft, isThrusterFiring: true },
+            score: prev.score + 250,
+            substepText: "STATIC FIRE TEST NOMINAL! Chamber pressure 100% · Thruster plume roaring (+250 pts).",
+          };
+        }
+
+        // Station 7: Departure / Launch Airlock Gate
+        if (targetId === "hangar_launch") {
+          soundManager.playEngineRoar();
+          soundManager.playSuccessFanfare();
+          return {
+            ...prev,
+            controlMode: "SPACECRAFT_COCKPIT",
+            step: "COCKPIT_ORBITAL_MANEUVER",
+            substepText: "LAUNCH SUCCESSFUL! Orbital insertion nominal. 6-DOF Cockpit flight controls online.",
+            spacecraft: {
+              ...prev.spacecraft,
+              position: new THREE.Vector3(0, 1.0, -28.0),
+              velocity: new THREE.Vector3(0, 0, -2.0),
+              isLanded: false,
+            },
+          };
+        }
+
         return prev;
       });
     },
@@ -818,6 +984,43 @@ export function GameManager({ onReturnToHub }: GameManagerProps) {
     handleDockComplete();
   }, [handleDockComplete]);
 
+  // Select active flight contract
+  const handleSelectFlightContract = useCallback((contractId: string) => {
+    soundManager.playBeaconChime();
+    setGameState((prev) => {
+      let nextSubstep = prev.substepText;
+      let nextDest: "ORBIT_GATEWAY" | "LUNAR_BASE_ALPHA" = "ORBIT_GATEWAY";
+      let nextTargetPos = new THREE.Vector3(0, 1.5, -11.2);
+
+      if (contractId === "ARC_600") {
+        nextSubstep = "FLIGHT CONTRACT ARC-600 ACTIVE: Maintain 600km Sun-Sync Orbit & downlink science.";
+        nextDest = "ORBIT_GATEWAY";
+      } else if (contractId === "ISS_400") {
+        nextSubstep = "FLIGHT CONTRACT ISS-400 ACTIVE: Approach Gateway-1 and execute soft docking at Port DOCK-01.";
+        nextDest = "ORBIT_GATEWAY";
+        nextTargetPos = new THREE.Vector3(0, 1.5, -11.2);
+      } else if (contractId === "LUN_PAD1") {
+        nextSubstep = "FLIGHT CONTRACT LUN-PAD1 ACTIVE: Execute lunar deorbit burn and land on PAD-01 (<3.8 m/s).";
+        nextDest = "LUNAR_BASE_ALPHA";
+        nextTargetPos = new THREE.Vector3(0, -18.0, -110.0);
+      } else if (contractId === "RET_100") {
+        nextSubstep = "FLIGHT CONTRACT RET-100 ACTIVE: Retrograde deorbit burn. Maintain 40° entry pitch angle.";
+        nextDest = "ORBIT_GATEWAY";
+      }
+
+      return {
+        ...prev,
+        activeFlightContract: contractId,
+        substepText: nextSubstep,
+        spacecraft: {
+          ...prev.spacecraft,
+          flightDestination: nextDest,
+          dockingTargetPos: nextTargetPos,
+        },
+      };
+    });
+  }, []);
+
   return (
     <div style={{ position: "relative", width: "100vw", height: "100vh", overflow: "hidden" }}>
       <GameCanvas
@@ -856,6 +1059,8 @@ export function GameManager({ onReturnToHub }: GameManagerProps) {
         onToggleFlashlight={handleToggleFlashlight}
         onToggleControlsOverlay={handleToggleControlsOverlay}
         onToggleSector={handleToggleSector}
+        onSelectFlightContract={handleSelectFlightContract}
+        onInteractHangar={handleInteract}
       />
     </div>
   );
