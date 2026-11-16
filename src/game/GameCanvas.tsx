@@ -6,6 +6,7 @@ import * as THREE from "three";
 import { StationEnvironment } from "./StationEnvironment";
 import { PlayerController } from "./PlayerController";
 import { SpacecraftFlight } from "./SpacecraftFlight";
+import { PostProcessingEffects } from "./PostProcessingEffects";
 import { GameState, InventoryItemId } from "./types";
 import { StationPhysics } from "./physics";
 
@@ -148,6 +149,7 @@ export function GameCanvas({
             onToggleControlsOverlay={onToggleControlsOverlay}
             onToggleSector={onToggleSector}
           />
+          <PostProcessingEffects gameState={gameState} />
         </Suspense>
       </Canvas>
     </div>
