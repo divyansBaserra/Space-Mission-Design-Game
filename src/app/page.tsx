@@ -477,18 +477,17 @@ function NasaJudgesGithubBanner() {
       rel="noopener noreferrer"
       style={{
         position: "fixed",
-        top: "20px",
-        left: "50%",
-        transform: "translateX(-50%)",
+        top: "14px",
+        right: "24px",
         zIndex: 999999,
         display: "flex",
         alignItems: "center",
-        gap: "16px",
-        padding: "12px 28px",
+        gap: "12px",
+        padding: "8px 18px",
         background: "linear-gradient(135deg, rgba(9, 13, 22, 0.98) 0%, rgba(17, 24, 39, 0.95) 100%)",
         border: "2px solid #38bdf8",
         borderRadius: "8px",
-        boxShadow: "0 0 35px rgba(56, 189, 248, 0.55), 0 8px 32px rgba(0, 0, 0, 0.9), inset 0 1px 0 rgba(255, 255, 255, 0.2)",
+        boxShadow: "0 0 25px rgba(56, 189, 248, 0.55), 0 8px 32px rgba(0, 0, 0, 0.9), inset 0 1px 0 rgba(255, 255, 255, 0.2)",
         textDecoration: "none",
         pointerEvents: "auto",
         backdropFilter: "blur(12px)",
@@ -496,14 +495,14 @@ function NasaJudgesGithubBanner() {
         transition: "all 0.25s cubic-bezier(0.16, 1, 0.3, 1)",
       }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.transform = "translateX(-50%) scale(1.04)";
+        e.currentTarget.style.transform = "scale(1.04)";
         e.currentTarget.style.borderColor = "#67e8f9";
         e.currentTarget.style.boxShadow = "0 0 45px rgba(56, 189, 248, 0.8), 0 12px 40px rgba(0, 0, 0, 0.95)";
       }}
       onMouseLeave={(e) => {
-        e.currentTarget.style.transform = "translateX(-50%) scale(1)";
+        e.currentTarget.style.transform = "scale(1)";
         e.currentTarget.style.borderColor = "#38bdf8";
-        e.currentTarget.style.boxShadow = "0 0 35px rgba(56, 189, 248, 0.55), 0 8px 32px rgba(0, 0, 0, 0.9), inset 0 1px 0 rgba(255, 255, 255, 0.2)";
+        e.currentTarget.style.boxShadow = "0 0 25px rgba(56, 189, 248, 0.55), 0 8px 32px rgba(0, 0, 0, 0.9)";
       }}
     >
       {/* Telemetry Status Cluster */}
