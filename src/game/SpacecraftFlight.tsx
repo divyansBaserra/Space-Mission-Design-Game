@@ -303,14 +303,15 @@ export function SpacecraftFlight({
           translation.addScaledVector(up, baseThrustAcc * 0.7);
           isThrusting = true;
         }
-        if (keys["KeyC"] || keys["ControlLeft"]) {
+        if (keys["ControlLeft"] || keys["KeyX"]) {
           translation.addScaledVector(up, -baseThrustAcc * 0.7);
           isThrusting = true;
         }
 
-        // Continuous Low-Frequency Thruster Rumble
+        // Continuous Low-Frequency Thruster Rumble with dynamic throttle pitch modulation
         if ((keys["KeyW"] || keys["KeyS"]) && propRef.current > 0) {
           soundManager.startThrusterRumble();
+          soundManager.updateThrusterThrottle(isBoosting ? 1.0 : 0.45);
         } else {
           soundManager.stopThrusterRumble();
         }

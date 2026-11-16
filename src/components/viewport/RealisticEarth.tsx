@@ -20,24 +20,29 @@ export interface RealisticEarthProps {
  * smoothly into the darkness of space on the night side.
  * Zero faceted polygon lines or thick cartoon ribbons.
  */
-const AtmosphericScatteringShader = {
+/**
+ * Physically-Accurate Atmospheric Rayleigh Scattering Model
+ * Combines:
+ * 1. An outer BackSide atmospheric halo (scale 1.12) with smooth exponential
+ *    decay into vacuum, guaranteeing ZERO hard silhouette rings or polygon seams.
+ * 2. Sun-vector modulated daylit cyan/blue scattering with sunset amber terminator.
+ * 3. Additive blending that naturally integrates with deep space starfields.
+ */
+const AtmosphericHaloShader = {
   vertexShader: `
     varying vec3 vNormal;
-    varying vec3 vWorldNormal;
-    varying vec3 vViewPosition;
+    varying vec3 vWorldPosition;
 
     void main() {
       vNormal = normalize(normalMatrix * normal);
-      vWorldNormal = normalize((modelMatrix * vec4(normal, 0.0)).xyz);
-      vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
-      vViewPosition = -mvPosition.xyz;
-      gl_Position = projectionMatrix * mvPosition;
+      vec4 worldPos = modelMatrix * vec4(position, 1.0);
+      vWorldPosition = worldPos.xyz;
+      gl_Position = projectionMatrix * viewMatrix * worldPos;
     }
   `,
   fragmentShader: `
     varying vec3 vNormal;
-    varying vec3 vWorldNormal;
-    varying vec3 vViewPosition;
+    varying vec3 vWorldPosition;
 
     uniform vec3 sunDirection;
     uniform vec3 dayGlowColor;
@@ -45,32 +50,71 @@ const AtmosphericScatteringShader = {
     uniform float intensity;
 
     void main() {
-      vec3 viewDir = normalize(vViewPosition);
+      vec3 viewDir = normalize(cameraPosition - vWorldPosition);
+      // For BackSide rendering, normal points inward towards center of Earth
       vec3 norm = normalize(vNormal);
-      vec3 worldNorm = normalize(vWorldNormal);
       vec3 sunDir = normalize(sunDirection);
 
-      // Limb Fresnel: bright at tangent glancing edges
-      float dotVN = clamp(dot(viewDir, norm), 0.0, 1.0);
-      float rim = 1.0 - dotVN;
-      // High-order exponential falloff creates a delicate, ultra-thin gossamer halo
-      float rimHaze = pow(rim, 4.2);
+      // BackSide limb calculation: intensity peaks near glancing limb and decays outward
+      float dotVN = dot(viewDir, norm);
+      // Delicate exponential fade out towards vacuum
+      float halo = pow(clamp(dotVN, 0.0, 1.0), 3.4);
 
-      // Sun illumination angle on atmospheric layer
-      float sunDot = dot(worldNorm, sunDir);
-      // Soft terminator transition from daylight to deep night
-      float dayFactor = smoothstep(-0.2, 0.35, sunDot);
+      // Modulate by sunlit hemisphere
+      float sunDot = dot(norm, sunDir);
+      float dayFactor = smoothstep(-0.25, 0.35, sunDot);
 
-      // Rayleigh sunset shift at glancing sun angles
-      float sunsetFactor = smoothstep(-0.15, 0.15, sunDot) * (1.0 - smoothstep(0.15, 0.5, sunDot));
-      vec3 scatterColor = mix(dayGlowColor, sunsetGlowColor, sunsetFactor * 0.45);
+      // Subtle Rayleigh sunset shift along the terminator
+      float sunsetFactor = smoothstep(-0.2, 0.15, sunDot) * (1.0 - smoothstep(0.15, 0.5, sunDot));
+      vec3 scatterColor = mix(dayGlowColor, sunsetGlowColor, sunsetFactor * 0.4);
 
-      // Final atmospheric alpha: zero on dark side, soft ethereal glow on sunlit limb
-      float alpha = rimHaze * intensity * dayFactor;
-
-      if (alpha <= 0.002) discard;
+      float alpha = halo * intensity * dayFactor * 0.75;
+      if (alpha <= 0.001) discard;
 
       gl_FragColor = vec4(scatterColor, alpha);
+    }
+  `,
+};
+
+/**
+ * Inner Atmospheric Surface Limb Shader
+ * Adds a soft, subtle cyan haze right at the glancing horizon of the Earth globe
+ */
+const SurfaceLimbShader = {
+  vertexShader: `
+    varying vec3 vNormal;
+    varying vec3 vViewPosition;
+
+    void main() {
+      vNormal = normalize(normalMatrix * normal);
+      vec4 mvPos = modelViewMatrix * vec4(position, 1.0);
+      vViewPosition = -mvPos.xyz;
+      gl_Position = projectionMatrix * mvPos;
+    }
+  `,
+  fragmentShader: `
+    varying vec3 vNormal;
+    varying vec3 vViewPosition;
+
+    uniform vec3 sunDirection;
+    uniform vec3 limbColor;
+
+    void main() {
+      vec3 viewDir = normalize(vViewPosition);
+      vec3 norm = normalize(vNormal);
+
+      // Glance angle
+      float rim = 1.0 - clamp(dot(viewDir, norm), 0.0, 1.0);
+      float rimFactor = pow(rim, 3.8);
+
+      vec3 sunDir = normalize(sunDirection);
+      float sunDot = dot(norm, sunDir);
+      float dayFactor = smoothstep(-0.1, 0.3, sunDot);
+
+      float alpha = rimFactor * 0.45 * dayFactor;
+      if (alpha <= 0.001) discard;
+
+      gl_FragColor = vec4(limbColor, alpha);
     }
   `,
 };
@@ -97,7 +141,8 @@ export function RealisticEarth({
   const earthGroupRef = useRef<THREE.Group>(null);
   const globeRef = useRef<THREE.Mesh>(null);
   const cloudsRef = useRef<THREE.Mesh>(null);
-  const atmosphereRef = useRef<THREE.ShaderMaterial>(null);
+  const haloRef = useRef<THREE.ShaderMaterial>(null);
+  const surfaceLimbRef = useRef<THREE.ShaderMaterial>(null);
 
   // Load NASA photorealistic texture suite via TextureLoader
   const textures = useMemo(() => {
@@ -108,13 +153,16 @@ export function RealisticEarth({
     const day = loader.load("/assets/textures/earth/earth_day.jpg");
     day.colorSpace = THREE.SRGBColorSpace;
 
+    const lights = loader.load("/assets/textures/earth/earth_lights.png");
+    lights.colorSpace = THREE.SRGBColorSpace;
+
     const normal = loader.load("/assets/textures/earth/earth_normal.jpg");
 
     const specular = loader.load("/assets/textures/earth/earth_specular.jpg");
 
     const clouds = loader.load("/assets/textures/earth/earth_clouds.png");
 
-    return { day, normal, specular, clouds };
+    return { day, lights, normal, specular, clouds };
   }, []);
 
   // Sun direction vector for atmosphere lighting
@@ -122,16 +170,32 @@ export function RealisticEarth({
     return new THREE.Vector3(...sunPosition).normalize();
   }, [sunPosition]);
 
-  // Atmospheric scattering shader material
-  const atmosphereMaterial = useMemo(() => {
+  // Outer BackSide atmospheric halo shader material (soft gossamer falloff)
+  const haloMaterial = useMemo(() => {
     return new THREE.ShaderMaterial({
-      vertexShader: AtmosphericScatteringShader.vertexShader,
-      fragmentShader: AtmosphericScatteringShader.fragmentShader,
+      vertexShader: AtmosphericHaloShader.vertexShader,
+      fragmentShader: AtmosphericHaloShader.fragmentShader,
       uniforms: {
         sunDirection: { value: sunDirVector },
-        dayGlowColor: { value: new THREE.Color("#38bdf8") }, // Delicate cyan/blue Rayleigh
-        sunsetGlowColor: { value: new THREE.Color("#f59e0b") }, // Warm Rayleigh sunset amber
-        intensity: { value: 0.95 },
+        dayGlowColor: { value: new THREE.Color("#38bdf8") }, // Delicate Rayleigh cyan
+        sunsetGlowColor: { value: new THREE.Color("#f59e0b") }, // Rayleigh sunset amber
+        intensity: { value: 1.1 },
+      },
+      blending: THREE.AdditiveBlending,
+      side: THREE.BackSide,
+      transparent: true,
+      depthWrite: false,
+    });
+  }, [sunDirVector]);
+
+  // Inner glancing surface horizon limb shader material
+  const surfaceLimbMaterial = useMemo(() => {
+    return new THREE.ShaderMaterial({
+      vertexShader: SurfaceLimbShader.vertexShader,
+      fragmentShader: SurfaceLimbShader.fragmentShader,
+      uniforms: {
+        sunDirection: { value: sunDirVector },
+        limbColor: { value: new THREE.Color("#0284c7") },
       },
       blending: THREE.AdditiveBlending,
       side: THREE.FrontSide,
@@ -167,22 +231,25 @@ export function RealisticEarth({
               normalMap={textures.normal}
               normalScale={new THREE.Vector2(0.85, 0.85)}
               roughnessMap={textures.specular}
-              roughness={0.6}
-              metalness={0.12}
+              roughness={0.65}
+              metalness={0.08}
+              emissiveMap={textures.lights}
+              emissive={new THREE.Color("#fbbf24")}
+              emissiveIntensity={0.8}
             />
           ) : (
             <meshStandardMaterial color="#0b264a" roughness={0.5} metalness={0.1} />
           )}
         </mesh>
 
-        {/* 2. Concentric Dynamic Cloud Sphere (NASA Cloud Formations) */}
-        <mesh ref={cloudsRef} scale={[1.006, 1.006, 1.006]}>
+        {/* 2. Concentric Dynamic Cloud Sphere (Skimming smoothly at scale 1.0025) */}
+        <mesh ref={cloudsRef} scale={[1.0025, 1.0025, 1.0025]}>
           <sphereGeometry args={[radius, 128, 128]} />
           {textures && (
             <meshStandardMaterial
               map={textures.clouds}
               transparent
-              opacity={0.82}
+              opacity={0.58}
               roughness={0.9}
               metalness={0.0}
               depthWrite={false}
@@ -190,10 +257,16 @@ export function RealisticEarth({
           )}
         </mesh>
 
-        {/* 3. Physically realistic delicate Rayleigh limb atmospheric haze (Scale 1.012) */}
-        <mesh scale={[1.012, 1.012, 1.012]}>
+        {/* 3. Inner Horizon Glancing Limb (FrontSide scale 1.0035) */}
+        <mesh scale={[1.0035, 1.0035, 1.0035]}>
           <sphereGeometry args={[radius, 128, 128]} />
-          <primitive ref={atmosphereRef} object={atmosphereMaterial} attach="material" />
+          <primitive ref={surfaceLimbRef} object={surfaceLimbMaterial} attach="material" />
+        </mesh>
+
+        {/* 4. Outer Gossamer Atmospheric Halo (BackSide scale 1.11, zero hard edges) */}
+        <mesh scale={[1.11, 1.11, 1.11]}>
+          <sphereGeometry args={[radius, 96, 96]} />
+          <primitive ref={haloRef} object={haloMaterial} attach="material" />
         </mesh>
       </group>
     </group>

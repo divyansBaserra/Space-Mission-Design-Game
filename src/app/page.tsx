@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef, useMemo, useCallback } from "react"
 import { SpacecraftViewport } from "@/components/viewport";
 import { GameManager } from "@/game/GameManager";
 import { soundManager } from "@/game/audio";
+import { preloadAllGameAssets } from "@/game/useNASAModel";
 import {
   DESTINATION_PRESETS,
   GROUND_STATION_PRESETS,
@@ -556,6 +557,7 @@ export default function SpaceMissionGame() {
   const [hangarEclipseActive, setHangarEclipseActive] = useState<boolean>(false);
   const [contractFilter, setContractFilter] = useState<"ALL" | "LEO" | "POLAR" | "GEO">("ALL");
   const [showHangarGuide, setShowHangarGuide] = useState<boolean>(true);
+  const [showWelcomeGuide, setShowWelcomeGuide] = useState<boolean>(false);
   const [mainMenuOrbitProgress, setMainMenuOrbitProgress] = useState<number>(0.25);
 
   // Career Progress
@@ -610,8 +612,9 @@ export default function SpaceMissionGame() {
 
   const logContainerRef = useRef<HTMLDivElement>(null);
 
-  // Load persistent save data on mount with defensive schema sanitization
+  // Load persistent save data on mount with defensive schema sanitization and preload assets
   useEffect(() => {
+    preloadAllGameAssets();
     try {
       const saved = localStorage.getItem("smdg_career_data");
       if (saved) {
@@ -1420,7 +1423,38 @@ export default function SpaceMissionGame() {
           </div>
 
           {/* Center / Left Main Menu Actions */}
-          <div style={{ maxWidth: "420px", display: "flex", flexDirection: "column", gap: "var(--space-3)", pointerEvents: "auto" }}>
+          <div style={{ maxWidth: "440px", display: "flex", flexDirection: "column", gap: "var(--space-3)", pointerEvents: "auto" }}>
+            {/* Mission Intel & How to Play Button */}
+            <button
+              onClick={() => {
+                soundManager.playEquip();
+                setShowWelcomeGuide(true);
+              }}
+              style={{
+                padding: "12px 18px",
+                backgroundColor: "rgba(14, 165, 233, 0.2)",
+                border: "1px solid #38bdf8",
+                color: "#38bdf8",
+                fontWeight: 700,
+                fontSize: "12px",
+                textAlign: "left",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                borderRadius: "3px",
+                cursor: "pointer",
+                backdropFilter: "blur(8px)",
+                letterSpacing: "0.04em",
+                boxShadow: "0 0 15px rgba(56, 189, 248, 0.2)",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <span style={{ fontSize: "14px" }}>ℹ</span>
+                <span>HOW TO PLAY &amp; MISSION MODES GUIDE</span>
+              </div>
+              <span style={{ fontSize: "12px", fontWeight: 700, backgroundColor: "#0284c7", color: "#ffffff", padding: "2px 8px", borderRadius: "2px" }}>[OPEN GUIDE]</span>
+            </button>
+
             <button
               onClick={() => {
                 soundManager.playEquip();
@@ -1569,10 +1603,161 @@ export default function SpaceMissionGame() {
 
           {/* Bottom Bar Info */}
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "11px", color: "var(--color-text-muted)" }}>
-            <div>REAL-TIME ASTRODYNAMICS & SUB-SYSTEM ENGINEERING SIMULATOR</div>
-            <div className="font-mono">VER 1.0 // CDS REV 14.1 & JPL CML 4</div>
+            <div>REAL-TIME ASTRODYNAMICS &amp; SUB-SYSTEM ENGINEERING SIMULATOR</div>
+            <div className="font-mono">VER 1.0 // CDS REV 14.1 &amp; JPL CML 4</div>
           </div>
         </div>
+
+        {/* Comprehensive Interactive Welcome & How to Play Modal */}
+        {showWelcomeGuide && (
+          <div
+            style={{
+              position: "fixed",
+              inset: 0,
+              backgroundColor: "rgba(3, 7, 18, 0.88)",
+              backdropFilter: "blur(12px)",
+              zIndex: 100,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: "24px",
+              pointerEvents: "auto",
+            }}
+          >
+            <div
+              style={{
+                maxWidth: "780px",
+                width: "100%",
+                maxHeight: "90vh",
+                overflowY: "auto",
+                backgroundColor: "rgba(15, 23, 42, 0.96)",
+                border: "1px solid #38bdf8",
+                boxShadow: "0 20px 50px rgba(0, 0, 0, 0.8), 0 0 30px rgba(56, 189, 248, 0.25)",
+                padding: "28px",
+                borderRadius: "4px",
+                display: "flex",
+                flexDirection: "column",
+                gap: "20px",
+              }}
+            >
+              {/* Header */}
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", borderBottom: "1px solid rgba(255, 255, 255, 0.1)", paddingBottom: "16px" }}>
+                <div>
+                  <div className="font-mono" style={{ fontSize: "11px", color: "#38bdf8", fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase" }}>
+                    FLIGHT OPERATIONS MANUAL // ONBOARDING BRIEFING
+                  </div>
+                  <h2 style={{ fontSize: "22px", fontWeight: 700, color: "#f8fafc", margin: "4px 0 0" }}>
+                    HOW TO PLAY: SPACE MISSION DESIGN GAME
+                  </h2>
+                </div>
+                <button
+                  onClick={() => setShowWelcomeGuide(false)}
+                  style={{
+                    padding: "6px 14px",
+                    backgroundColor: "rgba(239, 68, 68, 0.2)",
+                    border: "1px solid #ef4444",
+                    color: "#f87171",
+                    fontSize: "12px",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                    borderRadius: "2px",
+                  }}
+                >
+                  CLOSE [X]
+                </button>
+              </div>
+
+              {/* 3 Game Modes Overview Cards */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "12px" }}>
+                <div style={{ padding: "14px", backgroundColor: "rgba(2, 132, 199, 0.12)", border: "1px solid rgba(56, 189, 248, 0.3)", borderRadius: "3px" }}>
+                  <div className="font-mono" style={{ fontSize: "10px", color: "#38bdf8", fontWeight: 700 }}>GAME MODE 1</div>
+                  <div style={{ fontSize: "14px", fontWeight: 700, color: "#ffffff", marginTop: "2px" }}>Orbital EVA Repair</div>
+                  <p style={{ fontSize: "11px", color: "#94a3b8", lineHeight: 1.45, marginTop: "6px" }}>
+                    First-person astronaut exploration on Gateway-1. Walk the gantry in microgravity, replace shattered GaAs solar wings, equip S-band antennas, and reboot telemetry on satellite AERO-3X.
+                  </p>
+                </div>
+
+                <div style={{ padding: "14px", backgroundColor: "rgba(16, 185, 129, 0.12)", border: "1px solid rgba(52, 211, 153, 0.3)", borderRadius: "3px" }}>
+                  <div className="font-mono" style={{ fontSize: "10px", color: "#34d399", fontWeight: 700 }}>GAME MODE 2</div>
+                  <div style={{ fontSize: "14px", fontWeight: 700, color: "#ffffff", marginTop: "2px" }}>3D Piloted Flight Sim</div>
+                  <p style={{ fontSize: "11px", color: "#94a3b8", lineHeight: 1.45, marginTop: "6px" }}>
+                    Pilot Orbital Utility Shuttle ORV-1 with 6-DOF RCS thrusters. Perform soft-capture docking at Port DOCK-01, execute lunar descent burns, and touch down on Base Alpha PAD-01.
+                  </p>
+                </div>
+
+                <div style={{ padding: "14px", backgroundColor: "rgba(245, 158, 11, 0.12)", border: "1px solid rgba(251, 191, 36, 0.3)", borderRadius: "3px" }}>
+                  <div className="font-mono" style={{ fontSize: "10px", color: "#fbbf24", fontWeight: 700 }}>GAME MODE 3</div>
+                  <div style={{ fontSize: "14px", fontWeight: 700, color: "#ffffff", marginTop: "2px" }}>Hangar Assembly</div>
+                  <p style={{ fontSize: "11px", color: "#94a3b8", lineHeight: 1.45, marginTop: "6px" }}>
+                    Construct modular CubeSats (1U, 3U, 6U) adhering to Cal Poly CDS Rev 14.1 standards. Run thruster static-fire tests, balance power/mass budgets, and launch into Earth orbit.
+                  </p>
+                </div>
+              </div>
+
+              {/* Step-by-Step Instructions */}
+              <div style={{ padding: "14px 18px", backgroundColor: "rgba(30, 41, 59, 0.5)", border: "1px solid rgba(255, 255, 255, 0.08)", borderRadius: "3px" }}>
+                <div style={{ fontSize: "12px", fontWeight: 700, color: "#f8fafc", marginBottom: "8px" }}>
+                  HOW TO BUILD &amp; LAUNCH IN THE SPACECRAFT WORKSHOP:
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", fontSize: "11px", color: "#cbd5e1", lineHeight: 1.5 }}>
+                  <div><strong>1. Choose Form Factor:</strong> 1U (Scout), 3U (Standard Science), or 6U (Deep Space Relay).</div>
+                  <div><strong>2. Balance Solar Power:</strong> Ensure solar panel wattage exceeds continuous subsystem electrical draw.</div>
+                  <div><strong>3. Battery Storage:</strong> Ensure battery survives the 35-minute Earth eclipse shadow without depleting.</div>
+                  <div><strong>4. Launch Authorization:</strong> When all engineering matrix rows turn green &apos;Nominal&apos;, click [Proceed to Launch]!</div>
+                </div>
+              </div>
+
+              {/* Keybinds Reference Table */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+                <div style={{ padding: "12px", backgroundColor: "rgba(15, 23, 42, 0.7)", border: "1px solid rgba(56, 189, 248, 0.2)", borderRadius: "2px" }}>
+                  <div style={{ fontSize: "11px", fontWeight: 700, color: "#38bdf8", marginBottom: "6px" }}>FLIGHT COCKPIT CONTROLS</div>
+                  <div style={{ fontSize: "10px", color: "#94a3b8", display: "grid", gridTemplateColumns: "80px 1fr", rowGap: "4px" }}>
+                    <span className="font-mono" style={{ color: "#f8fafc" }}>W / S</span><span>Forward / Reverse Thrusters</span>
+                    <span className="font-mono" style={{ color: "#f8fafc" }}>A / D</span><span>Yaw Port / Starboard</span>
+                    <span className="font-mono" style={{ color: "#f8fafc" }}>Q / E</span><span>Roll Counter / Clockwise</span>
+                    <span className="font-mono" style={{ color: "#f8fafc" }}>Space / Ctrl</span><span>Translate Up / Down</span>
+                    <span className="font-mono" style={{ color: "#f8fafc" }}>V / G</span><span>Toggle Camera View / Landing Gear</span>
+                  </div>
+                </div>
+
+                <div style={{ padding: "12px", backgroundColor: "rgba(15, 23, 42, 0.7)", border: "1px solid rgba(52, 211, 153, 0.2)", borderRadius: "2px" }}>
+                  <div style={{ fontSize: "11px", fontWeight: 700, color: "#34d399", marginBottom: "6px" }}>ASTRONAUT EVA CONTROLS</div>
+                  <div style={{ fontSize: "10px", color: "#94a3b8", display: "grid", gridTemplateColumns: "80px 1fr", rowGap: "4px" }}>
+                    <span className="font-mono" style={{ color: "#f8fafc" }}>W A S D</span><span>Move Astronaut</span>
+                    <span className="font-mono" style={{ color: "#f8fafc" }}>Space</span><span>Low-G Lunar Jump / Thruster</span>
+                    <span className="font-mono" style={{ color: "#f8fafc" }}>E</span><span>Interact / Board Shuttle / Repair</span>
+                    <span className="font-mono" style={{ color: "#f8fafc" }}>1 / 2 / 3 / 4</span><span>Equip Toolkit / Solar / Antenna / ALSEP</span>
+                    <span className="font-mono" style={{ color: "#f8fafc" }}>C / T</span><span>Controls Sheet / Sector Jump</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Start Playing CTA */}
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", paddingTop: "8px" }}>
+                <button
+                  onClick={() => {
+                    soundManager.playEquip();
+                    setShowWelcomeGuide(false);
+                    setStage("FIRST_PERSON_GAME");
+                  }}
+                  style={{
+                    padding: "10px 22px",
+                    backgroundColor: "#0284c7",
+                    border: "none",
+                    color: "#ffffff",
+                    fontSize: "12px",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                    borderRadius: "2px",
+                    letterSpacing: "0.04em",
+                  }}
+                >
+                  START ORBITAL REPAIR MISSION →
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </main>
     );
   }

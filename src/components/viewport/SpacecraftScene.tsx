@@ -145,113 +145,126 @@ export function SpacecraftScene({
           })}
         </group>
 
-        {/* Precision Orbit Trajectory Ribbon (Mathematically aligned) */}
-        <mesh rotation={[Math.PI / 2, orbitInclinationRad, 0]}>
-          <ringGeometry args={[scaledOrbitRadius - 0.008, scaledOrbitRadius + 0.008, 128]} />
-          <meshBasicMaterial
-            color={isEclipse ? "#ef4444" : "#38bdf8"}
-            transparent
-            opacity={0.55}
-            side={THREE.DoubleSide}
-          />
-        </mesh>
-
-        {/* Earth Shadow (Umbra Cylinder Visual Cue) */}
-        <mesh position={[-scaledOrbitRadius / 2, 0, 0]} rotation={[0, 0, Math.PI / 2]}>
-          <cylinderGeometry args={[earthRadius, earthRadius, scaledOrbitRadius, 32, 1, true]} />
-          <meshBasicMaterial color="#000000" transparent opacity={0.14} side={THREE.DoubleSide} />
-        </mesh>
-
-        {/* High-Fidelity Orbiting Spacecraft Model (Locks precisely to track) */}
-        <group position={[satPosition.x, satPosition.y, satPosition.z]}>
-          {/* Main Spacecraft Core (Gold Kapton MLI Blanket + Titanium Chassis) */}
+        {/* Unified Orbit Plane Group: Guarantees 100.00% Mathematical Track Centering */}
+        <group rotation={[Math.PI / 2, orbitInclinationRad, 0]}>
+          {/* 1. Precision Orbit Trajectory Ribbon */}
           <mesh>
-            <boxGeometry args={[0.16, 0.22, 0.16]} />
-            <meshStandardMaterial
-              color="#d97706"
-              metalness={0.9}
-              roughness={0.2}
-              emissive={isEclipse ? "#000000" : "#b45309"}
-              emissiveIntensity={isEclipse ? 0 : 0.15}
+            <ringGeometry args={[scaledOrbitRadius - 0.006, scaledOrbitRadius + 0.006, 128]} />
+            <meshBasicMaterial
+              color={isEclipse ? "#ef4444" : "#38bdf8"}
+              transparent
+              opacity={0.65}
+              side={THREE.DoubleSide}
             />
           </mesh>
 
-          {/* Titanium End Caps */}
-          <mesh position={[0, 0.112, 0]}>
-            <boxGeometry args={[0.162, 0.01, 0.162]} />
-            <meshStandardMaterial color="#94a3b8" metalness={0.9} roughness={0.25} />
-          </mesh>
-          <mesh position={[0, -0.112, 0]}>
-            <boxGeometry args={[0.162, 0.01, 0.162]} />
-            <meshStandardMaterial color="#94a3b8" metalness={0.9} roughness={0.25} />
+          {/* 2. Orbit Glow Track */}
+          <mesh>
+            <ringGeometry args={[scaledOrbitRadius - 0.025, scaledOrbitRadius + 0.025, 128]} />
+            <meshBasicMaterial
+              color={isEclipse ? "#dc2626" : "#0284c7"}
+              transparent
+              opacity={0.2}
+              side={THREE.DoubleSide}
+            />
           </mesh>
 
-          {/* High-Resolution Dual Deployable Photovoltaic Solar Wings */}
-          {/* Right Solar Array (+X) */}
-          <group position={[0.22, 0, 0]}>
+          {/* 3. High-Fidelity Orbiting Spacecraft Model (100% Locked to Track, Tangent to Flight) */}
+          <group
+            position={[
+              scaledOrbitRadius * Math.cos(orbitAngle),
+              scaledOrbitRadius * Math.sin(orbitAngle),
+              0,
+            ]}
+            rotation={[0, 0, orbitAngle + Math.PI / 2]}
+          >
+            {/* Spacecraft Core (NASA Gold Kapton MLI Thermal Foil) */}
             <mesh>
-              <boxGeometry args={[0.26, 0.16, 0.012]} />
-              <meshStandardMaterial color="#1e3a8a" metalness={0.8} roughness={0.2} />
+              <boxGeometry args={[0.16, 0.24, 0.16]} />
+              <meshStandardMaterial
+                color="#f59e0b"
+                metalness={0.65}
+                roughness={0.32}
+                emissive={isEclipse ? "#000000" : "#b45309"}
+                emissiveIntensity={isEclipse ? 0 : 0.25}
+              />
             </mesh>
-            {/* GaAs Solar Cell Divisions */}
-            <mesh position={[0, 0, 0.008]}>
-              <planeGeometry args={[0.24, 0.14]} />
-              <meshStandardMaterial color="#172554" metalness={0.9} roughness={0.1} />
+
+            {/* Titanium Structural End Caps & Rails */}
+            <mesh position={[0, 0.122, 0]}>
+              <boxGeometry args={[0.165, 0.012, 0.165]} />
+              <meshStandardMaterial color="#cbd5e1" metalness={0.8} roughness={0.25} />
             </mesh>
-            {/* Wing Hinge Strut */}
-            <mesh position={[-0.14, 0, 0]} rotation={[0, 0, Math.PI / 2]}>
-              <cylinderGeometry args={[0.01, 0.01, 0.05, 8]} />
-              <meshStandardMaterial color="#64748b" metalness={0.9} />
+            <mesh position={[0, -0.122, 0]}>
+              <boxGeometry args={[0.165, 0.012, 0.165]} />
+              <meshStandardMaterial color="#cbd5e1" metalness={0.8} roughness={0.25} />
+            </mesh>
+
+            {/* Starboard Deployable Photovoltaic Solar Wing (+X) */}
+            <group position={[0.22, 0, 0]}>
+              <mesh>
+                <boxGeometry args={[0.26, 0.16, 0.012]} />
+                <meshStandardMaterial color="#1e3a8a" metalness={0.6} roughness={0.3} />
+              </mesh>
+              {/* GaAs Photovoltaic Cells */}
+              <mesh position={[0, 0, 0.008]}>
+                <planeGeometry args={[0.24, 0.14]} />
+                <meshStandardMaterial color="#172554" metalness={0.8} roughness={0.15} />
+              </mesh>
+              {/* Solar Array Support Yoke */}
+              <mesh position={[-0.14, 0, 0]} rotation={[0, 0, Math.PI / 2]}>
+                <cylinderGeometry args={[0.01, 0.01, 0.05, 8]} />
+                <meshStandardMaterial color="#94a3b8" metalness={0.8} />
+              </mesh>
+            </group>
+
+            {/* Port Deployable Photovoltaic Solar Wing (-X) */}
+            <group position={[-0.22, 0, 0]}>
+              <mesh>
+                <boxGeometry args={[0.26, 0.16, 0.012]} />
+                <meshStandardMaterial color="#1e3a8a" metalness={0.6} roughness={0.3} />
+              </mesh>
+              <mesh position={[0, 0, 0.008]}>
+                <planeGeometry args={[0.24, 0.14]} />
+                <meshStandardMaterial color="#172554" metalness={0.8} roughness={0.15} />
+              </mesh>
+              <mesh position={[0.14, 0, 0]} rotation={[0, 0, Math.PI / 2]}>
+                <cylinderGeometry args={[0.01, 0.01, 0.05, 8]} />
+                <meshStandardMaterial color="#94a3b8" metalness={0.8} />
+              </mesh>
+            </group>
+
+            {/* High-Gain Parabolic Telemetry Dish (Pointing Nadir Earthward) */}
+            <group position={[0, 0, 0.12]} rotation={[-Math.PI / 2, 0, 0]}>
+              <mesh>
+                <sphereGeometry args={[0.065, 16, 12, 0, Math.PI * 2, 0, Math.PI / 2]} />
+                <meshStandardMaterial color="#f8fafc" metalness={0.6} roughness={0.3} side={THREE.DoubleSide} />
+              </mesh>
+              <mesh position={[0, 0.04, 0]}>
+                <cylinderGeometry args={[0.005, 0.005, 0.06, 8]} />
+                <meshStandardMaterial color="#f59e0b" metalness={0.7} />
+              </mesh>
+            </group>
+
+            {/* Nadir Earth Observation Optical Lens */}
+            <mesh position={[0, -0.06, 0.09]}>
+              <cylinderGeometry args={[0.025, 0.03, 0.01, 16]} />
+              <meshStandardMaterial color="#0284c7" emissive="#0369a1" emissiveIntensity={0.6} roughness={0.1} />
+            </mesh>
+
+            {/* Pulsing Telemetry Beacon LED */}
+            <mesh position={[0, 0.13, 0]}>
+              <sphereGeometry args={[0.015, 8, 8]} />
+              <meshBasicMaterial color={isEclipse ? "#ef4444" : "#22c55e"} />
+            </mesh>
+            <pointLight position={[0, 0.14, 0]} intensity={1.2} distance={1.5} color={isEclipse ? "#ef4444" : "#22c55e"} />
+
+            {/* RCS Hydrazine Thruster Nozzle (-Y Aft Face) */}
+            <mesh position={[0, -0.135, 0]} rotation={[Math.PI, 0, 0]}>
+              <coneGeometry args={[0.02, 0.03, 12, 1, true]} />
+              <meshStandardMaterial color="#64748b" metalness={0.9} roughness={0.2} side={THREE.DoubleSide} />
             </mesh>
           </group>
-
-          {/* Left Solar Array (-X) */}
-          <group position={[-0.22, 0, 0]}>
-            <mesh>
-              <boxGeometry args={[0.26, 0.16, 0.012]} />
-              <meshStandardMaterial color="#1e3a8a" metalness={0.8} roughness={0.2} />
-            </mesh>
-            <mesh position={[0, 0, 0.008]}>
-              <planeGeometry args={[0.24, 0.14]} />
-              <meshStandardMaterial color="#172554" metalness={0.9} roughness={0.1} />
-            </mesh>
-            <mesh position={[0.14, 0, 0]} rotation={[0, 0, Math.PI / 2]}>
-              <cylinderGeometry args={[0.01, 0.01, 0.05, 8]} />
-              <meshStandardMaterial color="#64748b" metalness={0.9} />
-            </mesh>
-          </group>
-
-          {/* High-Gain Parabolic Telemetry Dish (Pointing Earthward) */}
-          <group position={[0, -0.13, 0.05]} rotation={[-Math.PI / 4, 0, 0]}>
-            <mesh>
-              <sphereGeometry args={[0.06, 16, 12, 0, Math.PI * 2, 0, Math.PI / 2]} />
-              <meshStandardMaterial color="#f8fafc" metalness={0.8} roughness={0.3} side={THREE.DoubleSide} />
-            </mesh>
-            <mesh position={[0, 0.04, 0]}>
-              <cylinderGeometry args={[0.005, 0.005, 0.06, 8]} />
-              <meshStandardMaterial color="#d97706" metalness={0.9} />
-            </mesh>
-          </group>
-
-          {/* Optical Aperture Lens (Forward Nadir sensor) */}
-          <mesh position={[0, 0.04, 0.082]}>
-            <cylinderGeometry args={[0.025, 0.03, 0.01, 16]} />
-            <meshStandardMaterial color="#0284c7" emissive="#0369a1" emissiveIntensity={0.5} roughness={0.1} />
-          </mesh>
-
-          {/* Telemetry Beacon Blinking Indicator */}
-          <mesh position={[0, 0.12, 0]}>
-            <sphereGeometry args={[0.012, 8, 8]} />
-            <meshBasicMaterial color={isEclipse ? "#ef4444" : "#22c55e"} />
-          </mesh>
-
-          {/* Active Thruster Plume in Orbit */}
-          {thrusterActive && (
-            <mesh position={[0, -0.2, 0]} rotation={[Math.PI, 0, 0]}>
-              <coneGeometry args={[0.06, 0.24, 12]} />
-              <meshBasicMaterial color="#38bdf8" transparent opacity={0.85} />
-            </mesh>
-          )}
         </group>
 
         <OrbitControls
@@ -277,12 +290,19 @@ export function SpacecraftScene({
       {/* Eliminates dark shadows, silhouettes and murky black surfaces         */}
       {/* ==================================================================== */}
       {/* High-quality studio ambient fill */}
-      <ambientLight intensity={0.8} />
+      <ambientLight intensity={1.1} />
+
+      {/* Front Eye-Level Camera Key Light (guarantees crisp frontal illumination) */}
+      <directionalLight
+        position={[0, 2, 7]}
+        intensity={1.4}
+        color="#ffffff"
+      />
 
       {/* Main Overhead Softbox Light (clean aerospace white) */}
       <directionalLight
         position={[0, 10, 2]}
-        intensity={1.6}
+        intensity={1.8}
         color="#ffffff"
       />
 
@@ -296,7 +316,7 @@ export function SpacecraftScene({
       {/* Fill Light (Soft neutral, ensures no pitch-black surfaces) */}
       <directionalLight
         position={[-6, 3, 5]}
-        intensity={1.1}
+        intensity={1.2}
         color="#e2e8f0"
       />
 
@@ -310,7 +330,7 @@ export function SpacecraftScene({
       {/* Floor Bounce Uplight from Turntable */}
       <directionalLight
         position={[0, -4, 4]}
-        intensity={0.6}
+        intensity={0.7}
         color="#38bdf8"
       />
 
@@ -355,9 +375,9 @@ export function SpacecraftScene({
         <mesh position={[0, 0, 0]}>
           <boxGeometry args={[widthMultiplier * 0.98, heightMultiplier * 0.98, 0.98]} />
           <meshStandardMaterial
-            color="#2a3444"
-            metalness={0.75}
-            roughness={0.35}
+            color="#3b4a60"
+            metalness={0.4}
+            roughness={0.42}
           />
         </mesh>
 

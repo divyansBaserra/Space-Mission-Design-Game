@@ -45,7 +45,7 @@ export function loadNASAModel(url: string): Promise<THREE.Group> {
         box.getCenter(center);
         gltf.scene.position.sub(center);
 
-        // Apply high-quality PBR material settings
+        // Apply high-quality PBR material settings with authentic aerospace balance
         gltf.scene.traverse((child) => {
           if ((child as THREE.Mesh).isMesh) {
             child.castShadow = true;
@@ -53,9 +53,10 @@ export function loadNASAModel(url: string): Promise<THREE.Group> {
             const mesh = child as THREE.Mesh;
             if (mesh.material) {
               const mat = mesh.material as THREE.MeshStandardMaterial;
-              mat.roughness = Math.min(0.85, Math.max(0.15, mat.roughness ?? 0.4));
-              mat.metalness = Math.min(0.95, Math.max(0.2, mat.metalness ?? 0.6));
-              mat.envMapIntensity = 1.2;
+              // Balanced roughness & metalness ensures rich diffuse lighting without black voids
+              mat.roughness = Math.min(0.85, Math.max(0.32, mat.roughness ?? 0.45));
+              mat.metalness = Math.min(0.45, Math.max(0.08, mat.metalness ?? 0.2));
+              mat.envMapIntensity = 1.0;
             }
           }
         });
@@ -108,4 +109,25 @@ export function useNASAModel(url: string | null): THREE.Group | null {
   }, [url]);
 
   return model;
+}
+
+/**
+ * Asynchronously preloads all essential NASA 3D models into memory cache.
+ * Eliminates stutters and ensures instantaneous 0ms response when starting
+ * or restarting missions.
+ */
+export function preloadAllGameAssets(): void {
+  if (typeof window === "undefined") return;
+  const criticalModels = [
+    "/assets/models/nasa/iss-station.glb",
+    "/assets/models/nasa/space-shuttle-engine.glb",
+    "/assets/models/nasa/cubesat-icecube.glb",
+    "/assets/models/nasa/asteroid.glb",
+    "/assets/models/nasa/base-station.glb",
+  ];
+  criticalModels.forEach((url) => {
+    loadNASAModel(url).catch(() => {
+      // Gracefully handles background preloading
+    });
+  });
 }

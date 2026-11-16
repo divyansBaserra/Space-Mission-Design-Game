@@ -199,6 +199,13 @@ function HangarSandboxBay({ gameState }: { gameState: GameState }) {
 
   return (
     <group position={[0, 0, 0.5]}>
+      {/* Cleanroom Studio Lighting (Guarantees 100% illuminated, vibrant PBR surfaces without shadows) */}
+      <ambientLight intensity={1.2} />
+      <pointLight position={[0, 3.5, 0]} intensity={3.2} distance={10} color="#f8fafc" />
+      <directionalLight position={[2.5, 4.0, 3.0]} intensity={2.4} color="#ffffff" />
+      <directionalLight position={[-2.5, 3.5, 2.5]} intensity={1.9} color="#e0f2fe" />
+      <directionalLight position={[0, 2.5, -3.5]} intensity={1.6} color="#bae6fd" />
+
       {/* 1. CENTRAL MAGNETIC RIG PEDESTAL */}
       <group position={[0, 0, 0]}>
         <mesh position={[0, 0.2, 0]} castShadow receiveShadow>
@@ -236,49 +243,46 @@ function HangarSandboxBay({ gameState }: { gameState: GameState }) {
         {/* Chassis Model */}
         {craft.chassis === "1U" && (
           <group scale={[0.9, 0.9, 0.9]}>
+            {/* NASA Gold Kapton MLI Thermal Core */}
             <mesh castShadow>
               <boxGeometry args={[0.5, 0.5, 0.5]} />
-              <meshStandardMaterial color="#d97706" metalness={0.9} roughness={0.2} />
+              <meshStandardMaterial color="#f59e0b" metalness={0.55} roughness={0.35} emissive="#b45309" emissiveIntensity={0.15} />
             </mesh>
             {[-0.26, 0.26].map((x) =>
               [-0.26, 0.26].map((z) => (
                 <mesh key={`r1u-${x}-${z}`} position={[x, 0, z]}>
                   <boxGeometry args={[0.04, 0.52, 0.04]} />
-                  <meshStandardMaterial color="#94a3b8" metalness={0.9} roughness={0.1} />
+                  <meshStandardMaterial color="#cbd5e1" metalness={0.8} roughness={0.2} />
                 </mesh>
               ))
             )}
-            <Suspense fallback={null}>
-              <NASAModelObject
-                url="/assets/models/nasa/cubesat-1-ru-generic.glb"
-                position={[0, 0, 0]}
-                scale={[0.012, 0.012, 0.012]}
-              />
-            </Suspense>
           </group>
         )}
 
         {craft.chassis === "3U" && (
           <group scale={[0.85, 0.85, 0.85]}>
+            {/* 3U Gold MLI Chassis Body */}
             <mesh castShadow>
               <boxGeometry args={[0.45, 1.35, 0.45]} />
-              <meshStandardMaterial color="#d97706" metalness={0.85} roughness={0.25} />
+              <meshStandardMaterial color="#f59e0b" metalness={0.55} roughness={0.35} emissive="#b45309" emissiveIntensity={0.15} />
+            </mesh>
+            {/* GaAs Solar Face Panels */}
+            <mesh position={[0, 0, 0.23]}>
+              <planeGeometry args={[0.4, 1.25]} />
+              <meshStandardMaterial color="#1e3a8a" metalness={0.7} roughness={0.2} />
+            </mesh>
+            <mesh position={[0, 0, -0.23]} rotation={[0, Math.PI, 0]}>
+              <planeGeometry args={[0.4, 1.25]} />
+              <meshStandardMaterial color="#1e3a8a" metalness={0.7} roughness={0.2} />
             </mesh>
             {[-0.23, 0.23].map((x) =>
               [-0.23, 0.23].map((z) => (
                 <mesh key={`r3u-${x}-${z}`} position={[x, 0, z]}>
                   <boxGeometry args={[0.04, 1.38, 0.04]} />
-                  <meshStandardMaterial color="#94a3b8" metalness={0.9} roughness={0.1} />
+                  <meshStandardMaterial color="#cbd5e1" metalness={0.85} roughness={0.2} />
                 </mesh>
               ))
             )}
-            <Suspense fallback={null}>
-              <NASAModelObject
-                url="/assets/models/nasa/cubesat-icecube.glb"
-                position={[0, 0, 0]}
-                scale={[0.016, 0.016, 0.016]}
-              />
-            </Suspense>
           </group>
         )}
 
@@ -575,7 +579,7 @@ export function StationEnvironment({
     const tex = loader.load("/assets/textures/earth/moon.jpg");
     tex.wrapS = THREE.RepeatWrapping;
     tex.wrapT = THREE.RepeatWrapping;
-    tex.repeat.set(12, 12);
+    tex.repeat.set(4, 4);
     return tex;
   }, []);
 
@@ -638,10 +642,10 @@ export function StationEnvironment({
   const isSurface = gameState.controlMode === "SURFACE_EXPLORATION";
   const isNearMoon =
     isSurface ||
-    gameState.spacecraft.position.z < -50 ||
     gameState.step === "SURFACE_DESCENT" ||
     gameState.step === "SURFACE_LANDED" ||
-    gameState.step === "EXPLORE_SURFACE";
+    gameState.step === "EXPLORE_SURFACE" ||
+    (gameState.controlMode === "SPACECRAFT_COCKPIT" && gameState.spacecraft.position.z < -80);
 
   return (
     <group>
@@ -1351,12 +1355,18 @@ export function StationEnvironment({
         </mesh>
 
         {/* --- MAIN 3U CUBESAT CHASSIS --- */}
+        {/* NASA Gold Kapton MLI Thermal Core & Titanium Rails */}
+        <mesh>
+          <boxGeometry args={[0.42, 0.98, 0.42]} />
+          <meshStandardMaterial color="#f59e0b" metalness={0.6} roughness={0.32} emissive="#b45309" emissiveIntensity={0.2} />
+        </mesh>
+
         {/* Aluminum 6061-T6 Structural Rails */}
         {[-0.22, 0.22].map((x) =>
           [-0.22, 0.22].map((z) => (
             <mesh key={`rail-${x}-${z}`} position={[x, 0, z]}>
               <boxGeometry args={[0.035, 1.0, 0.035]} />
-              <meshStandardMaterial color="#475569" metalness={0.9} roughness={0.25} />
+              <meshStandardMaterial color="#cbd5e1" metalness={0.85} roughness={0.25} />
             </mesh>
           ))
         )}
@@ -1372,12 +1382,14 @@ export function StationEnvironment({
         )}
 
         {/* NASA IceCube Earth Observation Satellite 3D Model */}
-        <NASAModelObject
-          url="/assets/models/nasa/cubesat-icecube.glb"
-          position={[0, 0, 0]}
-          rotation={[0, 0, 0]}
-          scale={[0.18, 0.18, 0.18]}
-        />
+        <Suspense fallback={null}>
+          <NASAModelObject
+            url="/assets/models/nasa/cubesat-icecube.glb"
+            position={[0, 0, 0]}
+            rotation={[0, 0, 0]}
+            scale={[0.18, 0.18, 0.18]}
+          />
+        </Suspense>
 
         {/* Earth Observation Optical Payload Lens on Nadir (-Y) face */}
         <mesh position={[0, -0.48, 0]}>
@@ -1702,8 +1714,8 @@ export function StationEnvironment({
         </group>
       )}
 
-      {/* FLYING SHUTTLE IN SPACE (when in Cockpit Flight mode, external 3D mesh) */}
-      {gameState.controlMode === "SPACECRAFT_COCKPIT" && (
+      {/* FLYING SHUTTLE IN SPACE (external 3D mesh rendered strictly in CHASE camera mode) */}
+      {gameState.controlMode === "SPACECRAFT_COCKPIT" && gameState.spacecraft.cameraViewMode === "CHASE" && (
         <group
           position={gameState.spacecraft.position}
           rotation={[

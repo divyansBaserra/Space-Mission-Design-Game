@@ -112,10 +112,10 @@ export class StationPhysics {
 
     // Space Shuttle `ORV-1` at Gateway-1 Gantry Berth (Z = -28.0)
     // Prevents player walking straight into the external tank, SRBs, or fuselage!
-    this.addBox(-1.6, -0.2, -31.8, 1.6, 3.8, -25.2, "shuttle_fuselage_tank");
-    this.addBox(-3.4, 0.0, -31.2, -1.6, 2.6, -26.0, "shuttle_wing_srb_left");
-    this.addBox(1.6, 0.0, -31.2, 3.4, 2.6, -26.0, "shuttle_wing_srb_right");
-    this.addBox(-0.6, -0.6, -28.6, 0.6, 0.6, -27.4, "shuttle_cradle_stanchion");
+    this.addBox(-2.0, -0.5, -32.5, 2.0, 4.2, -24.8, "shuttle_fuselage_tank");
+    this.addBox(-4.2, -0.5, -32.0, -1.8, 3.2, -25.8, "shuttle_wing_srb_left");
+    this.addBox(1.8, -0.5, -32.0, 4.2, 3.2, -25.8, "shuttle_wing_srb_right");
+    this.addBox(-0.8, -0.6, -28.8, 0.8, 0.8, -27.2, "shuttle_cradle_stanchion");
 
     // ========================================================================
     // 5. LUNAR BASE ALPHA SURFACE OBSTACLES (Z = -110.0, Y = -18.0)

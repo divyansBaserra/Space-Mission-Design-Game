@@ -371,6 +371,12 @@ class SoundManager {
     }
   }
 
+  public updateThrusterThrottle(throttle: number) {
+    if (!this.rumbleOsc || !this.ctx) return;
+    const targetFreq = 38 + Math.min(48, throttle * 42);
+    this.rumbleOsc.frequency.setTargetAtTime(targetFreq, this.ctx.currentTime, 0.08);
+  }
+
   /**
    * Short High-Frequency Burst for RCS Maneuvering (Q/E/A/D)
    */
