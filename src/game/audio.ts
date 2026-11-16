@@ -881,6 +881,180 @@ class SoundManager {
       // Audio playback best-effort
     }
   }
+
+  public playRadioStatic(durationMs: number = 180) {
+    if (!this.soundEnabled || this.volume <= 0) return;
+    const ctx = this.getContext();
+    const dest = this.getDest();
+    if (!ctx || !dest) return;
+    try {
+      const bufferSize = Math.max(256, Math.floor(ctx.sampleRate * (durationMs / 1000)));
+      const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        data[i] = (Math.random() * 2 - 1) * 0.14;
+      }
+      const noise = ctx.createBufferSource();
+      noise.buffer = buffer;
+
+      const filter = ctx.createBiquadFilter();
+      filter.type = "bandpass";
+      filter.frequency.setValueAtTime(1400, ctx.currentTime);
+      filter.Q.setValueAtTime(2.0, ctx.currentTime);
+
+      const gain = ctx.createGain();
+      gain.gain.setValueAtTime(0.06, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + durationMs / 1000);
+
+      noise.connect(filter);
+      filter.connect(gain);
+      gain.connect(dest);
+
+      noise.start();
+    } catch {
+      // Audio playback best effort
+    }
+  }
+
+  public playMasterCaution() {
+    if (!this.soundEnabled || this.volume <= 0) return;
+    const ctx = this.getContext();
+    const dest = this.getDest();
+    if (!ctx || !dest) return;
+    try {
+      const now = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = "sawtooth";
+      osc.frequency.setValueAtTime(880, now);
+      osc.frequency.setValueAtTime(587.33, now + 0.12);
+      osc.frequency.setValueAtTime(880, now + 0.24);
+      osc.frequency.setValueAtTime(587.33, now + 0.36);
+
+      gain.gain.setValueAtTime(0.12, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.48);
+
+      osc.connect(gain);
+      gain.connect(dest);
+
+      osc.start(now);
+      osc.stop(now + 0.5);
+    } catch {
+      // Audio best-effort
+    }
+  }
+
+  public playHullStrain(intensity: number = 1.0) {
+    if (!this.soundEnabled || this.volume <= 0) return;
+    const ctx = this.getContext();
+    const dest = this.getDest();
+    if (!ctx || !dest) return;
+    try {
+      const now = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      const filter = ctx.createBiquadFilter();
+
+      filter.type = "lowpass";
+      filter.frequency.setValueAtTime(120, now);
+
+      osc.type = "triangle";
+      osc.frequency.setValueAtTime(68, now);
+      osc.frequency.linearRampToValueAtTime(52, now + 0.4);
+
+      const vol = Math.min(0.18, 0.08 * intensity);
+      gain.gain.setValueAtTime(vol, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.44);
+
+      osc.connect(filter);
+      filter.connect(gain);
+      gain.connect(dest);
+
+      osc.start(now);
+      osc.stop(now + 0.46);
+    } catch {
+      // Audio best-effort
+    }
+  }
+
+  public playDockingCrunch() {
+    if (!this.soundEnabled || this.volume <= 0) return;
+    const ctx = this.getContext();
+    const dest = this.getDest();
+    if (!ctx || !dest) return;
+    try {
+      const now = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = "sawtooth";
+      osc.frequency.setValueAtTime(160, now);
+      osc.frequency.exponentialRampToValueAtTime(36, now + 0.28);
+
+      gain.gain.setValueAtTime(0.24, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+
+      osc.connect(gain);
+      gain.connect(dest);
+
+      osc.start(now);
+      osc.stop(now + 0.32);
+    } catch {
+      // Audio best-effort
+    }
+  }
+
+  public speakRadioComm(text: string, callsign: string = "HOUSTON") {
+    if (!this.soundEnabled || this.volume <= 0) return;
+    if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
+    try {
+      this.playQuindarTone(true);
+      this.playRadioStatic(220);
+
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.pitch = 0.94;
+      utterance.rate = 1.04;
+      utterance.volume = Math.min(1.0, this.volume * 1.1);
+
+      const voices = window.speechSynthesis.getVoices();
+      const preferred = voices.find((v) => v.lang.startsWith("en") && !v.name.includes("Google"));
+      if (preferred) utterance.voice = preferred;
+
+      utterance.onend = () => {
+        this.playRadioStatic(120);
+        this.playQuindarTone(false);
+      };
+
+      window.speechSynthesis.cancel();
+      window.speechSynthesis.speak(utterance);
+    } catch {
+      // Speech synthesis best-effort
+    }
+  }
+
+  public speakGPWS(callout: string, isWarning: boolean = false) {
+    if (!this.soundEnabled || this.volume <= 0) return;
+    if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
+    try {
+      if (isWarning) {
+        this.playMasterCaution();
+      }
+
+      const utterance = new SpeechSynthesisUtterance(callout);
+      utterance.pitch = isWarning ? 1.15 : 0.88;
+      utterance.rate = 1.12;
+      utterance.volume = Math.min(1.0, this.volume * 1.2);
+
+      const voices = window.speechSynthesis.getVoices();
+      const roboticVoice = voices.find((v) => v.lang.startsWith("en"));
+      if (roboticVoice) utterance.voice = roboticVoice;
+
+      window.speechSynthesis.speak(utterance);
+    } catch {
+      // Speech synthesis best-effort
+    }
+  }
 }
 
 export const soundManager = new SoundManager();

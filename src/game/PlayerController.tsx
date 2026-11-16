@@ -124,6 +124,15 @@ export function PlayerController({
         return;
       }
 
+      // Emergency airlock tether return (KeyB) when in microgravity EVA outside
+      if (e.code === "KeyB" && playerPosRef.current.z < -10.5 && gameState.controlMode === "ASTRONAUT") {
+        playerPosRef.current.set(0, 1.0, -11.5);
+        velocityRef.current.set(0, 0, 0);
+        soundManager.playEquip();
+        soundManager.speakRadioComm("Emergency airlock tether engaged. Astronaut secured at Gateway-1 hatch.", "HOUSTON");
+        return;
+      }
+
       // Pause toggle
       if (e.code === "Escape" || e.code === "KeyP") {
         onTogglePause?.();

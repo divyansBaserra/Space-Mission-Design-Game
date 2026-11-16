@@ -341,6 +341,10 @@ export function GameManager({ onReturnToHub, gameMode = "ORBITAL_REPAIR" }: Game
       if (isCurrentlySurface) {
         soundManager.playEngineRoar();
         soundManager.playEquip();
+        soundManager.speakRadioComm(
+          "Ascent trajectory confirmed, ORV-1. Gateway-1 orbital station beacon acquired.",
+          "HOUSTON"
+        );
         return {
           ...prev,
           controlMode: "ASTRONAUT",
@@ -359,6 +363,10 @@ export function GameManager({ onReturnToHub, gameMode = "ORBITAL_REPAIR" }: Game
       } else {
         soundManager.playTouchdown();
         soundManager.playQuindarTone();
+        soundManager.speakRadioComm(
+          "De-orbit burn complete, ORV-1. Entering lunar descent corridor. Target is Pad Zero One.",
+          "HOUSTON"
+        );
         const nextInv = prev.inventory.includes("ALSEP_KIT") || prev.alsepDeployed
           ? prev.inventory
           : [...prev.inventory, "ALSEP_KIT" as InventoryItemId];

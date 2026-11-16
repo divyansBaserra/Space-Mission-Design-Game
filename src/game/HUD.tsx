@@ -1381,22 +1381,58 @@ export function HUD({
               })}
             </div>
 
-            {/* Controls Reference */}
+            {/* Right Cluster: Sector Transition & Astronaut Controls Reference */}
             <div
               style={{
-                backgroundColor: "rgba(18, 22, 28, 0.85)",
-                border: "1px solid rgba(255,255,255,0.12)",
-                padding: "8px 12px",
-                fontSize: "10px",
-                color: "#94a3b8",
                 display: "flex",
                 flexDirection: "column",
-                gap: "2px",
-                backdropFilter: "blur(6px)",
+                gap: "6px",
+                pointerEvents: "auto",
               }}
             >
-              <div>WASD Move · Shift Sprint · Space Jump</div>
-              <div>E Interact · F Flashlight · 1-3 Equip</div>
+              <button
+                onClick={() => onToggleSector?.()}
+                style={{
+                  padding: "7px 14px",
+                  backgroundColor: "rgba(217, 119, 6, 0.85)",
+                  border: "1px solid #f59e0b",
+                  color: "#fef3c7",
+                  fontSize: "11px",
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  backdropFilter: "blur(6px)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "6px",
+                  boxShadow: "0 0 10px rgba(245, 158, 11, 0.3)",
+                }}
+              >
+                <span>[T]</span>
+                <span>DESCEND TO LUNAR SURFACE (GRAVITY)</span>
+              </button>
+
+              <div
+                style={{
+                  backgroundColor: "rgba(18, 22, 28, 0.85)",
+                  border: "1px solid rgba(255, 255, 255, 0.12)",
+                  padding: "8px 12px",
+                  fontSize: "10px",
+                  color: "#94a3b8",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "3px",
+                  backdropFilter: "blur(6px)",
+                }}
+              >
+                <div style={{ display: "flex", justifyContent: "space-between", gap: "10px" }}>
+                  <span>WASD Move · Shift Sprint</span>
+                  <span style={{ color: "#38bdf8", cursor: "pointer" }} onClick={() => onToggleControlsOverlay?.()}>
+                    [C] Controls
+                  </span>
+                </div>
+                <div>{gameState.isEva ? "Space Up · Ctrl/X Down · [B] Re-tether" : "Space Jump · E Interact · F Torch"}</div>
+              </div>
             </div>
           </>
         )}

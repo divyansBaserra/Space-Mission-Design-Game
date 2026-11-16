@@ -86,6 +86,15 @@ export function SpacecraftFlight({
   const lastImpactTimeRef = useRef<number>(0);
   const lastRcsBurstTimeRef = useRef<number>(0);
 
+  // GPWS descent altitude milestones and voice callouts
+  const announcedAltitudesRef = useRef<Set<number>>(new Set());
+  const lastGearWarningTimeRef = useRef<number>(0);
+  const lastSinkRateWarningTimeRef = useRef<number>(0);
+  const lastDockingAbortTimeRef = useRef<number>(0);
+  const lastHullStrainTimeRef = useRef<number>(0);
+  const hasSpokenIntroRef = useRef<boolean>(false);
+  const hasSpokenDockingApproachRef = useRef<boolean>(false);
+
   // Cockpit camera spring-damper lag and recoil vectors
   const camQuatRef = useRef<THREE.Quaternion>(new THREE.Quaternion());
   const camRecoilRef = useRef<THREE.Vector3>(new THREE.Vector3());
@@ -148,10 +157,25 @@ export function SpacecraftFlight({
       pwrRef.current = 100;
       isLandedRef.current = false;
       landingGearRef.current = false;
+      announcedAltitudesRef.current.clear();
+      hasSpokenIntroRef.current = false;
+      hasSpokenDockingApproachRef.current = false;
     }
   }, [gameState.step, gameState.missionMetSeconds, gameState.spacecraft.position]);
 
-  // Keyboard and mouse listeners
+  // Mission Control intro radio transmission when entering cockpit
+  useEffect(() => {
+    if (gameState.controlMode === "SPACECRAFT_COCKPIT" && !hasSpokenIntroRef.current) {
+      hasSpokenIntroRef.current = true;
+      const timer = setTimeout(() => {
+        soundManager.speakRadioComm(
+          "Artemis ORV-1, Houston Flight. Orbit insertion confirmed. Gateway docking beacon acquired. You are go for rendezvous.",
+          "HOUSTON"
+        );
+      }, 750);
+      return () => clearTimeout(timer);
+    }
+  }, [gameState.controlMode]);
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       keysRef.current[e.code] = true;
@@ -427,12 +451,44 @@ export function SpacecraftFlight({
       }
     }
 
-    // Proximity warning alarm when descending too fast near ground
-    if (surfaceAlt < 14.0 && verticalSpeed < -3.6 && !isLandedRef.current) {
+    // GPWS Voice Altitude Announcements during descent towards lunar surface
+    if (posRef.current.z < -45 && verticalSpeed < -0.2 && !isLandedRef.current) {
+      const altitudes = [
+        { alt: 100, text: "ONE HUNDRED" },
+        { alt: 50, text: "FIFTY" },
+        { alt: 30, text: "THIRTY" },
+        { alt: 20, text: "TWENTY" },
+        { alt: 10, text: "TEN" },
+      ];
+      for (const m of altitudes) {
+        if (surfaceAlt <= m.alt && surfaceAlt > m.alt - 6.0 && !announcedAltitudesRef.current.has(m.alt)) {
+          announcedAltitudesRef.current.add(m.alt);
+          soundManager.speakGPWS(m.text);
+        } else if (surfaceAlt > m.alt + 12.0) {
+          announcedAltitudesRef.current.delete(m.alt);
+        }
+      }
+    }
+
+    // GPWS Landing Gear warning: within 28m of surface descending without landing gear deployed
+    if (surfaceAlt < 28.0 && surfaceAlt > 0.8 && !landingGearRef.current && verticalSpeed < -0.4 && !isLandedRef.current && posRef.current.z < -45) {
+      const now = Date.now();
+      if (now - lastGearWarningTimeRef.current > 4200) {
+        soundManager.speakGPWS("WARNING. GEAR UP. GEAR UP.", true);
+        lastGearWarningTimeRef.current = now;
+      }
+    }
+
+    // GPWS Proximity Sink Rate warning alarm when descending excessively fast near ground
+    if (surfaceAlt < 18.0 && verticalSpeed < -3.6 && !isLandedRef.current) {
       const now = Date.now();
       if (now - lastAlarmTimeRef.current > 750) {
         soundManager.playWarningAlarm();
         lastAlarmTimeRef.current = now;
+      }
+      if (now - lastSinkRateWarningTimeRef.current > 3800) {
+        soundManager.speakGPWS("SINK RATE! PULL UP! PULL UP!", true);
+        lastSinkRateWarningTimeRef.current = now;
       }
     }
 
@@ -457,6 +513,13 @@ export function SpacecraftFlight({
       soundManager.playTouchdown();
       soundManager.playSuccessFanfare();
       soundManager.playQuindarTone(false);
+      soundManager.speakGPWS("TOUCHDOWN CONFIRMED.");
+      setTimeout(() => {
+        soundManager.speakRadioComm(
+          "Touchdown confirmed, ORV-1. Engine cut-off. Welcome to Lunar Base Alpha.",
+          "LUNAR BASE"
+        );
+      }, 1400);
       onLandComplete?.(touchdownVy, touchdownDist, totalLandingScore);
     }
 
@@ -484,10 +547,22 @@ export function SpacecraftFlight({
       const targetRecoilZ = isThrusting ? 0.042 : 0.0;
       camRecoilRef.current.z = THREE.MathUtils.lerp(camRecoilRef.current.z, targetRecoilZ, dt * 10);
 
-      // Camera vibration on high thrust
-      const shakeAmp = isThrusting ? 0.006 : 0.0008;
+      // Camera vibration on high thrust with mechanical engine shudder
+      const isBoosting = !!keys["ShiftLeft"] || !!keys["ShiftRight"];
+      const shakeAmp = isThrusting ? (isBoosting ? 0.012 : 0.007) : 0.0006;
       const shakeX = (Math.random() - 0.5) * shakeAmp;
       const shakeY = (Math.random() - 0.5) * shakeAmp;
+
+      // High-G mechanical hull strain groaned into chassis
+      const curSpeed = velRef.current.length();
+      const gForce = 1.0 + curSpeed * 0.12 + (isThrusting && isBoosting ? 2.4 : isThrusting ? 1.0 : 0);
+      if (gForce > 2.8) {
+        const now = Date.now();
+        if (now - lastHullStrainTimeRef.current > 2200) {
+          soundManager.playHullStrain(gForce / 3.0);
+          lastHullStrainTimeRef.current = now;
+        }
+      }
 
       const cockpitEye = posRef.current
         .clone()
@@ -502,7 +577,6 @@ export function SpacecraftFlight({
       camera.quaternion.copy(camQuatRef.current);
 
       if ("fov" in camera) {
-        const isBoosting = !!keys["ShiftLeft"] || !!keys["ShiftRight"];
         const targetFov = isThrusting && isBoosting ? 84 : isThrusting ? 76 : 72;
         const pCam = camera as THREE.PerspectiveCamera;
         pCam.fov = THREE.MathUtils.lerp(pCam.fov, targetFov, dt * 6);
@@ -547,17 +621,47 @@ export function SpacecraftFlight({
       }
     }
 
-    // Check Auto Soft Capture Condition at Station Docking Port
-    if (
-      distToDock <= 3.2 &&
-      speed <= 0.8 &&
-      alignmentAngleDeg <= 25 &&
-      !gameState.spacecraft.isDocked
-    ) {
-      soundManager.playDockingLatch();
-      soundManager.playSuccessFanfare();
-      soundManager.playQuindarTone(true);
-      onDockComplete();
+    // Mission control docking approach callout
+    if (distToDock < 18 && distToDock > 4.0 && !hasSpokenDockingApproachRef.current && !isLandedRef.current && posRef.current.z > -45) {
+      hasSpokenDockingApproachRef.current = true;
+      soundManager.speakRadioComm(
+        "ORV-1, Houston. Target docking collar in sight. Keep approach velocity under zero decimal eight.",
+        "HOUSTON"
+      );
+    }
+
+    // Check Docking Condition at Station Docking Port
+    if (distToDock <= 3.2 && !gameState.spacecraft.isDocked) {
+      if (speed <= 0.8 && alignmentAngleDeg <= 25) {
+        // Successful soft capture
+        soundManager.playDockingLatch();
+        soundManager.playSuccessFanfare();
+        soundManager.playQuindarTone(true);
+        soundManager.speakRadioComm(
+          "Contact confirmed. Soft capture ring locked. Welcome aboard Gateway One.",
+          "GATEWAY"
+        );
+        onDockComplete();
+      } else {
+        // Docking Consequence: Crunch, recoil, master caution, and abort transmission
+        soundManager.playDockingCrunch();
+        soundManager.playMasterCaution();
+
+        const recoilDir = toDock.clone().normalize().negate();
+        if (recoilDir.lengthSq() < 0.01) recoilDir.set(0, 0, -1);
+        velRef.current.copy(recoilDir.multiplyScalar(Math.max(1.8, speed * 0.9)));
+        posRef.current.addScaledVector(recoilDir, 0.4);
+        camRecoilRef.current.z = 0.15; // Cockpit eye recoil jerk
+
+        const now = Date.now();
+        if (now - lastDockingAbortTimeRef.current > 5000) {
+          soundManager.speakRadioComm(
+            "ABORT DOCKING. Alignment error or excessive approach speed detected. Structural ring stress.",
+            "HOUSTON"
+          );
+          lastDockingAbortTimeRef.current = now;
+        }
+      }
     }
 
     // Notify state manager of complete flight telemetry
