@@ -137,6 +137,9 @@ export function PlayerController({
       if (e.code === "Digit3" && gameState.inventory.includes("SBAND_ANTENNA")) {
         onEquipItem?.("SBAND_ANTENNA");
       }
+      if (e.code === "Digit4" && gameState.inventory.includes("ALSEP_KIT")) {
+        onInteract("deploy_alsep");
+      }
 
       // Flashlight toggle or Hangar Solar Deployment toggle
       if (e.code === "KeyF") {
@@ -536,6 +539,12 @@ export function PlayerController({
         targetId = "lunar_sample";
         targetPrompt = "[E] Collect Lunar Regolith Core Sample (CORE-GEO-01)";
       }
+
+      // 5. Deploy Apollo ALSEP Lunar Science Station
+      if (gameState.inventory.includes("ALSEP_KIT") && !gameState.alsepDeployed) {
+        targetId = "deploy_alsep";
+        targetPrompt = "[E / 4] Deploy Apollo ALSEP Lunar Science Station";
+      }
     } else {
       // 1. Briefing Table (Command Deck: [0, 0, 11])
       const distToBriefing = p.distanceTo(new THREE.Vector3(0, 0, 11));
@@ -730,6 +739,23 @@ export function PlayerController({
                 <mesh position={[0, 0.14, 0.02]}>
                   <cylinderGeometry args={[0.01, 0.01, 0.08, 8]} />
                   <meshStandardMaterial color="#94a3b8" metalness={0.9} roughness={0.3} />
+                </mesh>
+              </group>
+            )}
+
+            {gameState.equippedItem === "ALSEP_KIT" && (
+              <group scale={[0.5, 0.5, 0.5]}>
+                <mesh position={[0, 0.08, 0]}>
+                  <boxGeometry args={[0.22, 0.16, 0.16]} />
+                  <meshStandardMaterial color="#eab308" metalness={0.9} roughness={0.2} />
+                </mesh>
+                <mesh position={[0, 0.18, 0]}>
+                  <cylinderGeometry args={[0.012, 0.012, 0.12, 8]} />
+                  <meshStandardMaterial color="#94a3b8" metalness={0.9} />
+                </mesh>
+                <mesh position={[0, 0.25, 0]}>
+                  <sphereGeometry args={[0.025, 8, 8]} />
+                  <meshBasicMaterial color="#00f3ff" />
                 </mesh>
               </group>
             )}

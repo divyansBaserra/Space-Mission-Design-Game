@@ -1595,6 +1595,65 @@ export function StationEnvironment({
           </group>
         )}
 
+        {/* Deployed Apollo ALSEP Lunar Surface Science Station */}
+        {gameState.alsepDeployed && (
+          <group position={[5.0, 0.0, 6.0]}>
+            {/* Central Station Base Box (Gold Foil & Sunshield) */}
+            <mesh position={[0, 0.35, 0]} castShadow receiveShadow>
+              <boxGeometry args={[0.9, 0.7, 0.7]} />
+              <meshStandardMaterial color="#eab308" metalness={0.9} roughness={0.2} />
+            </mesh>
+            {/* White Thermal Radiator Top */}
+            <mesh position={[0, 0.72, 0]}>
+              <boxGeometry args={[0.95, 0.04, 0.75]} />
+              <meshStandardMaterial color="#f8fafc" roughness={0.3} />
+            </mesh>
+            {/* Helical Telemetry Antenna Mast */}
+            <mesh position={[0.2, 1.3, 0]}>
+              <cylinderGeometry args={[0.015, 0.015, 1.2, 8]} />
+              <meshStandardMaterial color="#94a3b8" metalness={0.8} />
+            </mesh>
+            <mesh position={[0.2, 1.9, 0]}>
+              <sphereGeometry args={[0.06, 12, 12]} />
+              <meshBasicMaterial color="#00f3ff" />
+            </mesh>
+
+            {/* RTG Nuclear Power Unit (SNAP-27) with Cooling Fins */}
+            <group position={[-1.2, 0.35, 0]}>
+              <mesh>
+                <cylinderGeometry args={[0.18, 0.18, 0.55, 12]} />
+                <meshStandardMaterial color="#475569" metalness={0.8} roughness={0.4} />
+              </mesh>
+              {[0, Math.PI / 4, Math.PI / 2, (3 * Math.PI) / 4].map((rad, i) => (
+                <mesh key={`rtg-fin-${i}`} rotation={[0, rad, 0]}>
+                  <boxGeometry args={[0.48, 0.5, 0.02]} />
+                  <meshStandardMaterial color="#334155" metalness={0.9} />
+                </mesh>
+              ))}
+              <pointLight position={[0, 0.4, 0]} intensity={0.8} distance={3} color="#f59e0b" />
+            </group>
+
+            {/* Laser Ranging Retroreflector (LRRR) Array */}
+            <group position={[1.1, 0.25, 0.4]} rotation={[-0.45, 0.3, 0]}>
+              <mesh>
+                <boxGeometry args={[0.55, 0.4, 0.08]} />
+                <meshStandardMaterial color="#1e293b" metalness={0.8} />
+              </mesh>
+              <mesh position={[0, 0, 0.05]}>
+                <planeGeometry args={[0.48, 0.34]} />
+                <meshStandardMaterial color="#38bdf8" metalness={0.95} roughness={0.05} />
+              </mesh>
+            </group>
+
+            {/* Upward Laser Telemetry Beam to Orbit */}
+            <mesh position={[0.2, 15.0, 0]}>
+              <cylinderGeometry args={[0.04, 0.04, 30.0, 8]} />
+              <meshBasicMaterial color="#00f3ff" transparent opacity={0.65} />
+            </mesh>
+            <pointLight position={[0.2, 2.0, 0]} intensity={2.2} distance={10} color="#00f3ff" />
+          </group>
+        )}
+
         {/* Astronaut Outpost Crewmember on Surface (NASA Spacesuit Model) */}
         <Suspense fallback={null}>
           <NASAModelObject

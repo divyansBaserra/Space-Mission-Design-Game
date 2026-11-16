@@ -2,7 +2,7 @@
 
 import * as THREE from "three";
 
-export type InventoryItemId = "TOOLKIT" | "SOLAR_WING" | "SBAND_ANTENNA" | "LUNAR_SAMPLE";
+export type InventoryItemId = "TOOLKIT" | "SOLAR_WING" | "SBAND_ANTENNA" | "LUNAR_SAMPLE" | "ALSEP_KIT";
 
 export interface InventoryItem {
   id: InventoryItemId;
@@ -115,4 +115,6 @@ export interface GameState {
   interactionPrompt: string | null;
   hangarCraft: HangarCraftState;
   activeFlightContract: string;
+  alsepDeployed: boolean;
+  alsepPosition: THREE.Vector3 | null;
 }

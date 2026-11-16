@@ -72,6 +72,7 @@ export function HUD({
     { id: "TOOLKIT", name: "Aerospace Toolkit", key: "1" },
     { id: "SOLAR_WING", name: "GaAs Solar Wing (28W)", key: "2" },
     { id: "SBAND_ANTENNA", name: "S-Band Transceiver", key: "3" },
+    { id: "ALSEP_KIT", name: "Apollo ALSEP Science Station", key: "4" },
   ];
 
   const isCockpit = gameState.controlMode === "SPACECRAFT_COCKPIT";

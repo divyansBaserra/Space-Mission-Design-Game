@@ -78,6 +78,8 @@ const INITIAL_GAME_STATE: GameState = {
     isThrusterFiring: false,
   },
   activeFlightContract: "ARC_600",
+  alsepDeployed: false,
+  alsepPosition: null,
 };
 
 interface GameManagerProps {
@@ -357,13 +359,17 @@ export function GameManager({ onReturnToHub, gameMode = "ORBITAL_REPAIR" }: Game
       } else {
         soundManager.playTouchdown();
         soundManager.playQuindarTone();
+        const nextInv = prev.inventory.includes("ALSEP_KIT") || prev.alsepDeployed
+          ? prev.inventory
+          : [...prev.inventory, "ALSEP_KIT" as InventoryItemId];
         return {
           ...prev,
+          inventory: nextInv,
           controlMode: "SURFACE_EXPLORATION",
           isEva: true,
           step: "EXPLORE_SURFACE",
           substepText:
-            "Descent burn nominal. Landed at Lunar Base Alpha (0.166g lunar gravity).",
+            "Descent burn nominal. Landed at Lunar Base Alpha (0.166g lunar gravity). Deploy ALSEP station [4/E].",
           spacecraft: {
             ...prev.spacecraft,
             position: new THREE.Vector3(0, -18.0, -110.0),
@@ -400,12 +406,16 @@ export function GameManager({ onReturnToHub, gameMode = "ORBITAL_REPAIR" }: Game
 
       // If landed on lunar surface, disembark onto lunar base
       if (prev.spacecraft.isLanded) {
+        const nextInv = prev.inventory.includes("ALSEP_KIT") || prev.alsepDeployed
+          ? prev.inventory
+          : [...prev.inventory, "ALSEP_KIT" as InventoryItemId];
         return {
           ...prev,
+          inventory: nextInv,
           controlMode: "SURFACE_EXPLORATION",
           step: "EXPLORE_SURFACE",
           substepText:
-            "Disembarked onto Lunar Base Alpha. Low lunar gravity (1.62 m/s²). Investigate base outpost.",
+            "Disembarked onto Lunar Base Alpha. Low lunar gravity (1.62 m/s²). Deploy ALSEP station [4/E] or collect sample.",
         };
       }
 
@@ -706,6 +716,23 @@ export function GameManager({ onReturnToHub, gameMode = "ORBITAL_REPAIR" }: Game
             score: prev.score + 750,
             substepText:
               "Lunar geological sample CORE-GEO-01 retrieved! (+750 pts). Return to ORV-1 or Habitat module.",
+          };
+        }
+
+        // 12B. Deploy ALSEP Lunar Surface Science Package
+        if (targetId === "deploy_alsep" && !prev.alsepDeployed) {
+          soundManager.playSuccessFanfare();
+          soundManager.playBeaconChime();
+          const nextInv = prev.inventory.filter((id) => id !== "ALSEP_KIT");
+          return {
+            ...prev,
+            inventory: nextInv,
+            equippedItem: null,
+            alsepDeployed: true,
+            alsepPosition: new THREE.Vector3(5.0, -18.0, -104.0),
+            score: prev.score + 1000,
+            substepText:
+              "ALSEP SCIENCE STATION DEPLOYED! RTG power nominal · Seismic & laser telemetry active (+1000 pts).",
           };
         }
 
