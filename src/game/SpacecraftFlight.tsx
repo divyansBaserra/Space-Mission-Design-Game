@@ -35,6 +35,8 @@ interface SpacecraftFlightProps {
   onExitCockpit?: () => void;
   onToggleCameraView?: () => void;
   onToggleLandingGear?: () => void;
+  onToggleControlsOverlay?: () => void;
+  onToggleSector?: () => void;
 }
 
 export function SpacecraftFlight({
@@ -47,6 +49,8 @@ export function SpacecraftFlight({
   onExitCockpit,
   onToggleCameraView,
   onToggleLandingGear,
+  onToggleControlsOverlay,
+  onToggleSector,
 }: SpacecraftFlightProps) {
   const { camera } = useThree();
 
@@ -99,10 +103,37 @@ export function SpacecraftFlight({
     }
   }, [gameState.spacecraft.isLanded]);
 
+  // Clean reset on mission restart
+  useEffect(() => {
+    if (gameState.step === "BRIEFING" && gameState.missionMetSeconds === 0) {
+      posRef.current.copy(gameState.spacecraft.position);
+      velRef.current.set(0, 0, 0);
+      pitchRef.current = 0;
+      yawRef.current = 0;
+      rollRef.current = 0;
+      propRef.current = 100;
+      pwrRef.current = 100;
+      isLandedRef.current = false;
+      landingGearRef.current = false;
+    }
+  }, [gameState.step, gameState.missionMetSeconds, gameState.spacecraft.position]);
+
   // Keyboard and mouse listeners
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       keysRef.current[e.code] = true;
+
+      // Controls overlay toggle (KeyC)
+      if (e.code === "KeyC") {
+        onToggleControlsOverlay?.();
+        return;
+      }
+
+      // Sector transition (KeyT: Orbit <-> Lunar Surface)
+      if (e.code === "KeyT") {
+        onToggleSector?.();
+        return;
+      }
 
       // Pause toggle
       if (e.code === "Escape" || e.code === "KeyP") {
@@ -185,6 +216,8 @@ export function SpacecraftFlight({
     onTogglePause,
     onToggleCameraView,
     onToggleLandingGear,
+    onToggleControlsOverlay,
+    onToggleSector,
   ]);
 
   // Flight simulation loop

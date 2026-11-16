@@ -16,6 +16,8 @@ interface PlayerControllerProps {
   onPointerLockChange: (locked: boolean) => void;
   onTogglePause?: () => void;
   onEquipItem?: (id: InventoryItemId) => void;
+  onToggleControlsOverlay?: () => void;
+  onToggleSector?: () => void;
 }
 
 export function PlayerController({
@@ -27,6 +29,8 @@ export function PlayerController({
   onPointerLockChange,
   onTogglePause,
   onEquipItem,
+  onToggleControlsOverlay,
+  onToggleSector,
 }: PlayerControllerProps) {
   const { camera, gl } = useThree();
 
@@ -60,7 +64,7 @@ export function PlayerController({
     };
   }, [camera]);
 
-  // Synchronize player position when entering surface exploration
+  // Synchronize player position when entering surface exploration or returning to station
   useEffect(() => {
     if (gameState.controlMode === "SURFACE_EXPLORATION") {
       playerPosRef.current.set(0, -18.0, -104.0);
@@ -68,13 +72,45 @@ export function PlayerController({
       yawRef.current = Math.PI; // Face south towards Lunar Base habitat
       pitchRef.current = 0;
       isGroundedRef.current = true;
+    } else if (gameState.controlMode === "ASTRONAUT" && playerPosRef.current.y < -10) {
+      playerPosRef.current.set(0, 1.0, -25.0);
+      velocityRef.current.set(0, 0, 0);
+      yawRef.current = 0;
+      pitchRef.current = 0;
+      isGroundedRef.current = true;
     }
   }, [gameState.controlMode]);
+
+  // Clean reset on mission restart
+  useEffect(() => {
+    if (gameState.step === "BRIEFING" && gameState.missionMetSeconds === 0) {
+      playerPosRef.current.set(0, 0, 9);
+      velocityRef.current.set(0, 0, 0);
+      yawRef.current = 0;
+      pitchRef.current = 0;
+      rollRef.current = 0;
+      isGroundedRef.current = true;
+      camera.position.set(0, 1.65, 9);
+      camera.rotation.set(0, 0, 0);
+    }
+  }, [gameState.step, gameState.missionMetSeconds, camera]);
 
   // Pointer lock & keyboard event listeners
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       keysRef.current[e.code] = true;
+
+      // Controls overlay toggle (KeyC)
+      if (e.code === "KeyC") {
+        onToggleControlsOverlay?.();
+        return;
+      }
+
+      // Sector transition (KeyT: Orbit <-> Lunar Surface)
+      if (e.code === "KeyT") {
+        onToggleSector?.();
+        return;
+      }
 
       // Pause toggle
       if (e.code === "Escape" || e.code === "KeyP") {
@@ -157,6 +193,8 @@ export function PlayerController({
     onPointerLockChange,
     onTogglePause,
     onEquipItem,
+    onToggleControlsOverlay,
+    onToggleSector,
   ]);
 
   // Main game physics and camera update loop
@@ -342,8 +380,8 @@ export function PlayerController({
       if (keys["Space"]) {
         rcsAcc.y += rcsThrust; // Thrust UP
       }
-      if (keys["KeyC"] || keys["ControlLeft"]) {
-        rcsAcc.y -= rcsThrust; // Thrust DOWN
+      if (keys["ControlLeft"] || keys["KeyX"] || keys["KeyZ"]) {
+        rcsAcc.y -= rcsThrust; // Thrust DOWN (Left Ctrl / X / Z)
       }
 
       // Apply RCS acceleration

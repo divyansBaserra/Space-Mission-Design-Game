@@ -42,6 +42,8 @@ interface GameCanvasProps {
   onExitCockpit?: () => void;
   onToggleCameraView?: () => void;
   onToggleLandingGear?: () => void;
+  onToggleControlsOverlay?: () => void;
+  onToggleSector?: () => void;
 }
 
 export function GameCanvas({
@@ -59,6 +61,8 @@ export function GameCanvas({
   onExitCockpit,
   onToggleCameraView,
   onToggleLandingGear,
+  onToggleControlsOverlay,
+  onToggleSector,
 }: GameCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -128,6 +132,8 @@ export function GameCanvas({
             onPointerLockChange={onPointerLockChange}
             onTogglePause={onTogglePause}
             onEquipItem={onEquipItem}
+            onToggleControlsOverlay={onToggleControlsOverlay}
+            onToggleSector={onToggleSector}
           />
           <SpacecraftFlight
             gameState={gameState}
@@ -139,6 +145,8 @@ export function GameCanvas({
             onExitCockpit={onExitCockpit}
             onToggleCameraView={onToggleCameraView}
             onToggleLandingGear={onToggleLandingGear}
+            onToggleControlsOverlay={onToggleControlsOverlay}
+            onToggleSector={onToggleSector}
           />
         </Suspense>
       </Canvas>

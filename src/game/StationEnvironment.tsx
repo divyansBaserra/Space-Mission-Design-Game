@@ -176,6 +176,14 @@ export function StationEnvironment({
 
   const hasItem = (id: InventoryItemId) => gameState.inventory.includes(id);
 
+  const isSurface = gameState.controlMode === "SURFACE_EXPLORATION";
+  const isNearMoon =
+    isSurface ||
+    gameState.spacecraft.position.z < -50 ||
+    gameState.step === "SURFACE_DESCENT" ||
+    gameState.step === "SURFACE_LANDED" ||
+    gameState.step === "EXPLORE_SURFACE";
+
   return (
     <group>
       {/* ==================================================================== */}
@@ -188,12 +196,21 @@ export function StationEnvironment({
       <directionalLight position={[25, 12, 10]} intensity={1.8} castShadow shadow-bias={-0.0001} />
       <ambientLight intensity={0.12} />
 
-      {/* Photorealistic NASA Blue Marble Earth in Low Earth Orbit */}
-      <RealisticEarth
-        radius={75}
-        position={[0, -76, 10]}
-        rotationSpeed={0.012}
-      />
+      {/* Photorealistic NASA Blue Marble Earth */}
+      {!isSurface ? (
+        <RealisticEarth
+          radius={260}
+          position={[0, -285, 30]}
+          rotationSpeed={0.008}
+        />
+      ) : (
+        /* Distant Earth Blue Marble viewed from Lunar Surface Sky (Earthrise vista) */
+        <RealisticEarth
+          radius={14}
+          position={[60, 95, -160]}
+          rotationSpeed={0.005}
+        />
+      )}
 
       {/* Real NASA International Space Station Superstructure (Mounted along Station Truss) */}
       <Suspense fallback={null}>
@@ -343,22 +360,83 @@ export function StationEnvironment({
         </mesh>
         <pointLight position={[0, 1.3, 0]} intensity={1.2} distance={4} color="#38bdf8" />
 
-        {/* Floating Holographic Satellite Model */}
-        <group ref={holoSatRef} position={[0, 1.45, 0]} scale={[0.4, 0.4, 0.4]}>
-          {/* Main 3U bus */}
+        {/* High-Fidelity 3D Holographic Satellite Display (AERO-3X Earth Observation Sentinel) */}
+        <group ref={holoSatRef} position={[0, 1.45, 0]} scale={[0.42, 0.42, 0.42]}>
+          {/* Main 3U CubeSat Bus (Gold Kapton MLI with Holographic Shimmer) */}
           <mesh>
-            <boxGeometry args={[0.5, 1.5, 0.5]} />
-            <meshBasicMaterial color="#38bdf8" wireframe />
+            <boxGeometry args={[0.42, 1.25, 0.42]} />
+            <meshStandardMaterial
+              color="#d97706"
+              emissive="#0284c7"
+              emissiveIntensity={0.25}
+              metalness={0.85}
+              roughness={0.2}
+              transparent
+              opacity={0.88}
+            />
           </mesh>
-          {/* Intact Left wing */}
-          <mesh position={[-0.8, 0, 0]}>
-            <boxGeometry args={[1.0, 1.2, 0.05]} />
-            <meshBasicMaterial color="#38bdf8" wireframe />
+
+          {/* Titanium Extruded Corner Rails */}
+          {[-0.21, 0.21].map((x) =>
+            [-0.21, 0.21].map((z) => (
+              <mesh key={`holo-rail-${x}-${z}`} position={[x, 0, z]}>
+                <boxGeometry args={[0.04, 1.28, 0.04]} />
+                <meshStandardMaterial color="#94a3b8" metalness={0.9} roughness={0.2} />
+              </mesh>
+            ))
+          )}
+
+          {/* Intact Left GaAs Solar Wing (-X) */}
+          <group position={[-0.75, 0, 0]}>
+            <mesh>
+              <boxGeometry args={[1.0, 0.85, 0.02]} />
+              <meshStandardMaterial color="#1e3a8a" emissive="#172554" emissiveIntensity={0.3} metalness={0.8} roughness={0.2} />
+            </mesh>
+            {/* Photovoltaic Cell Divisions */}
+            <mesh position={[0, 0, 0.012]}>
+              <planeGeometry args={[0.94, 0.8]} />
+              <meshStandardMaterial color="#0284c7" emissive="#0369a1" emissiveIntensity={0.35} metalness={0.9} roughness={0.1} />
+            </mesh>
+            {/* Hinge Bracket */}
+            <mesh position={[0.52, 0, 0]} rotation={[0, 0, Math.PI / 2]}>
+              <cylinderGeometry args={[0.02, 0.02, 0.08, 8]} />
+              <meshStandardMaterial color="#64748b" metalness={0.9} />
+            </mesh>
+          </group>
+
+          {/* Damaged Right Solar Wing (+X) - Fracture Angle & Diagnostic Warning */}
+          <group position={[0.72, -0.15, 0]} rotation={[0, 0.15, -0.35]}>
+            <mesh>
+              <boxGeometry args={[0.85, 0.75, 0.02]} />
+              <meshStandardMaterial color="#ef4444" emissive="#b91c1c" emissiveIntensity={0.4} metalness={0.7} roughness={0.3} />
+            </mesh>
+            {/* Shattered Cell Substrate */}
+            <mesh position={[0, 0, 0.012]}>
+              <planeGeometry args={[0.78, 0.7]} />
+              <meshStandardMaterial color="#7f1d1d" emissive="#ef4444" emissiveIntensity={0.2} />
+            </mesh>
+          </group>
+
+          {/* Earth-Facing Parabolic Telemetry Dish */}
+          <group position={[0, 0.68, 0]} rotation={[-Math.PI / 4, 0, 0]}>
+            <mesh>
+              <sphereGeometry args={[0.16, 16, 12, 0, Math.PI * 2, 0, Math.PI / 2]} />
+              <meshStandardMaterial color="#f8fafc" emissive="#38bdf8" emissiveIntensity={0.2} side={THREE.DoubleSide} />
+            </mesh>
+            <mesh position={[0, 0.09, 0]}>
+              <cylinderGeometry args={[0.01, 0.01, 0.14, 8]} />
+              <meshStandardMaterial color="#d97706" />
+            </mesh>
+          </group>
+
+          {/* Holographic Diagnostic Data Rings */}
+          <mesh rotation={[Math.PI / 2, 0, 0]}>
+            <ringGeometry args={[1.4, 1.43, 32]} />
+            <meshBasicMaterial color="#38bdf8" transparent opacity={0.4} side={THREE.DoubleSide} />
           </mesh>
-          {/* Damaged Right wing (blinking red wireframe) */}
-          <mesh position={[0.7, -0.2, 0]} rotation={[0, 0, -0.4]}>
-            <boxGeometry args={[0.8, 0.9, 0.05]} />
-            <meshBasicMaterial color="#ef4444" wireframe />
+          <mesh rotation={[Math.PI / 2.3, 0.3, 0]}>
+            <ringGeometry args={[1.65, 1.67, 32]} />
+            <meshBasicMaterial color="#0284c7" transparent opacity={0.3} side={THREE.DoubleSide} />
           </mesh>
         </group>
 
@@ -926,21 +1004,20 @@ export function StationEnvironment({
         />
       </group>
 
-      {/* ==================================================================== */}
-      {/* 5. PLANETARY / LUNAR SURFACE LANDING ZONE (LUNAR BASE ALPHA)          */}
-      {/* Floor at Y = -18.0, Pad at [0, -18.0, -110.0]                         */}
-      {/* ==================================================================== */}
-      <group position={[0, -18.0, -110.0]}>
-        {/* Cratered Lunar Terrain Ground Plane */}
-        <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-          <planeGeometry args={[160, 160, 32, 32]} />
-          <meshStandardMaterial
-            map={moonTexture ?? undefined}
-            color={moonTexture ? "#ffffff" : "#64748b"}
-            roughness={0.92}
-            metalness={0.08}
-          />
-        </mesh>
+      {/* 5. PLANETARY / LUNAR SURFACE LANDING ZONE (LUNAR BASE ALPHA) */}
+      {/* Rendered when approaching lunar descent sector or landed on Moon */}
+      {isNearMoon && (
+        <group position={[0, -18.0, -110.0]}>
+          {/* Cratered Lunar Terrain Ground Plane */}
+          <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+            <planeGeometry args={[160, 160, 32, 32]} />
+            <meshStandardMaterial
+              map={moonTexture ?? undefined}
+              color={moonTexture ? "#ffffff" : "#64748b"}
+              roughness={0.92}
+              metalness={0.08}
+            />
+          </mesh>
 
         {/* Illuminated Octagonal Surface Landing Pad (PAD-01) */}
         <mesh position={[0, 0.08, 0]} rotation={[-Math.PI / 2, 0, Math.PI / 8]} receiveShadow>
@@ -1064,6 +1141,7 @@ export function StationEnvironment({
           />
         </Suspense>
       </group>
+      )}
 
       {/* ==================================================================== */}
       {/* 6. ORBITAL UTILITY SHUTTLE `ORV-1` (NASA Spacecraft Orbiter)         */}

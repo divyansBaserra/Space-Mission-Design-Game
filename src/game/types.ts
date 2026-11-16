@@ -97,6 +97,7 @@ export interface GameState {
   missionMetSeconds: number;
   score: number;
   paused: boolean;
+  showControlsOverlay: boolean;
   interactionTarget: string | null;
   interactionPrompt: string | null;
 }

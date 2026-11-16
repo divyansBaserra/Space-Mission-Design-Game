@@ -7,6 +7,7 @@ import { MeshoptDecoder } from "meshoptimizer";
 
 const modelCache = new Map<string, THREE.Group>();
 const pendingPromises = new Map<string, Promise<THREE.Group>>();
+const failedUrls = new Set<string>();
 
 /**
  * Loads a real NASA 3D GLB model with MeshoptDecoder decompression.
@@ -15,6 +16,10 @@ const pendingPromises = new Map<string, Promise<THREE.Group>>();
 export function loadNASAModel(url: string): Promise<THREE.Group> {
   if (typeof window === "undefined") {
     return Promise.reject(new Error("Cannot load 3D models on server"));
+  }
+
+  if (failedUrls.has(url)) {
+    return Promise.reject(new Error(`Asset previously failed: ${url}`));
   }
 
   const cached = modelCache.get(url);
@@ -63,6 +68,7 @@ export function loadNASAModel(url: string): Promise<THREE.Group> {
       },
       undefined,
       (error) => {
+        failedUrls.add(url);
         console.warn(`Failed loading NASA asset from ${url}:`, error);
         reject(error);
       }

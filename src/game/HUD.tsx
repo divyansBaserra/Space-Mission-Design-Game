@@ -20,6 +20,8 @@ interface HUDProps {
   onToggleLandingGear?: () => void;
   onReturnToHub?: () => void;
   onToggleFlashlight?: () => void;
+  onToggleControlsOverlay?: () => void;
+  onToggleSector?: () => void;
 }
 
 export function HUD({
@@ -38,6 +40,8 @@ export function HUD({
   onToggleLandingGear,
   onReturnToHub,
   onToggleFlashlight,
+  onToggleControlsOverlay,
+  onToggleSector,
 }: HUDProps) {
   const [hasEntered, setHasEntered] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
@@ -232,6 +236,44 @@ export function HUD({
               </span>
             </div>
           </div>
+
+          {/* Controls Sheet Toggle Button */}
+          <button
+            onClick={() => onToggleControlsOverlay?.()}
+            style={{
+              padding: "8px 14px",
+              backgroundColor: gameState.showControlsOverlay ? "rgba(2, 132, 199, 0.4)" : "rgba(30, 41, 59, 0.85)",
+              border: gameState.showControlsOverlay ? "1px solid #38bdf8" : "1px solid rgba(255, 255, 255, 0.15)",
+              color: "#38bdf8",
+              fontSize: "11px",
+              fontWeight: 700,
+              cursor: "pointer",
+              backdropFilter: "blur(6px)",
+              transition: "all 0.15s ease",
+            }}
+            title="Press [C] in gameplay anytime to view the complete controls cheat sheet"
+          >
+            [C] CONTROLS
+          </button>
+
+          {/* Sector Transition: Orbit Gateway-1 <-> Lunar Base Alpha */}
+          <button
+            onClick={() => onToggleSector?.()}
+            style={{
+              padding: "8px 14px",
+              backgroundColor: isSurface ? "rgba(180, 83, 9, 0.3)" : "rgba(16, 185, 129, 0.25)",
+              border: isSurface ? "1px solid #f59e0b" : "1px solid #34d399",
+              color: isSurface ? "#fbbf24" : "#6ee7b7",
+              fontSize: "11px",
+              fontWeight: 700,
+              cursor: "pointer",
+              backdropFilter: "blur(6px)",
+              transition: "all 0.15s ease",
+            }}
+            title="Instant de-orbit descent or orbital ascent transfer [T]"
+          >
+            {isSurface ? "[T] ASCENT TO GATEWAY-1" : "[T] DESCENT TO LUNAR BASE"}
+          </button>
 
           {/* Pause Button */}
           <button
@@ -1626,6 +1668,230 @@ export function HUD({
                 }}
               >
                 Return to Hub
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ==================================================================== */}
+      {/* CONTROLS QUICK-REFERENCE MODAL (HOTKEY [C])                          */}
+      {/* ==================================================================== */}
+      {gameState.showControlsOverlay && (
+        <div
+          onClick={() => onToggleControlsOverlay?.()}
+          style={{
+            position: "fixed",
+            inset: 0,
+            backgroundColor: "rgba(3, 7, 18, 0.88)",
+            backdropFilter: "blur(8px)",
+            zIndex: 100,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            pointerEvents: "auto",
+            padding: "20px",
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              width: "100%",
+              maxWidth: "820px",
+              maxHeight: "90vh",
+              overflowY: "auto",
+              backgroundColor: "rgba(15, 23, 42, 0.98)",
+              border: "1px solid #38bdf8",
+              boxShadow: "0 25px 60px rgba(0, 0, 0, 0.85), 0 0 20px rgba(56, 189, 248, 0.2)",
+              padding: "28px 32px",
+              display: "flex",
+              flexDirection: "column",
+              gap: "20px",
+              borderRadius: "2px",
+            }}
+          >
+            {/* Header */}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", borderBottom: "1px solid rgba(255, 255, 255, 0.12)", paddingBottom: "16px" }}>
+              <div>
+                <div className="font-mono" style={{ fontSize: "11px", color: "#38bdf8", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" }}>
+                  NASA ASTRONAUT &amp; FLIGHT OPERATIONS MANUAL // REV 4.2
+                </div>
+                <h2 style={{ fontSize: "22px", fontWeight: 700, color: "#f8fafc", margin: "4px 0 0" }}>
+                  FLIGHT &amp; EVA CONTROLS CHEAT SHEET
+                </h2>
+              </div>
+              <button
+                onClick={() => onToggleControlsOverlay?.()}
+                style={{
+                  padding: "6px 14px",
+                  backgroundColor: "rgba(239, 68, 68, 0.15)",
+                  border: "1px solid #ef4444",
+                  color: "#f87171",
+                  fontSize: "12px",
+                  fontWeight: 700,
+                  cursor: "pointer",
+                }}
+              >
+                CLOSE [C / ESC]
+              </button>
+            </div>
+
+            {/* Quick Sector Transfer Callout */}
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                backgroundColor: isSurface ? "rgba(245, 158, 11, 0.12)" : "rgba(34, 197, 94, 0.12)",
+                border: isSurface ? "1px solid rgba(245, 158, 11, 0.4)" : "1px solid rgba(34, 197, 94, 0.4)",
+                padding: "12px 16px",
+                borderRadius: "2px",
+              }}
+            >
+              <div>
+                <div style={{ fontSize: "11px", color: "#94a3b8", fontWeight: 600 }}>CURRENT SECTOR LOCATION</div>
+                <div style={{ fontSize: "14px", fontWeight: 700, color: isSurface ? "#fbbf24" : "#4ade80" }}>
+                  {isSurface ? "LUNAR BASE ALPHA (0.166g GRAVITY)" : "GATEWAY-1 ORBITAL STATION (MICROGRAVITY)"}
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  onToggleSector?.();
+                  onToggleControlsOverlay?.();
+                }}
+                style={{
+                  padding: "8px 18px",
+                  backgroundColor: isSurface ? "#d97706" : "#15803d",
+                  border: "none",
+                  color: "#f8fafc",
+                  fontSize: "12px",
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  letterSpacing: "0.03em",
+                }}
+              >
+                {isSurface ? "[T] ASCEND TO GATEWAY-1 STATION" : "[T] DESCEND TO LUNAR SURFACE"}
+              </button>
+            </div>
+
+            {/* Two-Column Grid: EVA vs Flight */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px" }}>
+              {/* Section 1: Astronaut EVA */}
+              <div
+                style={{
+                  backgroundColor: "rgba(30, 41, 59, 0.5)",
+                  border: "1px solid rgba(255, 255, 255, 0.08)",
+                  padding: "18px",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "10px",
+                }}
+              >
+                <div className="font-mono" style={{ fontSize: "12px", color: "#38bdf8", fontWeight: 700, borderBottom: "1px solid rgba(56, 189, 248, 0.2)", paddingBottom: "6px" }}>
+                  1. ASTRONAUT EVA &amp; STATION
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: "8px", fontSize: "12px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between" }}>
+                    <span className="font-mono" style={{ color: "#f8fafc", fontWeight: 600 }}>W / A / S / D</span>
+                    <span style={{ color: "#94a3b8" }}>Move / RCS translation</span>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between" }}>
+                    <span className="font-mono" style={{ color: "#f8fafc", fontWeight: 600 }}>SPACE</span>
+                    <span style={{ color: "#94a3b8" }}>Jump / RCS Thrust UP</span>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between" }}>
+                    <span className="font-mono" style={{ color: "#f8fafc", fontWeight: 600 }}>CTRL / X / Z</span>
+                    <span style={{ color: "#94a3b8" }}>RCS Thrust DOWN (EVA)</span>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between" }}>
+                    <span className="font-mono" style={{ color: "#f8fafc", fontWeight: 600 }}>LEFT SHIFT</span>
+                    <span style={{ color: "#94a3b8" }}>Sprint / RCS Boost</span>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between" }}>
+                    <span className="font-mono" style={{ color: "#f8fafc", fontWeight: 600 }}>MOUSE</span>
+                    <span style={{ color: "#94a3b8" }}>Look Pitch / Yaw</span>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between" }}>
+                    <span className="font-mono" style={{ color: "#f8fafc", fontWeight: 600 }}>E</span>
+                    <span style={{ color: "#94a3b8" }}>Interact / Repair / Airlock</span>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between" }}>
+                    <span className="font-mono" style={{ color: "#f8fafc", fontWeight: 600 }}>F</span>
+                    <span style={{ color: "#94a3b8" }}>Toggle Helmet Flashlight</span>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between" }}>
+                    <span className="font-mono" style={{ color: "#f8fafc", fontWeight: 600 }}>1 / 2 / 3</span>
+                    <span style={{ color: "#94a3b8" }}>Equip Tools / Subsystems</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Section 2: Spacecraft Cockpit */}
+              <div
+                style={{
+                  backgroundColor: "rgba(30, 41, 59, 0.5)",
+                  border: "1px solid rgba(255, 255, 255, 0.08)",
+                  padding: "18px",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "10px",
+                }}
+              >
+                <div className="font-mono" style={{ fontSize: "12px", color: "#38bdf8", fontWeight: 700, borderBottom: "1px solid rgba(56, 189, 248, 0.2)", paddingBottom: "6px" }}>
+                  2. SPACECRAFT FLIGHT (SHUTTLE ORV-1)
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: "8px", fontSize: "12px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between" }}>
+                    <span className="font-mono" style={{ color: "#f8fafc", fontWeight: 600 }}>W / S</span>
+                    <span style={{ color: "#94a3b8" }}>Throttle Main Engine Forward / Retro</span>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between" }}>
+                    <span className="font-mono" style={{ color: "#f8fafc", fontWeight: 600 }}>A / D</span>
+                    <span style={{ color: "#94a3b8" }}>RCS Yaw Left / Right</span>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between" }}>
+                    <span className="font-mono" style={{ color: "#f8fafc", fontWeight: 600 }}>Q / E</span>
+                    <span style={{ color: "#94a3b8" }}>RCS Roll Port / Starboard</span>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between" }}>
+                    <span className="font-mono" style={{ color: "#f8fafc", fontWeight: 600 }}>MOUSE / ARROWS</span>
+                    <span style={{ color: "#94a3b8" }}>Pitch &amp; Flight Attitude</span>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between" }}>
+                    <span className="font-mono" style={{ color: "#f8fafc", fontWeight: 600 }}>SPACE</span>
+                    <span style={{ color: "#94a3b8" }}>RCS Kill-Rot / Aerobrake</span>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between" }}>
+                    <span className="font-mono" style={{ color: "#f8fafc", fontWeight: 600 }}>G</span>
+                    <span style={{ color: "#94a3b8" }}>Toggle Landing Gear Down/Up</span>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between" }}>
+                    <span className="font-mono" style={{ color: "#f8fafc", fontWeight: 600 }}>V</span>
+                    <span style={{ color: "#94a3b8" }}>Switch Cockpit &amp; Chase View</span>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between" }}>
+                    <span className="font-mono" style={{ color: "#f8fafc", fontWeight: 600 }}>H / ENTER</span>
+                    <span style={{ color: "#94a3b8" }}>Disembark / Docking Lock</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Footer with resume button */}
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px", borderTop: "1px solid rgba(255, 255, 255, 0.1)", paddingTop: "16px" }}>
+              <button
+                onClick={() => onToggleControlsOverlay?.()}
+                style={{
+                  padding: "10px 24px",
+                  backgroundColor: "#0284c7",
+                  border: "1px solid #38bdf8",
+                  color: "#f8fafc",
+                  fontSize: "12px",
+                  fontWeight: 700,
+                  cursor: "pointer",
+                }}
+              >
+                RESUME GAMEPLAY
               </button>
             </div>
           </div>

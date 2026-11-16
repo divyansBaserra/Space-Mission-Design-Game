@@ -65,6 +65,7 @@ const INITIAL_GAME_STATE: GameState = {
   missionMetSeconds: 0,
   score: 0,
   paused: false,
+  showControlsOverlay: false,
   interactionTarget: null,
   interactionPrompt: null,
 };
@@ -283,6 +284,63 @@ export function GameManager({ onReturnToHub }: GameManagerProps) {
           landingGearDeployed: nextGear,
         },
       };
+    });
+  }, []);
+
+  // Controls overlay toggle (Hotkey [C] or HUD button)
+  const handleToggleControlsOverlay = useCallback(() => {
+    setGameState((prev) => ({
+      ...prev,
+      showControlsOverlay: !prev.showControlsOverlay,
+    }));
+    soundManager.playEquip();
+  }, []);
+
+  // Direct sector transition between Gateway-1 Orbit and Lunar Base Alpha (Hotkey [T] or HUD button)
+  const handleToggleSector = useCallback(() => {
+    setGameState((prev) => {
+      const isCurrentlySurface =
+        prev.controlMode === "SURFACE_EXPLORATION" ||
+        prev.spacecraft.position.z < -60 ||
+        prev.spacecraft.position.y < -5;
+
+      if (isCurrentlySurface) {
+        soundManager.playEngineRoar();
+        soundManager.playEquip();
+        return {
+          ...prev,
+          controlMode: "ASTRONAUT",
+          isEva: true,
+          step: prev.satellite.diagnosticRun ? "BOARD_SPACECRAFT" : "EVA_APPROACH_SATELLITE",
+          substepText:
+            "Ascent trajectory complete. Stationed at Gateway-1 Orbital Facility (Microgravity EVA).",
+          spacecraft: {
+            ...prev.spacecraft,
+            position: new THREE.Vector3(0, 1.0, -28.0),
+            velocity: new THREE.Vector3(0, 0, 0),
+            isLanded: false,
+            surfaceAltitudeMeters: 18.0,
+          },
+        };
+      } else {
+        soundManager.playTouchdown();
+        soundManager.playQuindarTone();
+        return {
+          ...prev,
+          controlMode: "SURFACE_EXPLORATION",
+          isEva: true,
+          step: "EXPLORE_SURFACE",
+          substepText:
+            "Descent burn nominal. Landed at Lunar Base Alpha (0.166g lunar gravity).",
+          spacecraft: {
+            ...prev.spacecraft,
+            position: new THREE.Vector3(0, -18.0, -110.0),
+            velocity: new THREE.Vector3(0, 0, 0),
+            isLanded: true,
+            surfaceAltitudeMeters: 0,
+          },
+        };
+      }
     });
   }, []);
 
@@ -777,6 +835,8 @@ export function GameManager({ onReturnToHub }: GameManagerProps) {
         onExitCockpit={handleExitCockpit}
         onToggleCameraView={handleToggleCameraView}
         onToggleLandingGear={handleToggleLandingGear}
+        onToggleControlsOverlay={handleToggleControlsOverlay}
+        onToggleSector={handleToggleSector}
       />
       <HUD
         gameState={gameState}
@@ -794,6 +854,8 @@ export function GameManager({ onReturnToHub }: GameManagerProps) {
         onToggleLandingGear={handleToggleLandingGear}
         onReturnToHub={onReturnToHub}
         onToggleFlashlight={handleToggleFlashlight}
+        onToggleControlsOverlay={handleToggleControlsOverlay}
+        onToggleSector={handleToggleSector}
       />
     </div>
   );
