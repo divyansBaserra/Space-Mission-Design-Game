@@ -984,6 +984,102 @@ export default function SpaceMissionGame() {
     );
   };
 
+  // Player Command: Orbital Retrograde Burn (-ΔV, lower orbit)
+  const handleRetrogradeBurn = () => {
+    if (propellantRemainingKg <= 0.02) {
+      soundManager.playWarningBeep();
+      addLog("THRUST REJECTED: Propellant exhausted. Zero delta-V remaining.", "caution");
+      return;
+    }
+
+    soundManager.playEngineRoar();
+    setThrusterActive(true);
+    setPropellantRemainingKg((prev) => Math.max(0, prev - 0.05));
+    setCurrentAltitudeKm((alt) => Math.max(180, alt - 14.5));
+    setCurrentVelocityKmS((vel) => Number(Math.max(6.5, vel - 0.04).toFixed(3)));
+    setCareerScore((s) => s + 75);
+    addLog("ORBITAL MANEUVER: Retrograde thruster fired! Perigee -14.5 km, braking delta-V applied (+75 XP).", "nominal");
+
+    setTimeout(() => {
+      setThrusterActive(false);
+    }, 2000);
+  };
+
+  // Player Command: Auto-Orient Solar Panels to Sun Vector
+  const handleSunTracking = () => {
+    soundManager.playPickup();
+    addLog("ATTITUDE ORIENTATION: Solar arrays locked to Sun vector (+15% solar recharge rate).", "nominal");
+    if (!inEclipse) {
+      setBatteryEnergyWh((wh) => Math.min(activeBattery.capacityWh, wh + 2.5));
+    }
+  };
+
+  // Keyboard Event Handler for Active 3D Flight Simulation
+  useEffect(() => {
+    if (stage !== "SPACE_GAMEPLAY") return;
+
+    const handleSpaceKeyDown = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+
+      if (e.code === "KeyW" || e.code === "ArrowUp") {
+        e.preventDefault();
+        handleExecuteBurn();
+      } else if (e.code === "KeyS" || e.code === "ArrowDown") {
+        e.preventDefault();
+        handleRetrogradeBurn();
+      } else if (e.code === "Digit1") {
+        e.preventDefault();
+        if (!safeModeActive && !fatalBlackout) {
+          soundManager.playEquip();
+          setOperatingMode("SCIENCE");
+          addLog("KEY COMMAND [1]: Science Mode active.", "nominal");
+        }
+      } else if (e.code === "Digit2") {
+        e.preventDefault();
+        if (!safeModeActive && !fatalBlackout) {
+          soundManager.playEquip();
+          setOperatingMode("CONSERVE");
+          addLog("KEY COMMAND [2]: Conserve Mode active.", "caution");
+        }
+      } else if (e.code === "Digit3") {
+        e.preventDefault();
+        if (!safeModeActive && !fatalBlackout) {
+          soundManager.playEquip();
+          setOperatingMode("COMMS_PRIORITY");
+          addLog("KEY COMMAND [3]: Comms Priority active.", "nominal");
+        }
+      } else if (e.code === "KeyT") {
+        e.preventDefault();
+        handleManualTelemetryDownlink();
+      } else if (e.code === "KeyR") {
+        e.preventDefault();
+        handleSunTracking();
+      } else if (e.code === "Space") {
+        e.preventDefault();
+        handleCaptureEarthSnapshot();
+      } else if (e.code === "KeyC") {
+        e.preventDefault();
+        soundManager.playEquip();
+        setViewMode((prev) => (prev === "ORBIT" ? "SPACECRAFT" : "ORBIT"));
+      }
+    };
+
+    window.addEventListener("keydown", handleSpaceKeyDown);
+    return () => window.removeEventListener("keydown", handleSpaceKeyDown);
+  }, [
+    stage,
+    safeModeActive,
+    fatalBlackout,
+    propellantRemainingKg,
+    thrusterActive,
+    dataBufferMb,
+    activeGroundStation,
+    operatingMode,
+    viewMode,
+    inEclipse,
+    activeBattery.capacityWh,
+  ]);
+
   // Live Simulation Clock Tick Loop
   useEffect(() => {
     if (stage !== "SPACE_GAMEPLAY" || !simRunning || fatalBlackout) {
@@ -1479,7 +1575,7 @@ export default function SpaceMissionGame() {
             <button
               onClick={() => {
                 soundManager.playEquip();
-                setStage("FLIGHT_SIM_GAME");
+                setStage("MISSION_SELECT");
               }}
               style={{
                 padding: "16px 20px",
@@ -1499,8 +1595,8 @@ export default function SpaceMissionGame() {
               }}
             >
               <div>
-                <div style={{ fontSize: "13px", fontWeight: 700, color: "#ffffff" }}>2. FLIGHT CONTRACTS &amp; CAREER (3D PILOTED FLIGHT SIM)</div>
-                <div style={{ fontSize: "11px", color: "#38bdf8", fontWeight: 500, marginTop: "2px" }}>Fly Shuttle ORV-1 · LEO Orbit, Gateway-1 Docking &amp; Lunar Touchdown</div>
+                <div style={{ fontSize: "13px", fontWeight: 700, color: "#ffffff" }}>2. FLIGHT CONTRACTS &amp; CAREER MISSIONS</div>
+                <div style={{ fontSize: "11px", color: "#38bdf8", fontWeight: 500, marginTop: "2px" }}>Tactical Star Command · 3D Modular Assembly &amp; Orbital Flight Sim</div>
               </div>
               <span style={{ fontSize: "18px" }}>→</span>
             </button>
@@ -1767,8 +1863,25 @@ export default function SpaceMissionGame() {
     });
 
     return (
-      <main style={{ display: "flex", flexDirection: "column", height: "100vh", width: "100vw", backgroundColor: "#06080c", backgroundImage: "radial-gradient(ellipse at 50% 10%, rgba(2, 132, 199, 0.12) 0%, transparent 70%)" }}>
-        <header style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 var(--space-6)", height: "52px", borderBottom: "1px solid rgba(56, 189, 248, 0.2)", backgroundColor: "rgba(10, 15, 26, 0.95)", backdropFilter: "blur(8px)" }}>
+      <main style={{ position: "relative", display: "flex", flexDirection: "column", height: "100vh", width: "100vw", backgroundColor: "#06080c", overflow: "hidden" }}>
+        {/* Fullscreen 3D Starfield & Orbital Earth Background */}
+        <div style={{ position: "absolute", inset: 0, zIndex: 0, opacity: 0.7, pointerEvents: "none" }}>
+          <SpacecraftViewport
+            busSize="3U"
+            viewMode="ORBIT"
+            solarArrayType="DUAL_WING"
+            solarArrayDeployed={true}
+            payloadType="IMAGER"
+            antennaType="SBAND"
+            hasPropulsion={true}
+            thrusterActive={false}
+            isEclipse={false}
+            orbitAltitudeKm={600}
+            orbitProgress={0.4}
+          />
+        </div>
+
+        <header style={{ position: "relative", zIndex: 10, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 var(--space-6)", height: "52px", borderBottom: "1px solid rgba(56, 189, 248, 0.2)", backgroundColor: "rgba(10, 15, 26, 0.95)", backdropFilter: "blur(8px)" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "var(--space-3)" }}>
             <button
               onClick={() => {
@@ -1795,8 +1908,56 @@ export default function SpaceMissionGame() {
           </div>
         </header>
 
-        <div style={{ flex: 1, overflowY: "auto", padding: "var(--space-8)", display: "flex", flexDirection: "column", alignItems: "center" }}>
+        <div style={{ position: "relative", zIndex: 10, flex: 1, overflowY: "auto", padding: "var(--space-8)", display: "flex", flexDirection: "column", alignItems: "center" }}>
           <div style={{ maxWidth: "980px", width: "100%", display: "flex", flexDirection: "column", gap: "20px" }}>
+            {/* Quick-Launch 3D Piloted Shuttle Mission Callout Banner */}
+            <div
+              style={{
+                padding: "14px 20px",
+                backgroundColor: "rgba(12, 74, 110, 0.4)",
+                border: "1.5px solid #38bdf8",
+                borderRadius: "4px",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                backdropFilter: "blur(12px)",
+                boxShadow: "0 0 20px rgba(56, 189, 248, 0.25)",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
+                <span style={{ fontSize: "24px" }}>🚀</span>
+                <div>
+                  <div style={{ fontSize: "13px", fontWeight: 700, color: "#ffffff", letterSpacing: "0.04em" }}>
+                    LAUNCH DIRECT 3D PILOTED SHUTTLE MISSION (ORV-1 6-DOF FLIGHT)
+                  </div>
+                  <div style={{ fontSize: "11px", color: "#38bdf8", marginTop: "2px" }}>
+                    6-DOF Cockpit Piloting · Gateway-1 Gantry Mooring · Atmospheric Entry · Lunar Base Alpha Landing
+                  </div>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  soundManager.playEngineRoar();
+                  setStage("FLIGHT_SIM_GAME");
+                }}
+                style={{
+                  padding: "10px 20px",
+                  backgroundColor: "#0284c7",
+                  border: "1px solid #38bdf8",
+                  color: "#ffffff",
+                  fontSize: "12px",
+                  fontWeight: 700,
+                  borderRadius: "3px",
+                  cursor: "pointer",
+                  letterSpacing: "0.05em",
+                  boxShadow: "0 0 14px rgba(56, 189, 248, 0.4)",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                PILOT SHUTTLE NOW →
+              </button>
+            </div>
+
             {/* Header & Filter Controls */}
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", borderBottom: "1px solid rgba(255, 255, 255, 0.1)", paddingBottom: "16px" }}>
               <div>
@@ -3029,6 +3190,205 @@ export default function SpaceMissionGame() {
               orbitProgress={orbitProgress}
               activeStationName={activeGroundStation}
             />
+
+            {/* On-Screen Interactive 3D Tactical Flight Controls Bar */}
+            <div
+              style={{
+                position: "absolute",
+                bottom: "44px",
+                left: "50%",
+                transform: "translateX(-50%)",
+                zIndex: 10,
+                display: "flex",
+                gap: "6px",
+                backgroundColor: "rgba(10, 15, 26, 0.9)",
+                padding: "8px 12px",
+                border: "1px solid rgba(56, 189, 248, 0.4)",
+                borderRadius: "6px",
+                backdropFilter: "blur(12px)",
+                boxShadow: "0 0 25px rgba(0, 0, 0, 0.8)",
+                alignItems: "center",
+              }}
+            >
+              <div style={{ fontSize: "10px", fontWeight: 700, color: "#38bdf8", marginRight: "6px", fontFamily: "var(--font-mono)" }}>
+                PILOT HUD:
+              </div>
+
+              <button
+                disabled={propellantRemainingKg <= 0.02 || thrusterActive || fatalBlackout}
+                onClick={handleExecuteBurn}
+                style={{
+                  padding: "6px 10px",
+                  fontSize: "11px",
+                  fontWeight: 700,
+                  backgroundColor: thrusterActive ? "rgba(245, 158, 11, 0.4)" : "rgba(15, 23, 42, 0.8)",
+                  border: "1px solid #f59e0b",
+                  color: "#fbbf24",
+                  borderRadius: "3px",
+                  cursor: "pointer",
+                }}
+                title="Fire Prograde Burn [W / Up Arrow] (+14.5km Altitude, +40 m/s ΔV)"
+              >
+                [W] PROGRADE (+ΔV)
+              </button>
+
+              <button
+                disabled={propellantRemainingKg <= 0.02 || thrusterActive || fatalBlackout}
+                onClick={handleRetrogradeBurn}
+                style={{
+                  padding: "6px 10px",
+                  fontSize: "11px",
+                  fontWeight: 700,
+                  backgroundColor: "rgba(15, 23, 42, 0.8)",
+                  border: "1px solid #ef4444",
+                  color: "#f87171",
+                  borderRadius: "3px",
+                  cursor: "pointer",
+                }}
+                title="Fire Retrograde Burn [S / Down Arrow] (-14.5km Altitude, Braking ΔV)"
+              >
+                [S] RETROGRADE (-ΔV)
+              </button>
+
+              <button
+                disabled={safeModeActive || fatalBlackout}
+                onClick={() => {
+                  soundManager.playEquip();
+                  setOperatingMode("SCIENCE");
+                  addLog("MODE CHANGED [1]: Science Mode active.", "nominal");
+                }}
+                style={{
+                  padding: "6px 10px",
+                  fontSize: "11px",
+                  fontWeight: 700,
+                  backgroundColor: operatingMode === "SCIENCE" ? "rgba(2, 132, 199, 0.4)" : "rgba(15, 23, 42, 0.8)",
+                  border: operatingMode === "SCIENCE" ? "1px solid #38bdf8" : "1px solid rgba(255,255,255,0.15)",
+                  color: operatingMode === "SCIENCE" ? "#38bdf8" : "#94a3b8",
+                  borderRadius: "3px",
+                  cursor: "pointer",
+                }}
+                title="Switch to Science Operating Mode [1]"
+              >
+                [1] SCIENCE
+              </button>
+
+              <button
+                disabled={safeModeActive || fatalBlackout}
+                onClick={() => {
+                  soundManager.playEquip();
+                  setOperatingMode("CONSERVE");
+                  addLog("MODE CHANGED [2]: Conserve Mode active.", "caution");
+                }}
+                style={{
+                  padding: "6px 10px",
+                  fontSize: "11px",
+                  fontWeight: 700,
+                  backgroundColor: operatingMode === "CONSERVE" ? "rgba(245, 158, 11, 0.4)" : "rgba(15, 23, 42, 0.8)",
+                  border: operatingMode === "CONSERVE" ? "1px solid #f59e0b" : "1px solid rgba(255,255,255,0.15)",
+                  color: operatingMode === "CONSERVE" ? "#fbbf24" : "#94a3b8",
+                  borderRadius: "3px",
+                  cursor: "pointer",
+                }}
+                title="Switch to Battery Conserve Mode [2]"
+              >
+                [2] CONSERVE
+              </button>
+
+              <button
+                disabled={safeModeActive || fatalBlackout}
+                onClick={() => {
+                  soundManager.playEquip();
+                  setOperatingMode("COMMS_PRIORITY");
+                  addLog("MODE CHANGED [3]: Comms Priority active.", "nominal");
+                }}
+                style={{
+                  padding: "6px 10px",
+                  fontSize: "11px",
+                  fontWeight: 700,
+                  backgroundColor: operatingMode === "COMMS_PRIORITY" ? "rgba(34, 197, 94, 0.4)" : "rgba(15, 23, 42, 0.8)",
+                  border: operatingMode === "COMMS_PRIORITY" ? "1px solid #22c55e" : "1px solid rgba(255,255,255,0.15)",
+                  color: operatingMode === "COMMS_PRIORITY" ? "#22c55e" : "#94a3b8",
+                  borderRadius: "3px",
+                  cursor: "pointer",
+                }}
+                title="Switch to Comms Priority Downlink Mode [3]"
+              >
+                [3] COMMS
+              </button>
+
+              <button
+                onClick={handleSunTracking}
+                style={{
+                  padding: "6px 10px",
+                  fontSize: "11px",
+                  fontWeight: 700,
+                  backgroundColor: "rgba(15, 23, 42, 0.8)",
+                  border: "1px solid #eab308",
+                  color: "#fde047",
+                  borderRadius: "3px",
+                  cursor: "pointer",
+                }}
+                title="Lock Solar Arrays to Sun [R] (Recharges Battery)"
+              >
+                [R] SUN TRACK
+              </button>
+
+              <button
+                disabled={dataBufferMb <= 0.1 || fatalBlackout}
+                onClick={handleManualTelemetryDownlink}
+                style={{
+                  padding: "6px 10px",
+                  fontSize: "11px",
+                  fontWeight: 700,
+                  backgroundColor: dataBufferMb > 0.1 ? "rgba(56, 189, 248, 0.25)" : "rgba(15, 23, 42, 0.8)",
+                  border: "1px solid #38bdf8",
+                  color: dataBufferMb > 0.1 ? "#38bdf8" : "var(--color-text-disabled)",
+                  borderRadius: "3px",
+                  cursor: dataBufferMb > 0.1 ? "pointer" : "not-allowed",
+                }}
+                title="Downlink Telemetry to Ground Station [T]"
+              >
+                [T] DOWNLINK
+              </button>
+
+              <button
+                disabled={operatingMode === "CONSERVE" || fatalBlackout}
+                onClick={handleCaptureEarthSnapshot}
+                style={{
+                  padding: "6px 10px",
+                  fontSize: "11px",
+                  fontWeight: 700,
+                  backgroundColor: "rgba(15, 23, 42, 0.8)",
+                  border: "1px solid #22c55e",
+                  color: "#22c55e",
+                  borderRadius: "3px",
+                  cursor: "pointer",
+                }}
+                title="Capture Earth Optical/Radar Sensor Scan [Space]"
+              >
+                [SPACE] SNAPSHOT
+              </button>
+
+              <button
+                onClick={() => {
+                  soundManager.playEquip();
+                  setViewMode(viewMode === "ORBIT" ? "SPACECRAFT" : "ORBIT");
+                }}
+                style={{
+                  padding: "6px 10px",
+                  fontSize: "11px",
+                  fontWeight: 700,
+                  backgroundColor: "rgba(15, 23, 42, 0.8)",
+                  border: "1px solid #a855f7",
+                  color: "#c084fc",
+                  borderRadius: "3px",
+                  cursor: "pointer",
+                }}
+                title="Cycle Camera View: Orbit vs Satellite Close-Up [C]"
+              >
+                [C] {viewMode === "ORBIT" ? "VIEW CRAFT" : "VIEW ORBIT"}
+              </button>
+            </div>
 
             {/* Bottom Monospace Telemetry Strip */}
             <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "var(--space-2) var(--space-4)", borderTop: "1px solid var(--color-border-subtle)", backgroundColor: "rgba(12, 14, 18, 0.9)", display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: "11px", color: "var(--color-text-secondary)" }}>

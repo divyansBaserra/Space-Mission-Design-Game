@@ -1771,7 +1771,7 @@ export function StationEnvironment({
       {/* ==================================================================== */}
       {/* DOCKED UTILITY SHUTTLE AT BERTH (when in Astronaut exploration mode) */}
       {gameState.controlMode === "ASTRONAUT" && (
-        <group position={[0, 0.4, -35.5]}>
+        <group position={[0, 0.4, -36.5]}>
           {/* Cradle Docking Stanchion */}
           <mesh position={[0, -0.6, 0]}>
             <cylinderGeometry args={[0.3, 0.45, 0.8, 12]} />

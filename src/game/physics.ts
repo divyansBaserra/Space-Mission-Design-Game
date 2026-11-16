@@ -29,6 +29,9 @@ export class StationPhysics {
     // ========================================================================
     // 1. COMMAND DECK (X: -4.5 to +4.5, Z: 6.0 to 16.0, Y: 0 to 3.0)
     // ========================================================================
+    // Ceiling Collider (prevents player flying or clipping through station roof)
+    this.addBox(-4.8, 2.9, 5.8, 4.8, 3.6, 16.2, "cmd_ceiling");
+
     // South Wall Observation Window & Glass Barrier
     this.addBox(-4.8, 0.0, 15.6, 4.8, 0.7, 16.4, "cmd_south_low");
     this.addBox(-4.8, 2.4, 15.6, 4.8, 3.4, 16.4, "cmd_south_top");
@@ -54,6 +57,9 @@ export class StationPhysics {
     // ========================================================================
     // 2. ENGINEERING WORKSHOP (X: -4.5 to +4.5, Z: -5.0 to 6.0, Y: 0 to 3.0)
     // ========================================================================
+    // Ceiling Collider
+    this.addBox(-4.8, 2.9, -5.2, 4.8, 3.6, 6.2, "ws_ceiling");
+
     // West Wall
     this.addBox(-4.8, 0.0, -5.0, -4.4, 3.2, 6.0, "ws_west_wall");
     // East Wall
@@ -84,6 +90,9 @@ export class StationPhysics {
     // ========================================================================
     // 3. AIRLOCK (X: -2.0 to +2.0, Z: -11.0 to -5.0, Y: 0 to 3.0)
     // ========================================================================
+    // Ceiling Collider
+    this.addBox(-2.5, 2.9, -11.2, 2.5, 3.6, -4.8, "airlock_ceiling");
+
     // West Wall
     this.addBox(-2.3, 0.0, -11.0, -1.9, 3.2, -5.0, "airlock_west_wall");
     // East Wall
@@ -100,22 +109,22 @@ export class StationPhysics {
     // ========================================================================
     // 4. EXTERIOR GANTRY & EVA BOUNDS
     // ========================================================================
-    // Gantry Floor Rails (stops accidental drift off walkway without jetpack)
-    this.addBox(-3.4, -0.4, -32.5, -2.7, 1.4, -11.0, "gantry_rail_left");
-    this.addBox(2.7, -0.4, -32.5, 3.4, 1.4, -11.0, "gantry_rail_right");
-    this.addBox(-3.4, -0.4, -32.5, 3.4, 1.4, -31.8, "gantry_rail_end");
+    // Gantry Safety Handrails (perfectly aligned with walkway edges at X = +/- 2.1m)
+    this.addBox(-2.8, -0.4, -31.5, -2.05, 2.2, -11.0, "gantry_rail_left");
+    this.addBox(2.05, -0.4, -31.5, 2.8, 2.2, -11.0, "gantry_rail_right");
+    this.addBox(-2.8, -0.4, -31.0, 2.8, 2.2, -30.1, "gantry_rail_end");
 
     // Satellite `AERO-3X` Solid Hull & Solar Arrays (at Z = -22.0)
     this.addBox(-0.7, 0.0, -22.7, 0.7, 2.5, -21.3, "satellite_core_chassis");
     this.addBox(-1.9, 0.8, -22.4, -0.7, 2.2, -21.6, "satellite_array_left");
     this.addBox(0.7, 0.8, -22.4, 1.9, 2.2, -21.6, "satellite_array_right");
 
-    // Space Shuttle `ORV-1` at Gateway-1 Gantry Mooring Terminal (Z = -35.5)
+    // Space Shuttle `ORV-1` at Mooring Berth (Z = -36.5)
     // Prevents player walking straight into the external tank, SRBs, or fuselage!
-    this.addBox(-2.2, -0.5, -40.5, 2.2, 4.5, -33.0, "shuttle_fuselage_tank");
-    this.addBox(-4.5, -0.5, -40.0, -2.0, 3.2, -34.8, "shuttle_wing_srb_left");
-    this.addBox(2.0, -0.5, -40.0, 4.5, 3.2, -34.8, "shuttle_wing_srb_right");
-    this.addBox(-0.8, -0.6, -36.0, 0.8, 0.8, -34.0, "shuttle_cradle_stanchion");
+    this.addBox(-3.2, -0.8, -43.0, 3.2, 5.0, -32.0, "shuttle_fuselage_tank");
+    this.addBox(-5.5, -0.8, -43.0, -2.5, 3.5, -34.5, "shuttle_wing_srb_left");
+    this.addBox(2.5, -0.8, -43.0, 5.5, 3.5, -34.5, "shuttle_wing_srb_right");
+    this.addBox(-0.9, -0.8, -37.0, 0.9, 0.9, -34.0, "shuttle_cradle_stanchion");
 
     // ========================================================================
     // 5. LUNAR BASE ALPHA SURFACE OBSTACLES (Z = -110.0, Y = -18.0)
@@ -335,10 +344,10 @@ export class StationPhysics {
 
     // 3. World boundary guards
     if (nextPos.z < -11.0 && nextPos.z >= -55.0 && nextPos.y >= -10.0) {
-      // Exterior orbital station gantry bounds
-      nextPos.x = THREE.MathUtils.clamp(nextPos.x, -4.5, 4.5);
-      nextPos.z = THREE.MathUtils.clamp(nextPos.z, -32.2, -11.0);
-      nextPos.y = THREE.MathUtils.clamp(nextPos.y, -1.5, 4.5);
+      // Exterior orbital station gantry bounds (prevent clipping off gantry or into shuttle)
+      nextPos.x = THREE.MathUtils.clamp(nextPos.x, -2.0, 2.0);
+      nextPos.z = THREE.MathUtils.clamp(nextPos.z, -30.0, -11.0);
+      nextPos.y = THREE.MathUtils.clamp(nextPos.y, 0.05, 4.0);
     } else if (nextPos.z < -55.0 || nextPos.y < -10.0) {
       // Lunar Base Alpha surface boundary guard (prevent walking off terrain)
       nextPos.x = THREE.MathUtils.clamp(nextPos.x, -65.0, 65.0);
