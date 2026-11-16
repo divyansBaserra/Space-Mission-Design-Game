@@ -19,6 +19,8 @@ interface PlayerControllerProps {
   onEquipItem?: (id: InventoryItemId) => void;
   onToggleControlsOverlay?: () => void;
   onToggleSector?: () => void;
+  onToggleMagBoots?: () => void;
+  onRetetherToGantry?: () => void;
 }
 
 export function PlayerController({
@@ -32,6 +34,8 @@ export function PlayerController({
   onEquipItem,
   onToggleControlsOverlay,
   onToggleSector,
+  onToggleMagBoots,
+  onRetetherToGantry,
 }: PlayerControllerProps) {
   const { camera, gl } = useThree();
 
@@ -75,12 +79,14 @@ export function PlayerController({
       yawRef.current = Math.PI; // Face south towards Lunar Base habitat
       pitchRef.current = 0;
       isGroundedRef.current = true;
-    } else if (gameState.controlMode === "ASTRONAUT" && playerPosRef.current.y < -10) {
-      playerPosRef.current.set(0, 1.0, -25.0);
-      velocityRef.current.set(0, 0, 0);
-      yawRef.current = 0;
-      pitchRef.current = 0;
-      isGroundedRef.current = true;
+    } else if (gameState.controlMode === "ASTRONAUT") {
+      if (playerPosRef.current.y < -10 || playerPosRef.current.z < -30) {
+        playerPosRef.current.set(0, 0.05, -26.0);
+        velocityRef.current.set(0, 0, 0);
+        yawRef.current = 0; // Face north along gantry towards airlock
+        pitchRef.current = 0;
+        isGroundedRef.current = true;
+      }
     }
   }, [gameState.controlMode]);
 
@@ -124,12 +130,20 @@ export function PlayerController({
         return;
       }
 
-      // Emergency airlock tether return (KeyB) when in microgravity EVA outside
-      if (e.code === "KeyB" && playerPosRef.current.z < -10.5 && gameState.controlMode === "ASTRONAUT") {
-        playerPosRef.current.set(0, 1.0, -11.5);
+      // Magnetic boots lock toggle (KeyG)
+      if (e.code === "KeyG") {
+        onToggleMagBoots?.();
+        return;
+      }
+
+      // Emergency airlock / gantry tether return (KeyR or KeyB) when in microgravity EVA outside
+      if ((e.code === "KeyR" || e.code === "KeyB") && playerPosRef.current.z < -10.5 && gameState.controlMode === "ASTRONAUT") {
+        playerPosRef.current.set(0, 0.05, -14.0);
         velocityRef.current.set(0, 0, 0);
+        isGroundedRef.current = true;
         soundManager.playEquip();
-        soundManager.speakRadioComm("Emergency airlock tether engaged. Astronaut secured at Gateway-1 hatch.", "HOUSTON");
+        soundManager.speakRadioComm("Emergency safety tether engaged. Astronaut secured on Gateway-1 gantry deck.", "HOUSTON");
+        onRetetherToGantry?.();
         return;
       }
 
@@ -420,45 +434,100 @@ export function PlayerController({
       }
     } else {
       // ======================================================================
-      // 2. EXTERIOR EVA (ZERO-G RCS THRUSTERS)
+      // 2. EXTERIOR EVA (ZERO-G RCS THRUSTERS OR MAGNETIC BOOTS LOCK)
       // ======================================================================
-      const rcsThrust = 3.6;
-      const rcsAcc = new THREE.Vector3();
+      if (gameState.isMagBootsLocked) {
+        // Firm Magnetic Deck Walkway Mode
+        const desiredVelX = (forward.x * -moveInput.z + right.x * moveInput.x) * baseSpeed;
+        const desiredVelZ = (forward.z * -moveInput.z + right.z * moveInput.x) * baseSpeed;
 
-      if (moveInput.z !== 0) {
-        rcsAcc.addScaledVector(forward, -moveInput.z * rcsThrust);
-      }
-      if (moveInput.x !== 0) {
-        rcsAcc.addScaledVector(right, moveInput.x * rcsThrust);
-      }
-      if (keys["Space"]) {
-        rcsAcc.y += rcsThrust; // Thrust UP
-      }
-      if (keys["ControlLeft"] || keys["KeyX"] || keys["KeyZ"]) {
-        rcsAcc.y -= rcsThrust; // Thrust DOWN (Left Ctrl / X / Z)
-      }
+        velocityRef.current.x = desiredVelX;
+        velocityRef.current.z = desiredVelZ;
+        velocityRef.current.y = 0;
+        playerPosRef.current.y = 0.05;
+        isGroundedRef.current = true;
 
-      // Apply RCS acceleration
-      velocityRef.current.addScaledVector(rcsAcc, dt);
-
-      // Audio puff on thruster firing
-      if (rcsAcc.lengthSq() > 0.1) {
-        const now = Date.now();
-        if (now - lastThrusterTimeRef.current > 350) {
-          soundManager.playThrusterPuff();
-          lastThrusterTimeRef.current = now;
+        const deltaPos = new THREE.Vector3(
+          velocityRef.current.x * dt,
+          0,
+          velocityRef.current.z * dt
+        );
+        const { finalPos, collided } = physics.movePlayer(playerPosRef.current, deltaPos, 0.52);
+        playerPosRef.current.x = finalPos.x;
+        playerPosRef.current.z = finalPos.z;
+        if (collided) {
+          velocityRef.current.x *= 0.4;
+          velocityRef.current.z *= 0.4;
         }
-      }
 
-      // Zero-G drag / damping
-      velocityRef.current.multiplyScalar(Math.pow(0.85, dt * 8));
+        const speedMag = Math.sqrt(velocityRef.current.x ** 2 + velocityRef.current.z ** 2);
+        if (speedMag > 0.4) {
+          bobbingTimerRef.current += dt * 8;
+          lastFootstepDistRef.current += speedMag * dt;
+          if (lastFootstepDistRef.current >= 1.6) {
+            soundManager.playFootstep();
+            lastFootstepDistRef.current = 0;
+          }
+        }
+      } else {
+        // Zero-G RCS Thruster Flight Mode
+        const rcsThrust = 3.6;
+        const rcsAcc = new THREE.Vector3();
 
-      // Move with collision checking along gantry
-      const deltaPos = velocityRef.current.clone().multiplyScalar(dt);
-      const { finalPos, collided } = physics.movePlayer(playerPosRef.current, deltaPos, 0.52);
-      playerPosRef.current.copy(finalPos);
-      if (collided) {
-        velocityRef.current.multiplyScalar(0.3);
+        if (moveInput.z !== 0) {
+          rcsAcc.addScaledVector(forward, -moveInput.z * rcsThrust);
+        }
+        if (moveInput.x !== 0) {
+          rcsAcc.addScaledVector(right, moveInput.x * rcsThrust);
+        }
+        if (keys["Space"]) {
+          rcsAcc.y += rcsThrust; // Thrust UP
+        }
+        if (keys["ControlLeft"] || keys["KeyX"] || keys["KeyZ"]) {
+          rcsAcc.y -= rcsThrust; // Thrust DOWN (Left Ctrl / X / Z)
+        }
+
+        // Apply RCS acceleration
+        velocityRef.current.addScaledVector(rcsAcc, dt);
+
+        // Audio puff on thruster firing
+        if (rcsAcc.lengthSq() > 0.1) {
+          const now = Date.now();
+          if (now - lastThrusterTimeRef.current > 350) {
+            soundManager.playThrusterPuff();
+            lastThrusterTimeRef.current = now;
+          }
+        }
+
+        // Zero-G drag / damping
+        velocityRef.current.multiplyScalar(Math.pow(0.85, dt * 8));
+
+        // Move with collision checking along gantry
+        const deltaPos = velocityRef.current.clone().multiplyScalar(dt);
+        const { finalPos, collided } = physics.movePlayer(playerPosRef.current, deltaPos, 0.52);
+        playerPosRef.current.copy(finalPos);
+        if (collided) {
+          velocityRef.current.multiplyScalar(0.3);
+        }
+
+        // Automatic Safety Tether Boundary Arrest
+        if (
+          playerPosRef.current.y > 16.0 ||
+          playerPosRef.current.y < -12.0 ||
+          playerPosRef.current.x > 8.0 ||
+          playerPosRef.current.x < -8.0 ||
+          playerPosRef.current.z < -42.0 ||
+          playerPosRef.current.z > -9.5
+        ) {
+          playerPosRef.current.set(0, 0.05, -14.0);
+          velocityRef.current.set(0, 0, 0);
+          isGroundedRef.current = true;
+          soundManager.playEquip();
+          soundManager.speakRadioComm(
+            "Safety tether limit reached. Astronaut reeled safely back to Gateway-1 gantry deck.",
+            "HOUSTON"
+          );
+        }
       }
     }
 

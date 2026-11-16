@@ -674,14 +674,7 @@ export default function SpaceMissionGame() {
     []
   );
 
-  // Animated Orbit Progress for Cinematic Main Menu
-  useEffect(() => {
-    if (stage !== "MAIN_MENU") return;
-    const interval = setInterval(() => {
-      setMainMenuOrbitProgress((prev) => (prev + 0.0015) % 1.0);
-    }, 50);
-    return () => clearInterval(interval);
-  }, [stage]);
+  // Main menu orbit progress baseline (R3F useFrame handles 60 FPS celestial rotation smoothly without React re-renders)
 
   // One-Click Engineering Presets for Workshop / Hangar
   const handleApplyPreset = (preset: "BALANCED_3U" | "DEEP_SPACE_6U" | "MINIMALIST_1U") => {

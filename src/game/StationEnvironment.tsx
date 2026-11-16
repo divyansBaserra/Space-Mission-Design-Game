@@ -679,11 +679,11 @@ export function StationEnvironment({
         <directionalLight position={[0, -10, 5]} intensity={0.38} color="#38bdf8" />
       )}
 
-      {/* Photorealistic NASA Blue Marble Earth */}
+      {/* Photorealistic NASA Blue Marble Earth in true low Earth orbit */}
       {!isSurface ? (
         <RealisticEarth
-          radius={260}
-          position={[0, -285, 30]}
+          radius={480}
+          position={[0, -520, 20]}
           rotationSpeed={0.008}
         />
       ) : (
@@ -1771,7 +1771,7 @@ export function StationEnvironment({
       {/* ==================================================================== */}
       {/* DOCKED UTILITY SHUTTLE AT BERTH (when in Astronaut exploration mode) */}
       {gameState.controlMode === "ASTRONAUT" && (
-        <group position={[0, 0.8, -28.0]}>
+        <group position={[0, 0.4, -35.5]}>
           {/* Cradle Docking Stanchion */}
           <mesh position={[0, -0.6, 0]}>
             <cylinderGeometry args={[0.3, 0.45, 0.8, 12]} />

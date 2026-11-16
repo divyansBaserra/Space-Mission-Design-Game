@@ -45,6 +45,8 @@ interface GameCanvasProps {
   onToggleLandingGear?: () => void;
   onToggleControlsOverlay?: () => void;
   onToggleSector?: () => void;
+  onToggleMagBoots?: () => void;
+  onRetetherToGantry?: () => void;
 }
 
 export function GameCanvas({
@@ -64,6 +66,8 @@ export function GameCanvas({
   onToggleLandingGear,
   onToggleControlsOverlay,
   onToggleSector,
+  onToggleMagBoots,
+  onRetetherToGantry,
 }: GameCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -137,6 +141,8 @@ export function GameCanvas({
             onEquipItem={onEquipItem}
             onToggleControlsOverlay={onToggleControlsOverlay}
             onToggleSector={onToggleSector}
+            onToggleMagBoots={onToggleMagBoots}
+            onRetetherToGantry={onRetetherToGantry}
           />
           <SpacecraftFlight
             gameState={gameState}

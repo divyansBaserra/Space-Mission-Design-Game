@@ -120,4 +120,5 @@ export interface GameState {
   activeFlightContract: string;
   alsepDeployed: boolean;
   alsepPosition: THREE.Vector3 | null;
+  isMagBootsLocked?: boolean;
 }

@@ -80,6 +80,7 @@ const INITIAL_GAME_STATE: GameState = {
   activeFlightContract: "ARC_600",
   alsepDeployed: false,
   alsepPosition: null,
+  isMagBootsLocked: false,
 };
 
 interface GameManagerProps {
@@ -328,6 +329,37 @@ export function GameManager({ onReturnToHub, gameMode = "ORBITAL_REPAIR" }: Game
       showControlsOverlay: !prev.showControlsOverlay,
     }));
     soundManager.playEquip();
+  }, []);
+
+  // Magnetic boots toggle (Hotkey [G] or HUD button)
+  const handleToggleMagBoots = useCallback(() => {
+    setGameState((prev) => {
+      const nextLocked = !prev.isMagBootsLocked;
+      soundManager.playEquip();
+      soundManager.speakRadioComm(
+        nextLocked
+          ? "Magnetic boots engaged. Gantry deck lock confirmed."
+          : "Magnetic boots disengaged. Microgravity EVA RCS active.",
+        "ASTRONAUT"
+      );
+      return {
+        ...prev,
+        isMagBootsLocked: nextLocked,
+      };
+    });
+  }, []);
+
+  // Emergency safety retether to gantry deck (Hotkey [R] or HUD button)
+  const handleRetetherToGantry = useCallback(() => {
+    soundManager.playEquip();
+    soundManager.speakRadioComm(
+      "Safety tether retracted. Astronaut secured on Gateway-1 maintenance gantry deck.",
+      "HOUSTON"
+    );
+    setGameState((prev) => ({
+      ...prev,
+      isMagBootsLocked: true,
+    }));
   }, []);
 
   // Direct sector transition between Gateway-1 Orbit and Lunar Base Alpha (Hotkey [T] or HUD button)
@@ -1095,6 +1127,8 @@ export function GameManager({ onReturnToHub, gameMode = "ORBITAL_REPAIR" }: Game
         onToggleLandingGear={handleToggleLandingGear}
         onToggleControlsOverlay={handleToggleControlsOverlay}
         onToggleSector={handleToggleSector}
+        onToggleMagBoots={handleToggleMagBoots}
+        onRetetherToGantry={handleRetetherToGantry}
       />
       <HUD
         gameState={gameState}
@@ -1114,6 +1148,8 @@ export function GameManager({ onReturnToHub, gameMode = "ORBITAL_REPAIR" }: Game
         onToggleFlashlight={handleToggleFlashlight}
         onToggleControlsOverlay={handleToggleControlsOverlay}
         onToggleSector={handleToggleSector}
+        onToggleMagBoots={handleToggleMagBoots}
+        onRetetherToGantry={handleRetetherToGantry}
         onSelectFlightContract={handleSelectFlightContract}
         onInteractHangar={handleInteract}
       />

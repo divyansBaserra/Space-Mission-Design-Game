@@ -24,6 +24,8 @@ interface HUDProps {
   onToggleSector?: () => void;
   onSelectFlightContract?: (contractId: string) => void;
   onInteractHangar?: (targetId: string) => void;
+  onToggleMagBoots?: () => void;
+  onRetetherToGantry?: () => void;
 }
 
 export function HUD({
@@ -46,6 +48,8 @@ export function HUD({
   onToggleSector,
   onSelectFlightContract,
   onInteractHangar,
+  onToggleMagBoots,
+  onRetetherToGantry,
 }: HUDProps) {
   const [hasEntered, setHasEntered] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
@@ -261,6 +265,48 @@ export function HUD({
           >
             [C] CONTROLS
           </button>
+
+          {/* EVA Gantry Mobility & Emergency Retether (Active when outside station on EVA) */}
+          {gameState.controlMode === "ASTRONAUT" && gameState.isEva && (
+            <>
+              <button
+                onClick={() => onRetetherToGantry?.()}
+                style={{
+                  padding: "8px 14px",
+                  backgroundColor: "rgba(220, 38, 38, 0.85)",
+                  border: "1px solid #ef4444",
+                  color: "#ffffff",
+                  fontSize: "11px",
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  backdropFilter: "blur(6px)",
+                  boxShadow: "0 0 12px rgba(239, 68, 68, 0.4)",
+                  transition: "all 0.15s ease",
+                }}
+                title="Emergency autopilot recall: instantly return safely to the maintenance gantry deck [R]"
+              >
+                [R] RETETHER TO GANTRY
+              </button>
+
+              <button
+                onClick={() => onToggleMagBoots?.()}
+                style={{
+                  padding: "8px 14px",
+                  backgroundColor: gameState.isMagBootsLocked ? "rgba(22, 101, 52, 0.9)" : "rgba(30, 41, 59, 0.85)",
+                  border: gameState.isMagBootsLocked ? "1px solid #22c55e" : "1px solid rgba(56, 189, 248, 0.4)",
+                  color: gameState.isMagBootsLocked ? "#86efac" : "#38bdf8",
+                  fontSize: "11px",
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  backdropFilter: "blur(6px)",
+                  transition: "all 0.15s ease",
+                }}
+                title="Toggle Magnetic Boots Lock [G]: clamp firmly to gantry deck for walking vs zero-g RCS"
+              >
+                [G] MAG-BOOTS: {gameState.isMagBootsLocked ? "LOCKED (WALKING)" : "OFF (ZERO-G)"}
+              </button>
+            </>
+          )}
 
           {/* Sector Transition: Orbit Gateway-1 <-> Lunar Base Alpha */}
           <button
@@ -2374,6 +2420,18 @@ export function HUD({
                   <div style={{ display: "flex", justifyContent: "space-between" }}>
                     <span className="font-mono" style={{ color: "#f8fafc", fontWeight: 600 }}>1 / 2 / 3</span>
                     <span style={{ color: "#94a3b8" }}>Equip Tools / Subsystems</span>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between" }}>
+                    <span className="font-mono" style={{ color: "#38bdf8", fontWeight: 700 }}>G</span>
+                    <span style={{ color: "#f8fafc", fontWeight: 600 }}>Toggle Mag-Boots Lock (Firm Walk vs Float)</span>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between" }}>
+                    <span className="font-mono" style={{ color: "#ef4444", fontWeight: 700 }}>R / B</span>
+                    <span style={{ color: "#f8fafc", fontWeight: 600 }}>Auto-Retether to Gantry Deck</span>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between" }}>
+                    <span className="font-mono" style={{ color: "#38bdf8", fontWeight: 700 }}>C</span>
+                    <span style={{ color: "#94a3b8" }}>Toggle Controls Cheat Sheet (Anytime)</span>
                   </div>
                 </div>
               </div>
