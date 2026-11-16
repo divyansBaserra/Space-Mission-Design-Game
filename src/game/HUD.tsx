@@ -1018,7 +1018,7 @@ export function HUD({
                 LUNAR BASE ALPHA · RESEARCH SECTOR
               </div>
               <div style={{ fontSize: "10px", color: "#38bdf8", fontFamily: "var(--font-mono)" }}>
-                LOC: {gameState.surfaceCoordinates?.lat ?? "0.6740° N"}, {gameState.surfaceCoordinates?.lon ?? "23.4720° E"} // MARE TRANQUILLITATIS
+                LOC: {gameState.surfaceCoordinates?.lat ?? "0.6740° N"}, {gameState.surfaceCoordinates?.lon ?? "23.4720° E"} {"//"} MARE TRANQUILLITATIS
               </div>
               <div style={{ fontSize: "10px", color: "#94a3b8" }}>
                 Touchdown Pad PAD-01 | Habitat Module | S-Band Deep Space Mast
@@ -1982,7 +1982,7 @@ export function HUD({
 
                 <div style={{ display: "flex", flexDirection: "column", gap: "10px", fontSize: "12px", color: "#cbd5e1", lineHeight: 1.5 }}>
                   <p>
-                    <strong>ASTROBIOLOGY DISCOVERY:</strong> Jupiter's ice moon Europa conceals a 100km-deep liquid saltwater ocean beneath a 20km cryogenic ice crust. Mission Deep-Valkyrie must survive Jovian radiation belts, melt through the ice shell via nuclear thermal probe, and navigate an abyssal submarine to hydrothermal black smokers.
+                    <strong>ASTROBIOLOGY DISCOVERY:</strong> Jupiter&apos;s ice moon Europa conceals a 100km-deep liquid saltwater ocean beneath a 20km cryogenic ice crust. Mission Deep-Valkyrie must survive Jovian radiation belts, melt through the ice shell via nuclear thermal probe, and navigate an abyssal submarine to hydrothermal black smokers.
                   </p>
                   <div style={{ backgroundColor: "rgba(30, 41, 59, 0.6)", padding: "12px", border: "1px solid rgba(99, 102, 241, 0.3)" }}>
                     <strong style={{ color: "#818cf8", letterSpacing: "0.5px" }}>ABYSSAL EXPLORATION DIRECTIVES:</strong>

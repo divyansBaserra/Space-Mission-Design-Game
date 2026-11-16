@@ -2933,7 +2933,7 @@ export default function SpaceMissionGame() {
         {/* Header */}
         <header style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 var(--space-5)", height: "48px", borderBottom: "1px solid var(--color-border-subtle)", backgroundColor: "var(--color-surface-1)" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "var(--space-3)" }}>
-            <h1 style={{ fontSize: "var(--text-sm)", fontWeight: 600 }}>{contract.code} // Flight Control Center</h1>
+            <h1 style={{ fontSize: "var(--text-sm)", fontWeight: 600 }}>{contract.code} {"//"} Flight Control Center</h1>
             <div style={{ width: "1px", height: "12px", backgroundColor: "var(--color-border-default)" }} />
             <span style={{ fontSize: "11px", color: "var(--color-text-muted)" }}>{contract.orbitType} · {contract.altitudeKm} km</span>
           </div>

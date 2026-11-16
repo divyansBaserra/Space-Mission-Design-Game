@@ -118,7 +118,7 @@ export function GameCanvas({
           gl.toneMapping = THREE.ACESFilmicToneMapping;
           gl.toneMappingExposure = 1.28;
           gl.shadowMap.enabled = isShadowsEnabled;
-          gl.shadowMap.type = THREE.PCFSoftShadowMap;
+          gl.shadowMap.type = THREE.PCFShadowMap;
         }}
       >
         <Suspense fallback={null}>
