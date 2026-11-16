@@ -465,6 +465,67 @@ interface CareerSaveData {
   medalsEarned: string[];
 }
 
+function NasaJudgesGithubBanner() {
+  return (
+    <a
+      href="https://github.com/divyansBaserra/Space-Mission-Design-Game"
+      target="_blank"
+      rel="noopener noreferrer"
+      style={{
+        position: "fixed",
+        top: "14px",
+        left: "50%",
+        transform: "translateX(-50%)",
+        zIndex: 99999,
+        display: "inline-flex",
+        alignItems: "center",
+        gap: "12px",
+        padding: "8px 22px",
+        backgroundColor: "rgba(10, 14, 24, 0.96)",
+        border: "2px solid #38bdf8",
+        borderRadius: "6px",
+        boxShadow: "0 0 24px rgba(56, 189, 248, 0.45), 0 4px 16px rgba(0,0,0,0.8)",
+        textDecoration: "none",
+        pointerEvents: "auto",
+        backdropFilter: "blur(8px)",
+        cursor: "pointer",
+        transition: "all 0.2s ease",
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.backgroundColor = "rgba(56, 189, 248, 0.2)";
+        e.currentTarget.style.boxShadow = "0 0 32px rgba(56, 189, 248, 0.75), 0 4px 20px rgba(0,0,0,0.9)";
+        e.currentTarget.style.transform = "translateX(-50%) scale(1.03)";
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.backgroundColor = "rgba(10, 14, 24, 0.96)";
+        e.currentTarget.style.boxShadow = "0 0 24px rgba(56, 189, 248, 0.45), 0 4px 16px rgba(0,0,0,0.8)";
+        e.currentTarget.style.transform = "translateX(-50%) scale(1)";
+      }}
+    >
+      <span style={{ display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "10px", fontWeight: 700, color: "#22c55e", letterSpacing: "0.1em" }}>
+        <span style={{ width: "8px", height: "8px", borderRadius: "50%", backgroundColor: "#22c55e", boxShadow: "0 0 8px #22c55e" }} />
+        NASA EVALUATION
+      </span>
+
+      <span style={{ width: "1px", height: "18px", backgroundColor: "rgba(255,255,255,0.25)" }} />
+
+      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="#38bdf8">
+          <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z" />
+        </svg>
+        <div style={{ display: "flex", flexDirection: "column", textAlign: "left" }}>
+          <span style={{ fontSize: "12px", fontWeight: 800, color: "#ffffff", letterSpacing: "0.04em", lineHeight: 1.2 }}>
+            INSPECT CODEBASE ON GITHUB &rarr;
+          </span>
+          <span style={{ fontSize: "9px", color: "#38bdf8", fontWeight: 600, letterSpacing: "0.06em", fontFamily: "monospace" }}>
+            SPACE-MISSION-DESIGN-GAME // MIT OPEN-SOURCE
+          </span>
+        </div>
+      </div>
+    </a>
+  );
+}
+
 // ============================================================================
 // Main Space Mission Design Game Component
 // ============================================================================
@@ -473,6 +534,8 @@ export default function SpaceMissionGame() {
   // Navigation Stage: Boot directly into First-Person 3D Game
   const [stage, setStage] = useState<GameStage>("FIRST_PERSON_GAME");
   const [viewMode, setViewMode] = useState<"SPACECRAFT" | "ORBIT">("SPACECRAFT");
+  const [showHangarGuide, setShowHangarGuide] = useState<boolean>(true);
+  const [mainMenuOrbitProgress, setMainMenuOrbitProgress] = useState<number>(0.25);
 
   // Career Progress
   const [careerScore, setCareerScore] = useState<number>(0);
@@ -559,6 +622,41 @@ export default function SpaceMissionGame() {
     },
     []
   );
+
+  // Animated Orbit Progress for Cinematic Main Menu
+  useEffect(() => {
+    if (stage !== "MAIN_MENU") return;
+    const interval = setInterval(() => {
+      setMainMenuOrbitProgress((prev) => (prev + 0.0015) % 1.0);
+    }, 50);
+    return () => clearInterval(interval);
+  }, [stage]);
+
+  // One-Click Engineering Presets for Workshop / Hangar
+  const handleApplyPreset = (preset: "BALANCED_3U" | "DEEP_SPACE_6U" | "MINIMALIST_1U") => {
+    if (preset === "BALANCED_3U") {
+      setFormFactor("3U");
+      setSolarArray("SINGLE_WING");
+      setBatteryId("BATT_40WH");
+      setPayloadId("IMAGER");
+      setPropulsionId("NONE");
+      setTelecomId("SBAND");
+    } else if (preset === "DEEP_SPACE_6U") {
+      setFormFactor("6U");
+      setSolarArray("DUAL_WING");
+      setBatteryId("BATT_80WH");
+      setPayloadId("RADAR");
+      setPropulsionId("HYDRAZINE");
+      setTelecomId("XBAND");
+    } else if (preset === "MINIMALIST_1U") {
+      setFormFactor("1U");
+      setSolarArray("BODY_MOUNTED");
+      setBatteryId("BATT_20WH");
+      setPayloadId("PLASMA");
+      setPropulsionId("NONE");
+      setTelecomId("UHF");
+    }
+  };
 
   // Active Contract Lookup
   const contract = useMemo(
@@ -1067,49 +1165,8 @@ export default function SpaceMissionGame() {
   if (stage === "FIRST_PERSON_GAME") {
     return (
       <main style={{ position: "relative", width: "100vw", height: "100vh", overflow: "hidden", backgroundColor: "#06080c" }}>
-        {/* Floating GitHub Source Code Link for NASA Judges */}
-        <a
-          href="https://github.com/divyansBaserra/Space-Mission-Design-Game"
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{
-            position: "fixed",
-            bottom: "16px",
-            right: "16px",
-            zIndex: 99999,
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "8px",
-            padding: "8px 14px",
-            backgroundColor: "rgba(15, 23, 42, 0.95)",
-            border: "1px solid rgba(56, 189, 248, 0.5)",
-            borderRadius: "6px",
-            color: "#38bdf8",
-            fontSize: "11px",
-            fontWeight: 700,
-            letterSpacing: "0.06em",
-            textDecoration: "none",
-            backdropFilter: "blur(8px)",
-            boxShadow: "0 4px 20px rgba(0, 0, 0, 0.6)",
-            pointerEvents: "auto",
-            transition: "all 0.2s ease",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = "rgba(56, 189, 248, 0.2)";
-            e.currentTarget.style.color = "#ffffff";
-            e.currentTarget.style.borderColor = "#38bdf8";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = "rgba(15, 23, 42, 0.95)";
-            e.currentTarget.style.color = "#38bdf8";
-            e.currentTarget.style.borderColor = "rgba(56, 189, 248, 0.5)";
-          }}
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z" />
-          </svg>
-          GITHUB SOURCE CODE &rarr;
-        </a>
+        {/* Prominent Glowing NASA Evaluation Top Banner */}
+        <NasaJudgesGithubBanner />
 
         <GameManager onReturnToHub={() => setStage("MAIN_MENU")} />
       </main>
@@ -1122,6 +1179,9 @@ export default function SpaceMissionGame() {
   if (stage === "MAIN_MENU") {
     return (
       <main style={{ position: "relative", width: "100vw", height: "100vh", overflow: "hidden", backgroundColor: "#06080c" }}>
+        {/* Prominent Glowing NASA Evaluation Top Banner */}
+        <NasaJudgesGithubBanner />
+
         {/* Fullscreen 3D Earth & Starfield Background Viewport */}
         <div style={{ position: "absolute", inset: 0, zIndex: 1 }}>
           <SpacecraftViewport
@@ -1135,7 +1195,7 @@ export default function SpaceMissionGame() {
             thrusterActive={false}
             isEclipse={false}
             orbitAltitudeKm={600}
-            orbitProgress={0.25}
+            orbitProgress={mainMenuOrbitProgress}
           />
         </div>
 
@@ -1274,6 +1334,37 @@ export default function SpaceMissionGame() {
               <span>4. FLIGHT ACADEMY &amp; REFERENCE MANUAL</span>
               <span>→</span>
             </button>
+
+            {/* NASA Evaluators Direct Code Link Button */}
+            <a
+              href="https://github.com/divyansBaserra/Space-Mission-Design-Game"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                marginTop: "var(--space-2)",
+                padding: "14px 20px",
+                backgroundColor: "rgba(12, 74, 110, 0.35)",
+                border: "2px solid #38bdf8",
+                color: "#f8fafc",
+                fontSize: "var(--text-xs)",
+                fontWeight: 700,
+                textAlign: "left",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                textDecoration: "none",
+                boxShadow: "0 0 16px rgba(56, 189, 248, 0.35)",
+                transition: "all 0.15s ease",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="#38bdf8">
+                  <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z" />
+                </svg>
+                <span>5. NASA JUDGES: GITHUB CODEBASE</span>
+              </div>
+              <span style={{ color: "#38bdf8", fontWeight: 700 }}>↗</span>
+            </a>
           </div>
 
           {/* Bottom Bar Info */}
@@ -1501,6 +1592,34 @@ export default function SpaceMissionGame() {
   // STAGE 4: SPACECRAFT WORKSHOP (Interactive 3D Assembly Bay)
   // ============================================================================
   if (stage === "WORKSHOP") {
+    // Compute plain-English guidance recommendations for players
+    const guidanceTips: string[] = [];
+    if (!massCompliant) {
+      guidanceTips.push(
+        `Mass Exceeded: Total wet mass is ${wetMassKg.toFixed(2)} kg (limit is ${cdsLimitKg.toFixed(1)} kg for ${formFactor}). Upgrade chassis to ${formFactor === "1U" ? "3U" : "6U"} or pick a lighter battery/payload.`
+      );
+    }
+    if (!powerPositive) {
+      guidanceTips.push(
+        `Power Deficit: Subsystems draw ${totalNominalLoadW.toFixed(1)} W, but solar panels only generate ${solarGenWatts.toFixed(1)} W. Upgrade to Single-Wing or Dual-Wing Solar Array.`
+      );
+    }
+    if (!dodNominal) {
+      guidanceTips.push(
+        `Battery DoD (${estimatedEclipseDodPercent.toFixed(1)}%): Exceeds safe 25% limit for 35-min eclipse shadow. Upgrade battery capacity.`
+      );
+    }
+    if (!linkMarginNominal) {
+      guidanceTips.push(
+        `Low RF Link Margin (${estimatedLinkMarginDb.toFixed(1)} dB): NASA requires ≥ 6.0 dB. Upgrade antenna to S-Band or X-Band.`
+      );
+    }
+    if (!budgetCompliant) {
+      guidanceTips.push(
+        `Over Budget: Hardware cost (${totalCostCredits.toLocaleString()} Cr) exceeds credits (${careerCredits.toLocaleString()} Cr).`
+      );
+    }
+
     return (
       <main style={{ display: "flex", flexDirection: "column", height: "100vh", width: "100vw", overflow: "hidden", backgroundColor: "var(--color-canvas)" }}>
         {/* Header */}
@@ -1511,6 +1630,21 @@ export default function SpaceMissionGame() {
             </button>
             <div style={{ width: "1px", height: "12px", backgroundColor: "var(--color-border-default)" }} />
             <h1 style={{ fontSize: "var(--text-sm)", fontWeight: 600 }}>Spacecraft Design Workshop // {contract.code}</h1>
+            <button
+              onClick={() => setShowHangarGuide(!showHangarGuide)}
+              style={{
+                padding: "3px 8px",
+                fontSize: "11px",
+                fontWeight: 600,
+                backgroundColor: showHangarGuide ? "rgba(56, 189, 248, 0.15)" : "var(--color-surface-2)",
+                color: showHangarGuide ? "#38bdf8" : "var(--color-text-muted)",
+                border: "1px solid rgba(56, 189, 248, 0.3)",
+                borderRadius: "3px",
+                cursor: "pointer",
+              }}
+            >
+              📖 {showHangarGuide ? "Hide Guide" : "Show Guide"}
+            </button>
           </div>
 
           <div style={{ display: "flex", alignItems: "center", gap: "var(--space-4)", fontSize: "11px" }}>
@@ -1520,18 +1654,115 @@ export default function SpaceMissionGame() {
         </header>
 
         {/* Workshop Split */}
-        <div style={{ display: "grid", gridTemplateColumns: "390px 1fr", flex: 1, overflow: "hidden" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "410px 1fr", flex: 1, overflow: "hidden" }}>
           {/* Left Part Assembly Rail */}
-          <aside style={{ borderRight: "1px solid var(--color-border-subtle)", backgroundColor: "var(--color-surface-1)", padding: "var(--space-5)", display: "flex", flexDirection: "column", gap: "var(--space-4)", overflowY: "auto" }}>
-            <div style={{ fontSize: "11px", fontWeight: 600, color: "var(--color-text-muted)", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+          <aside style={{ borderRight: "1px solid var(--color-border-subtle)", backgroundColor: "var(--color-surface-1)", padding: "var(--space-4)", display: "flex", flexDirection: "column", gap: "var(--space-3)", overflowY: "auto" }}>
+            {/* Quickstart Guide Banner */}
+            {showHangarGuide && (
+              <div
+                style={{
+                  padding: "10px 12px",
+                  backgroundColor: "rgba(2, 132, 199, 0.1)",
+                  border: "1px solid rgba(56, 189, 248, 0.35)",
+                  borderRadius: "4px",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "6px",
+                }}
+              >
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <span style={{ fontSize: "11px", fontWeight: 700, color: "#38bdf8", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                    🚀 How to Build Your Spacecraft
+                  </span>
+                  <button
+                    onClick={() => setShowHangarGuide(false)}
+                    style={{ background: "transparent", border: "none", color: "var(--color-text-muted)", fontSize: "12px", cursor: "pointer" }}
+                  >
+                    ✕
+                  </button>
+                </div>
+                <div style={{ fontSize: "10px", color: "var(--color-text-secondary)", lineHeight: 1.45 }}>
+                  <strong>1. Form Factor:</strong> Select Chassis (1U, 3U, 6U) to meet your payload and mass budget.<br />
+                  <strong>2. Power Balance:</strong> Solar generation (W) must exceed total load in sunlight.<br />
+                  <strong>3. Battery Storage:</strong> Must survive 35-min eclipse shadow with Depth-of-Discharge &lt; 25%.<br />
+                  <strong>4. Payload &amp; Radio:</strong> Match contract payload and ensure RF link margin &ge; 6.0 dB.<br />
+                  <strong>5. Ready to Fly:</strong> When all matrix rows turn green &apos;Nominal&apos;, Launch unlocks!
+                </div>
+              </div>
+            )}
+
+            {/* One-Click Presets */}
+            <div>
+              <div style={{ fontSize: "10px", fontWeight: 600, color: "var(--color-text-muted)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "4px" }}>
+                One-Click Architecture Presets
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "4px" }}>
+                <button
+                  onClick={() => handleApplyPreset("BALANCED_3U")}
+                  style={{
+                    padding: "5px 4px",
+                    backgroundColor: "var(--color-surface-2)",
+                    border: "1px solid var(--color-border-subtle)",
+                    color: "var(--color-text-primary)",
+                    fontSize: "10px",
+                    fontWeight: 600,
+                    borderRadius: "3px",
+                    cursor: "pointer",
+                    textAlign: "center",
+                  }}
+                  title="Balanced 3U Earth Observation setup"
+                >
+                  ⚡ 3U Earth Obs
+                </button>
+                <button
+                  onClick={() => handleApplyPreset("DEEP_SPACE_6U")}
+                  style={{
+                    padding: "5px 4px",
+                    backgroundColor: "var(--color-surface-2)",
+                    border: "1px solid var(--color-border-subtle)",
+                    color: "var(--color-text-primary)",
+                    fontSize: "10px",
+                    fontWeight: 600,
+                    borderRadius: "3px",
+                    cursor: "pointer",
+                    textAlign: "center",
+                  }}
+                  title="Deep space high-power 6U relay setup"
+                >
+                  🛰️ 6U Relay
+                </button>
+                <button
+                  onClick={() => handleApplyPreset("MINIMALIST_1U")}
+                  style={{
+                    padding: "5px 4px",
+                    backgroundColor: "var(--color-surface-2)",
+                    border: "1px solid var(--color-border-subtle)",
+                    color: "var(--color-text-primary)",
+                    fontSize: "10px",
+                    fontWeight: 600,
+                    borderRadius: "3px",
+                    cursor: "pointer",
+                    textAlign: "center",
+                  }}
+                  title="Minimalist 1U scout science setup"
+                >
+                  🔬 1U Scout
+                </button>
+              </div>
+            </div>
+
+            <div style={{ fontSize: "11px", fontWeight: 600, color: "var(--color-text-muted)", textTransform: "uppercase", letterSpacing: "0.06em", marginTop: "2px" }}>
               Subsystem Assembly Bay
             </div>
 
             {/* Chassis Form Factor */}
             <div>
-              <label style={{ fontSize: "var(--text-xs)", color: "var(--color-text-secondary)", display: "block", marginBottom: "4px" }}>
+              <label style={{ fontSize: "var(--text-xs)", color: "var(--color-text-secondary)", display: "block", marginBottom: "2px" }}>
                 1. Structural Chassis (CDS Standard)
               </label>
+              <div style={{ fontSize: "10px", color: "var(--color-text-muted)", marginBottom: "4px" }}>
+                Defines internal payload volume and launch dispenser mass limit.
+              </div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "1px", backgroundColor: "var(--color-border-subtle)", border: "1px solid var(--color-border-subtle)" }}>
                 {CHASSIS_CATALOG.map((c) => (
                   <button
@@ -1553,9 +1784,12 @@ export default function SpaceMissionGame() {
 
             {/* Solar Arrays */}
             <div>
-              <label style={{ fontSize: "var(--text-xs)", color: "var(--color-text-secondary)", display: "block", marginBottom: "4px" }}>
+              <label style={{ fontSize: "var(--text-xs)", color: "var(--color-text-secondary)", display: "block", marginBottom: "2px" }}>
                 2. Solar Generation Array
               </label>
+              <div style={{ fontSize: "10px", color: "var(--color-text-muted)", marginBottom: "4px" }}>
+                Photovoltaic cells. Single/dual deployable wings unfold to supply 28W–56W.
+              </div>
               <select
                 value={solarArray}
                 onChange={(e) => setSolarArray(e.target.value as "BODY_MOUNTED" | "SINGLE_WING" | "DUAL_WING")}
@@ -1571,9 +1805,12 @@ export default function SpaceMissionGame() {
 
             {/* Battery Storage */}
             <div>
-              <label style={{ fontSize: "var(--text-xs)", color: "var(--color-text-secondary)", display: "block", marginBottom: "4px" }}>
+              <label style={{ fontSize: "var(--text-xs)", color: "var(--color-text-secondary)", display: "block", marginBottom: "2px" }}>
                 3. Battery Storage Pack
               </label>
+              <div style={{ fontSize: "10px", color: "var(--color-text-muted)", marginBottom: "4px" }}>
+                Li-Ion pack powering the spacecraft in the 35-min Earth eclipse shadow. Keep DoD &lt; 25%.
+              </div>
               <select
                 value={batteryId}
                 onChange={(e) => setBatteryId(e.target.value)}
@@ -1589,9 +1826,12 @@ export default function SpaceMissionGame() {
 
             {/* Science Payload */}
             <div>
-              <label style={{ fontSize: "var(--text-xs)", color: "var(--color-text-secondary)", display: "block", marginBottom: "4px" }}>
+              <label style={{ fontSize: "var(--text-xs)", color: "var(--color-text-secondary)", display: "block", marginBottom: "2px" }}>
                 4. Mission Science Payload
               </label>
+              <div style={{ fontSize: "10px", color: "var(--color-text-muted)", marginBottom: "4px" }}>
+                Primary scientific sensor required to fulfill your active flight contract.
+              </div>
               <select
                 value={payloadId}
                 onChange={(e) => setPayloadId(e.target.value as "IMAGER" | "PLASMA" | "LIDAR" | "RADAR")}
@@ -1607,9 +1847,12 @@ export default function SpaceMissionGame() {
 
             {/* Propulsion */}
             <div>
-              <label style={{ fontSize: "var(--text-xs)", color: "var(--color-text-secondary)", display: "block", marginBottom: "4px" }}>
+              <label style={{ fontSize: "var(--text-xs)", color: "var(--color-text-secondary)", display: "block", marginBottom: "2px" }}>
                 5. Propulsion Subsystem
               </label>
+              <div style={{ fontSize: "10px", color: "var(--color-text-muted)", marginBottom: "4px" }}>
+                Provides Delta-V (Δv) for orbital station-keeping and deorbiting.
+              </div>
               <select
                 value={propulsionId}
                 onChange={(e) => setPropulsionId(e.target.value as "NONE" | "COLD_GAS" | "HYDRAZINE" | "ELECTROSPRAY")}
@@ -1625,9 +1868,12 @@ export default function SpaceMissionGame() {
 
             {/* Telecom */}
             <div>
-              <label style={{ fontSize: "var(--text-xs)", color: "var(--color-text-secondary)", display: "block", marginBottom: "4px" }}>
+              <label style={{ fontSize: "var(--text-xs)", color: "var(--color-text-secondary)", display: "block", marginBottom: "2px" }}>
                 6. Telecom & Transceiver
               </label>
+              <div style={{ fontSize: "10px", color: "var(--color-text-muted)", marginBottom: "4px" }}>
+                Downlinks scientific telemetry to ground stations. NASA requires &ge; 6.0 dB margin.
+              </div>
               <select
                 value={telecomId}
                 onChange={(e) => setTelecomId(e.target.value as "UHF" | "SBAND" | "XBAND")}
@@ -1641,8 +1887,37 @@ export default function SpaceMissionGame() {
               </select>
             </div>
 
+            {/* Plain-English Compliance Guidance Callout */}
+            <div
+              style={{
+                marginTop: "auto",
+                padding: "8px 10px",
+                backgroundColor: launchReady ? "rgba(34, 197, 94, 0.12)" : "rgba(239, 68, 68, 0.12)",
+                border: `1px solid ${launchReady ? "rgba(34, 197, 94, 0.4)" : "rgba(239, 68, 68, 0.4)"}`,
+                borderRadius: "4px",
+                display: "flex",
+                flexDirection: "column",
+                gap: "4px",
+              }}
+            >
+              <div style={{ fontSize: "11px", fontWeight: 700, color: launchReady ? "#22c55e" : "#ef4444", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                {launchReady ? "✓ Flight Ready for Launch" : "⚠️ Action Required for Clearance"}
+              </div>
+              {launchReady ? (
+                <div style={{ fontSize: "10px", color: "var(--color-text-secondary)", lineHeight: 1.35 }}>
+                  All engineering constraints satisfied. Subsystems verified to NASA LSP-REQ-317.01 standards.
+                </div>
+              ) : (
+                <ul style={{ margin: 0, paddingLeft: "14px", fontSize: "10px", color: "var(--color-text-secondary)", lineHeight: 1.35 }}>
+                  {guidanceTips.map((tip, idx) => (
+                    <li key={idx} style={{ marginBottom: "2px" }}>{tip}</li>
+                  ))}
+                </ul>
+              )}
+            </div>
+
             {/* Proceed to Launch Sequence */}
-            <div style={{ marginTop: "auto" }}>
+            <div>
               <button
                 disabled={!launchReady}
                 onClick={startLaunchSequence}
