@@ -383,20 +383,27 @@ export function GameManager({ onReturnToHub, gameMode = "ORBITAL_REPAIR" }: Game
   }, []);
 
   // Land Complete handler (PAD-01 Touchdown)
-  const handleLandComplete = useCallback(() => {
-    setGameState((prev) => ({
-      ...prev,
-      step: "SURFACE_LANDED",
-      substepText:
-        "TOUCHDOWN CONFIRMED ON PAD-01! Press [H] to disembark onto Lunar Base Alpha.",
-      spacecraft: {
-        ...prev.spacecraft,
-        isLanded: true,
-        surfaceAltitudeMeters: 0,
-        verticalSpeedMps: 0,
-      },
-    }));
-  }, []);
+  const handleLandComplete = useCallback(
+    (touchdownVy?: number, touchdownDist?: number, scoreAward?: number) => {
+      setGameState((prev) => ({
+        ...prev,
+        step: "SURFACE_LANDED",
+        score: prev.score + (scoreAward ?? 500),
+        substepText:
+          "TOUCHDOWN CONFIRMED ON PAD-01! Review flight log or press [H] to disembark.",
+        spacecraft: {
+          ...prev.spacecraft,
+          isLanded: true,
+          surfaceAltitudeMeters: 0,
+          verticalSpeedMps: 0,
+          touchdownVerticalSpeed: touchdownVy ?? 0.8,
+          touchdownDistanceToPad: touchdownDist ?? 2.2,
+          touchdownScore: scoreAward ?? 500,
+        },
+      }));
+    },
+    []
+  );
 
   // Disembark / Exit Cockpit back to astronaut or surface exploration mode
   const handleExitCockpit = useCallback(() => {

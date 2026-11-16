@@ -68,6 +68,9 @@ export interface SpacecraftFlightState {
   landingTargetPos: THREE.Vector3;
   distanceToLandingPad: number;
   flightDestination: "ORBIT_GATEWAY" | "LUNAR_BASE_ALPHA";
+  touchdownVerticalSpeed?: number;
+  touchdownDistanceToPad?: number;
+  touchdownScore?: number;
 }
 
 export interface HangarCraftState {

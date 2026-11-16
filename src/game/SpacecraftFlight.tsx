@@ -31,7 +31,7 @@ interface SpacecraftFlightProps {
     distToPad: number
   ) => void;
   onDockComplete: () => void;
-  onLandComplete?: () => void;
+  onLandComplete?: (touchdownVy: number, touchdownDist: number, scoreAward: number) => void;
   onTogglePause?: () => void;
   onExitCockpit?: () => void;
   onToggleCameraView?: () => void;
@@ -446,11 +446,18 @@ export function SpacecraftFlight({
     ) {
       isLandedRef.current = true;
       posRef.current.y = -16.2;
+      const touchdownVy = Math.abs(verticalSpeed);
+      const touchdownDist = distToPad;
+      const vyBonus = touchdownVy <= 1.0 ? 500 : touchdownVy <= 1.5 ? 350 : 200;
+      const distBonus = touchdownDist <= 3.0 ? 350 : touchdownDist <= 6.0 ? 200 : 100;
+      const fuelBonus = Math.round(propRef.current * 2.5);
+      const totalLandingScore = vyBonus + distBonus + fuelBonus;
+
       velRef.current.set(0, 0, 0);
       soundManager.playTouchdown();
       soundManager.playSuccessFanfare();
       soundManager.playQuindarTone(false);
-      onLandComplete?.();
+      onLandComplete?.(touchdownVy, touchdownDist, totalLandingScore);
     }
 
     // Camera view synchronization

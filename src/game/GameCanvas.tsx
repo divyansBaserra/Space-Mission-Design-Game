@@ -37,7 +37,7 @@ interface GameCanvasProps {
     distToPad: number
   ) => void;
   onDockComplete: () => void;
-  onLandComplete?: () => void;
+  onLandComplete?: (touchdownVy: number, touchdownDist: number, scoreAward: number) => void;
   onTogglePause?: () => void;
   onEquipItem?: (id: InventoryItemId) => void;
   onExitCockpit?: () => void;

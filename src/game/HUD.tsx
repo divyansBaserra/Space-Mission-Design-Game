@@ -527,27 +527,122 @@ export function HUD({
               </div>
             )}
 
-            {/* Surface Touchdown Confirmation Banner */}
+            {/* Surface Touchdown Evaluation & Scoring Breakdown Card */}
             {isCockpit && gameState.spacecraft.isLanded && (
               <div
                 style={{
-                  marginTop: "16px",
+                  marginTop: "14px",
                   display: "flex",
                   flexDirection: "column",
-                  alignItems: "center",
-                  gap: "6px",
-                  backgroundColor: "rgba(5, 46, 22, 0.92)",
+                  alignItems: "stretch",
+                  gap: "10px",
+                  backgroundColor: "rgba(3, 20, 14, 0.94)",
                   border: "2px solid #22c55e",
-                  padding: "12px 24px",
-                  boxShadow: "0 0 30px rgba(34, 197, 94, 0.6)",
+                  borderRadius: "6px",
+                  padding: "16px 24px",
+                  boxShadow: "0 0 35px rgba(34, 197, 94, 0.45), inset 0 0 15px rgba(34, 197, 94, 0.15)",
+                  backdropFilter: "blur(12px)",
+                  maxWidth: "520px",
+                  pointerEvents: "auto",
                 }}
               >
-                <span style={{ fontSize: "13px", fontWeight: 700, color: "#86efac", letterSpacing: "0.08em" }}>
-                  [TOUCHDOWN CONFIRMED - PAD-01 LUNAR BASE ALPHA]
-                </span>
-                <span style={{ fontSize: "11px", color: "#f0fdf4" }}>
-                  All landing gear locked · Pressure seal nominal. Press [H] to Disembark onto surface.
-                </span>
+                {/* Header */}
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid rgba(34, 197, 94, 0.35)", paddingBottom: "8px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    <div style={{ width: "8px", height: "8px", borderRadius: "50%", backgroundColor: "#22c55e", boxShadow: "0 0 8px #22c55e" }} />
+                    <span style={{ fontSize: "12px", fontWeight: 800, color: "#86efac", letterSpacing: "0.1em" }}>
+                      TOUCHDOWN EVALUATION // BASE ALPHA PAD-01
+                    </span>
+                  </div>
+                  <span style={{ fontSize: "11px", fontWeight: 700, color: "#facc15", backgroundColor: "rgba(234, 179, 8, 0.15)", padding: "2px 8px", borderRadius: "4px", border: "1px solid rgba(234, 179, 8, 0.4)" }}>
+                    +{gameState.spacecraft.touchdownScore ?? 1050} PTS
+                  </span>
+                </div>
+
+                {/* Score Breakdown Table */}
+                <div style={{ display: "flex", flexDirection: "column", gap: "6px", fontSize: "11px" }}>
+                  {/* Vertical Velocity */}
+                  {(() => {
+                    const vy = gameState.spacecraft.touchdownVerticalSpeed ?? 0.8;
+                    const isGradeS = vy <= 1.0;
+                    const isGradeA = vy <= 1.5;
+                    const gradeLabel = isGradeS ? "GRADE S: SOFT THREE-POINT CONTACT" : isGradeA ? "GRADE A: NOMINAL CONTACT" : "GRADE B: HARD STRUT IMPACT";
+                    const gradeColor = isGradeS ? "#86efac" : isGradeA ? "#38bdf8" : "#f59e0b";
+                    const gradePts = isGradeS ? 500 : isGradeA ? 350 : 200;
+                    return (
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "4px 8px", backgroundColor: "rgba(255,255,255,0.03)", borderRadius: "4px" }}>
+                        <span style={{ color: "#94a3b8" }}>DESCENT VERTICAL VELOCITY:</span>
+                        <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+                          <span style={{ fontWeight: 700, color: gradeColor }}>{vy.toFixed(2)} M/S ({gradeLabel})</span>
+                          <span style={{ color: "#86efac", fontWeight: 700 }}>+{gradePts} PTS</span>
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                  {/* Pad Radial Error */}
+                  {(() => {
+                    const dist = gameState.spacecraft.touchdownDistanceToPad ?? 2.2;
+                    const isBullseye = dist <= 3.0;
+                    const distLabel = isBullseye ? "BULLSEYE CENTERLINE" : "PAD PERIMETER";
+                    const distPts = isBullseye ? 350 : dist <= 6.0 ? 200 : 100;
+                    return (
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "4px 8px", backgroundColor: "rgba(255,255,255,0.03)", borderRadius: "4px" }}>
+                        <span style={{ color: "#94a3b8" }}>PAD-01 RADIAL ERROR:</span>
+                        <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+                          <span style={{ fontWeight: 700, color: isBullseye ? "#86efac" : "#38bdf8" }}>{dist.toFixed(1)} M ({distLabel})</span>
+                          <span style={{ color: "#86efac", fontWeight: 700 }}>+{distPts} PTS</span>
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                  {/* Fuel Conservation */}
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "4px 8px", backgroundColor: "rgba(255,255,255,0.03)", borderRadius: "4px" }}>
+                    <span style={{ color: "#94a3b8" }}>HYDRAZINE FUEL RESERVE:</span>
+                    <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+                      <span style={{ fontWeight: 700, color: "#38bdf8" }}>{gameState.spacecraft.propellantPercent.toFixed(0)}% REMAINING</span>
+                      <span style={{ color: "#86efac", fontWeight: 700 }}>+{Math.round(gameState.spacecraft.propellantPercent * 2.5)} PTS</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Quick Action Navigation Footer */}
+                <div style={{ display: "flex", gap: "8px", marginTop: "4px" }}>
+                  <button
+                    onClick={() => onExitCockpit?.()}
+                    style={{
+                      flex: 1,
+                      backgroundColor: "#15803d",
+                      border: "1px solid #22c55e",
+                      color: "#ffffff",
+                      padding: "8px 12px",
+                      borderRadius: "4px",
+                      fontSize: "11px",
+                      fontWeight: 700,
+                      cursor: "pointer",
+                      letterSpacing: "0.04em",
+                      transition: "all 0.15s ease",
+                    }}
+                  >
+                    [H] DISEMBARK (LUNAR EVA)
+                  </button>
+                  <button
+                    onClick={() => onToggleSector?.()}
+                    style={{
+                      backgroundColor: "rgba(30, 41, 59, 0.8)",
+                      border: "1px solid #475569",
+                      color: "#94a3b8",
+                      padding: "8px 12px",
+                      borderRadius: "4px",
+                      fontSize: "11px",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                    }}
+                  >
+                    [T] ORBIT SECTOR
+                  </button>
+                </div>
               </div>
             )}
           </div>
