@@ -1676,40 +1676,11 @@ export default function SpaceMissionGame() {
             <button
               onClick={() => {
                 soundManager.playEquip();
-                setStage("MISSION_SELECT");
-              }}
-              style={{
-                padding: "16px 20px",
-                backgroundColor: "rgba(15, 23, 42, 0.9)",
-                border: "1px solid #38bdf8",
-                color: "#38bdf8",
-                fontWeight: 700,
-                fontSize: "var(--text-sm)",
-                textAlign: "left",
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                transition: "all var(--duration-fast)",
-                backdropFilter: "blur(8px)",
-                boxShadow: "0 4px 18px rgba(56, 189, 248, 0.12)",
-                cursor: "pointer",
-              }}
-            >
-              <div>
-                <div style={{ fontSize: "13px", fontWeight: 700, color: "#ffffff" }}>3. FLIGHT CONTRACTS &amp; CAREER MISSIONS</div>
-                <div style={{ fontSize: "11px", color: "#38bdf8", fontWeight: 500, marginTop: "2px" }}>Tactical Star Command · 3D Modular Assembly &amp; Orbital Flight Sim</div>
-              </div>
-              <span style={{ fontSize: "18px" }}>→</span>
-            </button>
-
-            <button
-              onClick={() => {
-                soundManager.playEquip();
                 setStage("HANGAR_GAME");
               }}
               style={{
                 padding: "16px 20px",
-                backgroundColor: "rgba(15, 23, 42, 0.9)",
+                backgroundColor: "rgba(16, 185, 129, 0.25)",
                 border: "1px solid #10b981",
                 color: "#10b981",
                 fontWeight: 700,
@@ -1720,13 +1691,13 @@ export default function SpaceMissionGame() {
                 alignItems: "center",
                 transition: "all var(--duration-fast)",
                 backdropFilter: "blur(8px)",
-                boxShadow: "0 4px 18px rgba(16, 185, 129, 0.12)",
+                boxShadow: "0 4px 20px rgba(16, 185, 129, 0.2)",
                 cursor: "pointer",
               }}
             >
               <div>
-                <div style={{ fontSize: "13px", fontWeight: 700, color: "#ffffff" }}>4. SPACECRAFT HANGAR (3D ZERO-G ASSEMBLY SANDBOX)</div>
-                <div style={{ fontSize: "11px", color: "#10b981", fontWeight: 500, marginTop: "2px" }}>Modular Construction Bay · Thruster Static-Fire &amp; 3D Orbital Launch</div>
+                <div style={{ fontSize: "13px", fontWeight: 700, color: "#ffffff" }}>3. PLAY GAME 03: SPACECRAFT HANGAR &amp; PROVING GROUNDS</div>
+                <div style={{ fontSize: "11px", color: "#6ee7b7", fontWeight: 500, marginTop: "2px" }}>3D Zero-G CAD Sandbox · Thruster Static-Fire · Direct Orbital Flight</div>
               </div>
               <span style={{ fontSize: "18px" }}>→</span>
             </button>
@@ -1752,7 +1723,7 @@ export default function SpaceMissionGame() {
               }}
             >
               <div>
-                <div style={{ fontSize: "12px", fontWeight: 600, color: "#f8fafc" }}>5. FLIGHT ACADEMY &amp; REFERENCE MANUAL</div>
+                <div style={{ fontSize: "12px", fontWeight: 600, color: "#f8fafc" }}>4. FLIGHT ACADEMY &amp; REFERENCE MANUAL</div>
                 <div style={{ fontSize: "10px", color: "var(--color-text-muted)", marginTop: "2px" }}>CDS Standards, Telecom Link Budgets, JPL Margins</div>
               </div>
               <span>→</span>
