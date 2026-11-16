@@ -1817,18 +1817,43 @@ export function StationEnvironment({
             rotation={[0, Math.PI, 0]}
             scale={[0.18, 0.18, 0.18]}
           />
-          {/* Glowing Blue Rocket Exhaust Plume when moving */}
+          {/* Layered Translucent Rocket Exhaust Plume with Additive Blending & Thermal Shock Diamonds */}
           {gameState.spacecraft.speedMps > 0.3 && (
             <group position={[0, 0, 2.6]}>
+              {/* Outer Cyan Plasma Expansion Envelope */}
               <mesh rotation={[Math.PI / 2, 0, 0]}>
-                <coneGeometry args={[0.35, 1.8, 16]} />
-                <meshBasicMaterial color="#38bdf8" transparent opacity={0.85} />
+                <coneGeometry args={[0.42, 2.2, 24]} />
+                <meshBasicMaterial
+                  color="#0284c7"
+                  transparent
+                  opacity={0.45}
+                  blending={THREE.AdditiveBlending}
+                  depthWrite={false}
+                />
               </mesh>
-              <mesh rotation={[Math.PI / 2, 0, 0]} position={[0, 0, 0.4]}>
-                <coneGeometry args={[0.18, 1.0, 16]} />
-                <meshBasicMaterial color="#ffffff" transparent opacity={0.95} />
+              {/* Mid High-Energy Ionization Plume */}
+              <mesh rotation={[Math.PI / 2, 0, 0]} position={[0, 0, 0.25]}>
+                <coneGeometry args={[0.26, 1.6, 20]} />
+                <meshBasicMaterial
+                  color="#38bdf8"
+                  transparent
+                  opacity={0.75}
+                  blending={THREE.AdditiveBlending}
+                  depthWrite={false}
+                />
               </mesh>
-              <pointLight position={[0, 0, 0.8]} intensity={2.5} distance={6} color="#38bdf8" />
+              {/* Core Thermal Shock Diamond (Metallic White Heat Core) */}
+              <mesh rotation={[Math.PI / 2, 0, 0]} position={[0, 0, 0.5]}>
+                <coneGeometry args={[0.14, 1.0, 16]} />
+                <meshBasicMaterial
+                  color="#ffffff"
+                  transparent
+                  opacity={0.95}
+                  blending={THREE.AdditiveBlending}
+                  depthWrite={false}
+                />
+              </mesh>
+              <pointLight position={[0, 0, 0.9]} intensity={3.8} distance={8} color="#38bdf8" />
             </group>
           )}
         </group>

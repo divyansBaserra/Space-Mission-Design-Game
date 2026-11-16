@@ -9,7 +9,7 @@ interface LunarDustPlumeProps {
   gameState: GameState;
 }
 
-const PARTICLE_COUNT = 360;
+const PARTICLE_COUNT = 480;
 
 export function LunarDustPlume({ gameState }: LunarDustPlumeProps) {
   const pointsRef = useRef<THREE.Points>(null);
@@ -44,45 +44,48 @@ export function LunarDustPlume({ gameState }: LunarDustPlumeProps) {
       gameState.spacecraft.position.z < -45 ||
       gameState.controlMode === "SURFACE_EXPLORATION";
     const altitude = gameState.spacecraft.surfaceAltitudeMeters ?? 99;
-    const isDescentActive = isNearMoon && altitude <= 28.0 && !gameState.spacecraft.isLanded;
+    const isDescentActive = isNearMoon && altitude <= 18.0 && !gameState.spacecraft.isLanded;
 
     const craftPos = gameState.spacecraft.position;
     const groundY = -17.95; // Moon regolith surface height
 
+    // Ejection power scales higher the closer to the surface the thruster is
+    const throttleIntensity = isDescentActive ? Math.max(0.3, (18.0 - altitude) / 18.0) : 0;
+
     for (let i = 0; i < PARTICLE_COUNT; i++) {
       const idx = i * 3;
-      lifeTimes[i] -= dt * 1.4;
+      lifeTimes[i] -= dt * 1.5;
 
       if (lifeTimes[i] <= 0 && isDescentActive) {
-        // Respawn dust particle at engine ground impact point
+        // Respawn dust particle at engine ground impact point with radial vacuum dispersal
         const angle = Math.random() * Math.PI * 2;
-        const speed = 6.0 + Math.random() * 14.0;
-        const initialRad = 0.4 + Math.random() * 1.2;
+        const speed = (8.0 + Math.random() * 18.0) * throttleIntensity;
+        const initialRad = 0.3 + Math.random() * 1.4;
 
         posArray[idx] = craftPos.x + Math.cos(angle) * initialRad;
-        posArray[idx + 1] = groundY + Math.random() * 0.15;
+        posArray[idx + 1] = groundY + Math.random() * 0.12;
         posArray[idx + 2] = craftPos.z + Math.sin(angle) * initialRad;
 
-        // Vacuum sheet outward blast
+        // Apollo-style vacuum sheet outward blast (low angle skim over regolith)
         velocities[idx] = Math.cos(angle) * speed;
-        velocities[idx + 1] = 0.8 + Math.random() * 2.2; // upward ejecta angle
+        velocities[idx + 1] = (0.4 + Math.random() * 1.8) * throttleIntensity;
         velocities[idx + 2] = Math.sin(angle) * speed;
 
-        lifeTimes[i] = 0.6 + Math.random() * 0.5;
+        lifeTimes[i] = 0.5 + Math.random() * 0.6;
       } else if (lifeTimes[i] > 0) {
-        // Lunar gravity acceleration: 1.62 m/s^2 downwards
+        // Lunar gravity: 1.62 m/s^2 downwards
         velocities[idx + 1] -= 1.62 * dt;
 
         posArray[idx] += velocities[idx] * dt;
         posArray[idx + 1] += velocities[idx + 1] * dt;
         posArray[idx + 2] += velocities[idx + 2] * dt;
 
-        // Ground collision clamp
+        // Ground collision clamp with restitution damping
         if (posArray[idx + 1] < groundY) {
           posArray[idx + 1] = groundY;
           velocities[idx + 1] = 0;
-          velocities[idx] *= 0.85;
-          velocities[idx + 2] *= 0.85;
+          velocities[idx] *= 0.88;
+          velocities[idx + 2] *= 0.88;
         }
       } else {
         // Particle dead and hidden
@@ -102,10 +105,10 @@ export function LunarDustPlume({ gameState }: LunarDustPlumeProps) {
         />
       </bufferGeometry>
       <pointsMaterial
-        size={0.16}
+        size={0.22}
         color="#cbd5e1"
         transparent
-        opacity={0.7}
+        opacity={0.65}
         blending={THREE.NormalBlending}
         depthWrite={false}
       />
