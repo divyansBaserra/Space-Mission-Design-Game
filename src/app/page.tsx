@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef, useMemo, useCallback } from "react"
 import { SpacecraftViewport } from "@/components/viewport";
 import { GameManager } from "@/game/GameManager";
 import AegisGameManager from "@/game/aegis/AegisGameManager";
+import EuropaGameManager from "@/game/europa/EuropaGameManager";
 import { soundManager } from "@/game/audio";
 import { preloadAllGameAssets } from "@/game/useNASAModel";
 import {
@@ -36,6 +37,7 @@ type GameStage =
   | "FLIGHT_SIM_GAME"
   | "HANGAR_GAME"
   | "PROJECT_AEGIS_GAME"
+  | "PROJECT_EUROPA_GAME"
   | "MAIN_MENU"
   | "MISSION_SELECT"
   | "MISSION_BRIEFING"
@@ -1410,7 +1412,7 @@ export default function SpaceMissionGame() {
         {/* Prominent Glowing NASA Evaluation Top Banner */}
         <NasaJudgesGithubBanner />
 
-        <GameManager gameMode="ORBITAL_REPAIR" onReturnToHub={() => setStage("MAIN_MENU")} onLaunchAegis={() => setStage("PROJECT_AEGIS_GAME")} />
+        <GameManager gameMode="ORBITAL_REPAIR" onReturnToHub={() => setStage("MAIN_MENU")} onLaunchAegis={() => setStage("PROJECT_AEGIS_GAME")} onLaunchEuropa={() => setStage("PROJECT_EUROPA_GAME")} />
       </main>
     );
   }
@@ -1424,7 +1426,7 @@ export default function SpaceMissionGame() {
         {/* Prominent Glowing NASA Evaluation Top Banner */}
         <NasaJudgesGithubBanner />
 
-        <GameManager gameMode="FLIGHT_SIM" onReturnToHub={() => setStage("MAIN_MENU")} onLaunchAegis={() => setStage("PROJECT_AEGIS_GAME")} />
+        <GameManager gameMode="FLIGHT_SIM" onReturnToHub={() => setStage("MAIN_MENU")} onLaunchAegis={() => setStage("PROJECT_AEGIS_GAME")} onLaunchEuropa={() => setStage("PROJECT_EUROPA_GAME")} />
       </main>
     );
   }
@@ -1438,7 +1440,7 @@ export default function SpaceMissionGame() {
         {/* Prominent Glowing NASA Evaluation Top Banner */}
         <NasaJudgesGithubBanner />
 
-        <GameManager gameMode="HANGAR_SANDBOX" onReturnToHub={() => setStage("MAIN_MENU")} onLaunchAegis={() => setStage("PROJECT_AEGIS_GAME")} />
+        <GameManager gameMode="HANGAR_SANDBOX" onReturnToHub={() => setStage("MAIN_MENU")} onLaunchAegis={() => setStage("PROJECT_AEGIS_GAME")} onLaunchEuropa={() => setStage("PROJECT_EUROPA_GAME")} />
       </main>
     );
   }
@@ -1453,6 +1455,20 @@ export default function SpaceMissionGame() {
         <NasaJudgesGithubBanner />
 
         <AegisGameManager onReturnToHub={() => setStage("MAIN_MENU")} />
+      </main>
+    );
+  }
+
+  // ============================================================================
+  // STAGE 0E: GAME 03 - PROJECT EUROPA (ABYSS OF JUPITER)
+  // ============================================================================
+  if (stage === "PROJECT_EUROPA_GAME") {
+    return (
+      <main style={{ position: "relative", width: "100vw", height: "100vh", overflow: "hidden", backgroundColor: "#020408" }}>
+        {/* Prominent Glowing NASA Evaluation Top Banner */}
+        <NasaJudgesGithubBanner />
+
+        <EuropaGameManager onReturnToHub={() => setStage("MAIN_MENU")} />
       </main>
     );
   }
@@ -1676,13 +1692,13 @@ export default function SpaceMissionGame() {
             <button
               onClick={() => {
                 soundManager.playEquip();
-                setStage("HANGAR_GAME");
+                setStage("PROJECT_EUROPA_GAME");
               }}
               style={{
                 padding: "16px 20px",
-                backgroundColor: "rgba(16, 185, 129, 0.25)",
-                border: "1px solid #10b981",
-                color: "#10b981",
+                backgroundColor: "rgba(14, 165, 233, 0.25)",
+                border: "1px solid #38bdf8",
+                color: "#38bdf8",
                 fontWeight: 700,
                 fontSize: "var(--text-sm)",
                 textAlign: "left",
@@ -1691,13 +1707,13 @@ export default function SpaceMissionGame() {
                 alignItems: "center",
                 transition: "all var(--duration-fast)",
                 backdropFilter: "blur(8px)",
-                boxShadow: "0 4px 20px rgba(16, 185, 129, 0.2)",
+                boxShadow: "0 4px 20px rgba(56, 189, 248, 0.2)",
                 cursor: "pointer",
               }}
             >
               <div>
-                <div style={{ fontSize: "13px", fontWeight: 700, color: "#ffffff" }}>3. PLAY GAME 03: SPACECRAFT HANGAR &amp; PROVING GROUNDS</div>
-                <div style={{ fontSize: "11px", color: "#6ee7b7", fontWeight: 500, marginTop: "2px" }}>3D Zero-G CAD Sandbox · Thruster Static-Fire · Direct Orbital Flight</div>
+                <div style={{ fontSize: "13px", fontWeight: 700, color: "#ffffff" }}>3. PLAY GAME 03: PROJECT EUROPA (ABYSS OF JUPITER)</div>
+                <div style={{ fontSize: "11px", color: "#7dd3fc", fontWeight: 500, marginTop: "2px" }}>900°C Cryo-Melt Probe · 130 MPa Abyssal Submarine · Alien RNA Discovery</div>
               </div>
               <span style={{ fontSize: "18px" }}>→</span>
             </button>

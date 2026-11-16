@@ -2048,6 +2048,8 @@ export function HUD({
                 onCloseBriefing();
                 if (selectedCampaignTab === "AEGIS") {
                   onSelectFlightContract?.("AEGIS_DART");
+                } else if (selectedCampaignTab === "EUROPA") {
+                  onSelectFlightContract?.("EUROPA_ABYSS");
                 }
               }}
               style={{

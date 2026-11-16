@@ -15,6 +15,11 @@ class SoundManager {
   private dopplerOsc: OscillatorNode | null = null;
   private dopplerGain: GainNode | null = null;
 
+  private abyssalDroneOsc: OscillatorNode | null = null;
+  private abyssalDroneGain: GainNode | null = null;
+  private ventNoiseNode: AudioNode | null = null;
+  private ventGain: GainNode | null = null;
+
   private getContext(): AudioContext | null {
     if (typeof window === "undefined") return null;
     if (!this.ctx) {
@@ -1220,6 +1225,190 @@ class SoundManager {
       osc.stop(now + 0.18);
     } catch {
       // Audio best-effort
+    }
+  }
+
+  // GAME 03: PROJECT EUROPA - Subterranean Ocean Procedural Synthesis
+  // 1. Underwater Acoustic Resonance: 40 Hz - 60 Hz lowpass ocean drone (130 MPa mass)
+  public startAbyssalDrone() {
+    if (!this.soundEnabled || this.volume <= 0) return;
+    if (this.abyssalDroneOsc) return;
+    const ctx = this.getContext();
+    const dest = this.getDest();
+    if (!ctx || !dest) return;
+
+    try {
+      const now = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const filter = ctx.createBiquadFilter();
+      const gain = ctx.createGain();
+
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(48, now);
+
+      filter.type = "lowpass";
+      filter.frequency.setValueAtTime(65, now);
+      filter.Q.setValueAtTime(3.0, now);
+
+      gain.gain.setValueAtTime(0.001, now);
+      gain.gain.exponentialRampToValueAtTime(0.25 * this.volume, now + 1.5);
+
+      osc.connect(filter);
+      filter.connect(gain);
+      gain.connect(dest);
+
+      osc.start(now);
+      this.abyssalDroneOsc = osc;
+      this.abyssalDroneGain = gain;
+    } catch {}
+  }
+
+  public stopAbyssalDrone() {
+    if (!this.abyssalDroneOsc || !this.abyssalDroneGain) return;
+    const ctx = this.getContext();
+    if (ctx) {
+      const now = ctx.currentTime;
+      this.abyssalDroneGain.gain.setValueAtTime(this.abyssalDroneGain.gain.value, now);
+      this.abyssalDroneGain.gain.exponentialRampToValueAtTime(0.001, now + 0.8);
+      setTimeout(() => {
+        try {
+          this.abyssalDroneOsc?.stop();
+          this.abyssalDroneOsc?.disconnect();
+        } catch {}
+        this.abyssalDroneOsc = null;
+        this.abyssalDroneGain = null;
+      }, 900);
+    } else {
+      this.abyssalDroneOsc = null;
+      this.abyssalDroneGain = null;
+    }
+  }
+
+  // 2. Active Sonar Ping: 1200 Hz sinusoidal ping echoing with 1.8s acoustic reverberation tail
+  public playActiveSonarPing() {
+    if (!this.soundEnabled || this.volume <= 0) return;
+    const ctx = this.getContext();
+    const dest = this.getDest();
+    if (!ctx || !dest) return;
+
+    try {
+      const now = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(1200, now);
+      osc.frequency.exponentialRampToValueAtTime(1180, now + 0.15);
+
+      gain.gain.setValueAtTime(0.3 * this.volume, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 1.8);
+
+      osc.connect(gain);
+      gain.connect(dest);
+
+      osc.start(now);
+      osc.stop(now + 1.85);
+    } catch {}
+  }
+
+  // 3. Structural Pressure Creak: metallic stress creaks triggered when depth > 5000m
+  public playHullPressureCreak() {
+    if (!this.soundEnabled || this.volume <= 0) return;
+    const ctx = this.getContext();
+    const dest = this.getDest();
+    if (!ctx || !dest) return;
+
+    try {
+      const now = ctx.currentTime;
+      const osc1 = ctx.createOscillator();
+      const osc2 = ctx.createOscillator();
+      const gain = ctx.createGain();
+      const filter = ctx.createBiquadFilter();
+
+      osc1.type = "sawtooth";
+      osc1.frequency.setValueAtTime(115, now);
+      osc1.frequency.linearRampToValueAtTime(92, now + 0.7);
+
+      osc2.type = "sine";
+      osc2.frequency.setValueAtTime(118, now);
+      osc2.frequency.linearRampToValueAtTime(89, now + 0.7);
+
+      filter.type = "lowpass";
+      filter.frequency.setValueAtTime(280, now);
+
+      gain.gain.setValueAtTime(0.001, now);
+      gain.gain.linearRampToValueAtTime(0.18 * this.volume, now + 0.15);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.85);
+
+      osc1.connect(filter);
+      osc2.connect(filter);
+      filter.connect(gain);
+      gain.connect(dest);
+
+      osc1.start(now);
+      osc2.start(now);
+      osc1.stop(now + 0.9);
+      osc2.stop(now + 0.9);
+    } catch {}
+  }
+
+  // 4. Hydrothermal Vent Boil: Filtered white noise (200 Hz - 800 Hz) bubbling superheated water
+  public startHydrothermalBoil() {
+    if (!this.soundEnabled || this.volume <= 0) return;
+    if (this.ventNoiseNode) return;
+    const ctx = this.getContext();
+    const dest = this.getDest();
+    if (!ctx || !dest) return;
+
+    try {
+      const bufferSize = ctx.sampleRate * 2;
+      const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        data[i] = Math.random() * 2 - 1;
+      }
+
+      const noise = ctx.createBufferSource();
+      noise.buffer = buffer;
+      noise.loop = true;
+
+      const filter = ctx.createBiquadFilter();
+      filter.type = "bandpass";
+      filter.frequency.setValueAtTime(450, ctx.currentTime);
+      filter.Q.setValueAtTime(1.5, ctx.currentTime);
+
+      const gain = ctx.createGain();
+      gain.gain.setValueAtTime(0.001, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.15 * this.volume, ctx.currentTime + 1.0);
+
+      noise.connect(filter);
+      filter.connect(gain);
+      gain.connect(dest);
+
+      noise.start();
+      this.ventNoiseNode = noise;
+      this.ventGain = gain;
+    } catch {}
+  }
+
+  public stopHydrothermalBoil() {
+    if (!this.ventNoiseNode || !this.ventGain) return;
+    const ctx = this.getContext();
+    if (ctx) {
+      const now = ctx.currentTime;
+      this.ventGain.gain.setValueAtTime(this.ventGain.gain.value, now);
+      this.ventGain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+      setTimeout(() => {
+        try {
+          (this.ventNoiseNode as AudioBufferSourceNode)?.stop();
+          this.ventNoiseNode?.disconnect();
+        } catch {}
+        this.ventNoiseNode = null;
+        this.ventGain = null;
+      }, 600);
+    } else {
+      this.ventNoiseNode = null;
+      this.ventGain = null;
     }
   }
 }

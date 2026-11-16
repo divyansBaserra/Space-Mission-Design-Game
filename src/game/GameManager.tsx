@@ -87,9 +87,10 @@ interface GameManagerProps {
   onReturnToHub?: () => void;
   gameMode?: GameMode;
   onLaunchAegis?: () => void;
+  onLaunchEuropa?: () => void;
 }
 
-export function GameManager({ onReturnToHub, gameMode = "ORBITAL_REPAIR", onLaunchAegis }: GameManagerProps) {
+export function GameManager({ onReturnToHub, gameMode = "ORBITAL_REPAIR", onLaunchAegis, onLaunchEuropa }: GameManagerProps) {
   const physics = useMemo(() => new StationPhysics(), []);
 
   const [gameState, setGameState] = useState<GameState>(() => {
@@ -1095,6 +1096,10 @@ export function GameManager({ onReturnToHub, gameMode = "ORBITAL_REPAIR", onLaun
         soundManager.speakRadioComm("Aegis Flight, Mars gravity assist nominal. Optical SMART nav locked on Didymos moonlet. Closing velocity 6.2 kilometers per second.", "HOUSTON");
         nextDest = "ORBIT_GATEWAY";
       } else if (contractId === "EUROPA_ABYSS") {
+        if (onLaunchEuropa) {
+          onLaunchEuropa();
+          return prev;
+        }
         nextSubstep = "OPERATION EUROPA (GAME 03): Jovian Radiation survived. Nuclear cryo-drill melted through 20km ice. Submersible navigating hydrothermal vents for biosignatures.";
         soundManager.speakRadioComm("Europa Control, submersible breach into subsurface ocean confirmed. Radiation shielding holding. Track hydrothermal plumes.", "HOUSTON");
         nextDest = "LUNAR_BASE_ALPHA";
