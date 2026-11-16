@@ -19,6 +19,8 @@ class SoundManager {
   private abyssalDroneGain: GainNode | null = null;
   private ventNoiseNode: AudioNode | null = null;
   private ventGain: GainNode | null = null;
+  private cachedVoice: SpeechSynthesisVoice | null = null;
+  private voiceLoaded: boolean = false;
 
   private getContext(): AudioContext | null {
     if (typeof window === "undefined") return null;
@@ -1013,6 +1015,17 @@ class SoundManager {
     }
   }
 
+  private getPreferredVoice(): SpeechSynthesisVoice | null {
+    if (this.voiceLoaded) return this.cachedVoice;
+    if (typeof window === "undefined" || !("speechSynthesis" in window)) return null;
+    const voices = window.speechSynthesis.getVoices();
+    if (voices && voices.length > 0) {
+      this.cachedVoice = voices.find((v) => v.lang.startsWith("en") && !v.name.includes("Google")) || voices[0] || null;
+      this.voiceLoaded = true;
+    }
+    return this.cachedVoice;
+  }
+
   public speakRadioComm(text: string, callsign: string = "HOUSTON") {
     if (!this.soundEnabled || this.volume <= 0) return;
     if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
@@ -1025,9 +1038,8 @@ class SoundManager {
       utterance.rate = 1.04;
       utterance.volume = Math.min(1.0, this.volume * 1.1);
 
-      const voices = window.speechSynthesis.getVoices();
-      const preferred = voices.find((v) => v.lang.startsWith("en") && !v.name.includes("Google"));
-      if (preferred) utterance.voice = preferred;
+      const voice = this.getPreferredVoice();
+      if (voice) utterance.voice = voice;
 
       utterance.onend = () => {
         this.playRadioStatic(120);
@@ -1054,9 +1066,8 @@ class SoundManager {
       utterance.rate = 1.12;
       utterance.volume = Math.min(1.0, this.volume * 1.2);
 
-      const voices = window.speechSynthesis.getVoices();
-      const roboticVoice = voices.find((v) => v.lang.startsWith("en"));
-      if (roboticVoice) utterance.voice = roboticVoice;
+      const voice = this.getPreferredVoice();
+      if (voice) utterance.voice = voice;
 
       window.speechSynthesis.speak(utterance);
     } catch {

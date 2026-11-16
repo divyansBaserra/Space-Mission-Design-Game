@@ -116,11 +116,11 @@ export function GameCanvas({
           antialias: gameState.settings?.graphicsQuality !== "LOW",
           powerPreference: "high-performance",
           toneMapping: THREE.ACESFilmicToneMapping,
-          toneMappingExposure: 1.28,
+          toneMappingExposure: 1.02,
         }}
         onCreated={({ gl }) => {
           gl.toneMapping = THREE.ACESFilmicToneMapping;
-          gl.toneMappingExposure = 1.28;
+          gl.toneMappingExposure = 1.02;
           gl.shadowMap.enabled = isShadowsEnabled;
           gl.shadowMap.type = THREE.PCFShadowMap;
         }}

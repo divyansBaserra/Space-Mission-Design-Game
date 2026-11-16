@@ -87,12 +87,12 @@ export function PostProcessingEffects({ gameState }: PostProcessingProps) {
     const renderPass = new RenderPass(scene, camera);
     comp.addPass(renderPass);
 
-    // 2. Photonic Unreal Bloom Pass (Glowing thrusters, engine exhaust, HUD avionics)
+    // 2. Photonic Unreal Bloom Pass (Isolated to extreme emissive thrusters and lasers; zero diffuse blowout)
     const bloomPass = new UnrealBloomPass(
       new THREE.Vector2(size.width, size.height),
-      1.35, // strength (calibrated for authentic aerospace lens bloom)
-      0.5,  // radius
-      0.85  // threshold (isolates intense emissive thrusters and solar glare)
+      0.38, // strength (calibrated for subtle aerospace lens glow without washing out geometry)
+      0.4,  // radius
+      1.25  // threshold (isolates intense emissive thrusters and solar glare; prevents whiteout on lunar terrain)
     );
     comp.addPass(bloomPass);
 

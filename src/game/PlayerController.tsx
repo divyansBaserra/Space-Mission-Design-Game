@@ -113,86 +113,115 @@ export function PlayerController({
     }
   }, [gameState.step, gameState.missionMetSeconds, camera]);
 
-  // Pointer lock & keyboard event listeners
+  // Synchronize dynamic state in stable refs to prevent tearing down window listeners on every frame
+  const gameStateRef = useRef(gameState);
+  gameStateRef.current = gameState;
+
+  const callbacksRef = useRef({
+    onInteract,
+    onToggleFlashlight,
+    onPointerLockChange,
+    onTogglePause,
+    onEquipItem,
+    onToggleControlsOverlay,
+    onToggleSector,
+    onToggleMagBoots,
+    onRetetherToGantry,
+  });
+  callbacksRef.current = {
+    onInteract,
+    onToggleFlashlight,
+    onPointerLockChange,
+    onTogglePause,
+    onEquipItem,
+    onToggleControlsOverlay,
+    onToggleSector,
+    onToggleMagBoots,
+    onRetetherToGantry,
+  };
+
+  // Pointer lock & keyboard event listeners: attached once to gl context
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       keysRef.current[e.code] = true;
+      const state = gameStateRef.current;
+      const cb = callbacksRef.current;
 
       // Controls overlay toggle (KeyC)
       if (e.code === "KeyC") {
-        onToggleControlsOverlay?.();
+        cb.onToggleControlsOverlay?.();
         return;
       }
 
       // Sector transition (KeyT: Orbit <-> Lunar Surface)
       if (e.code === "KeyT") {
-        onToggleSector?.();
+        cb.onToggleSector?.();
         return;
       }
 
       // Magnetic boots lock toggle (KeyG)
       if (e.code === "KeyG") {
-        onToggleMagBoots?.();
+        cb.onToggleMagBoots?.();
         return;
       }
 
       // Emergency airlock / gantry tether return (KeyR or KeyB) when in microgravity EVA outside
-      if ((e.code === "KeyR" || e.code === "KeyB") && playerPosRef.current.z < -10.5 && gameState.controlMode === "ASTRONAUT") {
+      if ((e.code === "KeyR" || e.code === "KeyB") && playerPosRef.current.z < -10.5 && state.controlMode === "ASTRONAUT") {
         playerPosRef.current.set(0, 0.05, -14.0);
         velocityRef.current.set(0, 0, 0);
         isGroundedRef.current = true;
         soundManager.playEquip();
         soundManager.speakRadioComm("Emergency safety tether engaged. Astronaut secured on Gateway-1 gantry deck.", "HOUSTON");
-        onRetetherToGantry?.();
+        cb.onRetetherToGantry?.();
         return;
       }
 
       // Pause toggle
       if (e.code === "Escape" || e.code === "KeyP") {
-        onTogglePause?.();
+        cb.onTogglePause?.();
         return;
       }
 
       // Quickbar item equip keys (1, 2, 3)
-      if (e.code === "Digit1" && gameState.inventory.includes("TOOLKIT")) {
-        onEquipItem?.("TOOLKIT");
+      if (e.code === "Digit1" && state.inventory.includes("TOOLKIT")) {
+        cb.onEquipItem?.("TOOLKIT");
       }
-      if (e.code === "Digit2" && gameState.inventory.includes("SOLAR_WING")) {
-        onEquipItem?.("SOLAR_WING");
+      if (e.code === "Digit2" && state.inventory.includes("SOLAR_WING")) {
+        cb.onEquipItem?.("SOLAR_WING");
       }
-      if (e.code === "Digit3" && gameState.inventory.includes("SBAND_ANTENNA")) {
-        onEquipItem?.("SBAND_ANTENNA");
+      if (e.code === "Digit3" && state.inventory.includes("SBAND_ANTENNA")) {
+        cb.onEquipItem?.("SBAND_ANTENNA");
       }
-      if (e.code === "Digit4" && gameState.inventory.includes("ALSEP_KIT")) {
-        onInteract("deploy_alsep");
+      if (e.code === "Digit4" && state.inventory.includes("ALSEP_KIT")) {
+        cb.onInteract("deploy_alsep");
       }
 
       // Flashlight toggle or Hangar Solar Deployment toggle
       if (e.code === "KeyF") {
-        if (gameState.step === "HANGAR_ASSEMBLY") {
-          onInteract("hangar_solar_toggle");
+        if (state.step === "HANGAR_ASSEMBLY") {
+          cb.onInteract("hangar_solar_toggle");
           return;
         }
-        onToggleFlashlight();
+        cb.onToggleFlashlight();
         soundManager.playFlashlight();
       }
 
       // Hangar Quick Actions
-      if (gameState.step === "HANGAR_ASSEMBLY") {
+      if (state.step === "HANGAR_ASSEMBLY") {
         if (e.code === "KeyR") {
-          onInteract("hangar_static_fire");
+          cb.onInteract("hangar_static_fire");
           return;
         }
         if (e.code === "KeyL") {
-          onInteract("hangar_launch");
+          cb.onInteract("hangar_launch");
           return;
         }
       }
 
       // Interaction key
       if (e.code === "KeyE") {
-        if (gameState.interactionTarget) {
-          onInteract(gameState.interactionTarget);
+        if (state.interactionTarget) {
+          cb.onInteract(state.interactionTarget);
         }
       }
     };
@@ -202,10 +231,11 @@ export function PlayerController({
     };
 
     const handleMouseMove = (e: MouseEvent) => {
-      if (!isPointerLockedRef.current || gameState.paused) return;
+      const state = gameStateRef.current;
+      if (!isPointerLockedRef.current || state.paused) return;
 
-      const sensitivity = 0.0022 * (gameState.settings?.mouseSensitivity ?? 1.0);
-      const invertY = gameState.settings?.invertY ? -1 : 1;
+      const sensitivity = 0.0022 * (state.settings?.mouseSensitivity ?? 1.0);
+      const invertY = state.settings?.invertY ? -1 : 1;
       yawRef.current -= e.movementX * sensitivity;
       pitchRef.current -= e.movementY * sensitivity * invertY;
 
@@ -222,7 +252,7 @@ export function PlayerController({
     const handlePointerLockChange = () => {
       const locked = document.pointerLockElement === gl.domElement;
       isPointerLockedRef.current = locked;
-      onPointerLockChange(locked);
+      callbacksRef.current.onPointerLockChange(locked);
     };
 
     window.addEventListener("keydown", handleKeyDown);
@@ -236,20 +266,7 @@ export function PlayerController({
       window.removeEventListener("mousemove", handleMouseMove);
       document.removeEventListener("pointerlockchange", handlePointerLockChange);
     };
-  }, [
-    gl,
-    gameState.interactionTarget,
-    gameState.inventory,
-    gameState.paused,
-    gameState.settings,
-    onInteract,
-    onToggleFlashlight,
-    onPointerLockChange,
-    onTogglePause,
-    onEquipItem,
-    onToggleControlsOverlay,
-    onToggleSector,
-  ]);
+  }, [gl]);
 
   // Main game physics and camera update loop
   useFrame((_, delta) => {
@@ -627,8 +644,8 @@ export function PlayerController({
         targetPrompt = "[E] Collect Lunar Regolith Core Sample (CORE-GEO-01)";
       }
 
-      // 5. Deploy Apollo ALSEP Lunar Science Station
-      if (gameState.inventory.includes("ALSEP_KIT") && !gameState.alsepDeployed) {
+      // 5. Deploy Apollo ALSEP Lunar Science Station (only when not near other specific targets)
+      if (!targetId && gameState.inventory.includes("ALSEP_KIT") && !gameState.alsepDeployed) {
         targetId = "deploy_alsep";
         targetPrompt = "[E / 4] Deploy Apollo ALSEP Lunar Science Station";
       }

@@ -88,6 +88,67 @@ export function HUD({
     gameState.spacecraft.speedMps <= 2.8 &&
     !gameState.spacecraft.isDocked;
 
+  const getStepDirectives = () => {
+    if (isSurface) {
+      return {
+        phase: "PHASE 5: LUNAR BASE ALPHA EVA",
+        action: gameState.alsepDeployed
+          ? "ALSEP Station active! Walk towards the glowing cyan marker to collect CORE-GEO-01 sample, then return to ORV-1 cockpit [H]."
+          : "1. Press [E] or [4] to deploy Apollo ALSEP Station. 2. Walk to glowing cyan beacon to collect CORE-GEO-01 Sample. 3. Re-enter ORV-1 cockpit [H].",
+      };
+    }
+    if (isCockpit) {
+      return {
+        phase: "PHASE 4: ORBITAL SHUTTLE FLIGHT & LANDING",
+        action: gameState.spacecraft.isLanded
+          ? "TOUCHDOWN CONFIRMED! Press [H] to disembark onto Lunar Base Alpha."
+          : gameState.spacecraft.position.z < -45
+          ? "LUNAR DESCENT: Deploy landing gear [G]. Control vertical speed (< 2.0 m/s) with [W/S] thrusters for soft touchdown on PAD-01."
+          : "ORBITAL FLIGHT: Fly ORV-1 using [W/S] thrust, [A/D] yaw, [Q/E] roll. Dock at DOCK-01 or press [T] to descend to Moon.",
+      };
+    }
+    switch (gameState.step) {
+      case "BRIEFING":
+        return {
+          phase: "PHASE 1: COMMAND BRIEFING",
+          action: "Walk forward to the center Holo-Table and press [E] to review the Artemis-VII Flight Directive.",
+        };
+      case "COLLECT_EQUIPMENT":
+        return {
+          phase: "PHASE 2: GEAR PREPARATION",
+          action: "Pick up the Aerospace Toolkit [E] from the left bench and GaAs Solar Wing [E] from the right bench.",
+        };
+      case "ENTER_AIRLOCK":
+      case "CYCLE_AIRLOCK_DEPRESS":
+        return {
+          phase: "PHASE 3: AIRLOCK DEPRESSURIZATION",
+          action: "Walk through the partition door into the airlock chamber and press [E] on the console to cycle to vacuum.",
+        };
+      case "EVA_APPROACH_SATELLITE":
+      case "REPAIR_SATELLITE":
+        return {
+          phase: "PHASE 4: SATELLITE EVA REPAIR",
+          action: "Walk along the gantry to AERO-3X [Z = -22m]. Equip Toolkit [1] to remove damaged wing, then Solar Wing [2] to install.",
+        };
+      case "BOARD_SPACECRAFT":
+        return {
+          phase: "PHASE 5: BOARD SHUTTLE ORV-1",
+          action: "Satellite restored! Walk forward along the gantry to the ORV-1 shuttle berth [Z = -28m] and press [E] to enter cockpit.",
+        };
+      case "HANGAR_ASSEMBLY":
+        return {
+          phase: "HANGAR CAD SANDBOX",
+          action: "Interact [E] with assembly workstations. Press [F] to toggle solar wings, [R] for static-fire test, [L] for orbital flight.",
+        };
+      default:
+        return {
+          phase: "MISSION ACTIVE",
+          action: gameState.substepText || "Follow active HUD objectives.",
+        };
+    }
+  };
+  const directive = getStepDirectives();
+
   return (
     <div
       style={{
@@ -152,62 +213,81 @@ export function HUD({
           background: "linear-gradient(180deg, rgba(8, 10, 14, 0.85) 0%, rgba(8, 10, 14, 0) 100%)",
         }}
       >
-        {/* Objective Badge */}
+        {/* Prominent High-Visibility Objective Badge */}
         <div
           style={{
             display: "flex",
             flexDirection: "column",
-            gap: "4px",
-            backgroundColor: "rgba(18, 22, 28, 0.9)",
-            border: "1px solid rgba(255, 255, 255, 0.12)",
-            padding: "8px 14px",
-            maxWidth: "500px",
-            backdropFilter: "blur(6px)",
+            gap: "5px",
+            backgroundColor: "rgba(11, 16, 26, 0.95)",
+            border: "1.5px solid #38bdf8",
+            padding: "10px 16px",
+            maxWidth: "580px",
+            backdropFilter: "blur(12px)",
+            boxShadow: "0 0 20px rgba(56, 189, 248, 0.25), 0 8px 32px rgba(0, 0, 0, 0.8)",
+            borderRadius: "4px",
+            pointerEvents: "auto",
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <span
-              style={{
-                width: "8px",
-                height: "8px",
-                borderRadius: "50%",
-                backgroundColor:
-                  gameState.step === "MISSION_COMPLETE"
-                    ? "#22c55e"
-                    : gameState.step === "MISSION_FAILED"
-                    ? "#ef4444"
-                    : isSurface
-                    ? "#a855f7"
-                    : isCockpit
-                    ? "#f59e0b"
-                    : "#38bdf8",
-                boxShadow: "0 0 8px currentColor",
-              }}
-            />
-            <span
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <span
+                style={{
+                  width: "10px",
+                  height: "10px",
+                  borderRadius: "50%",
+                  backgroundColor:
+                    gameState.step === "MISSION_COMPLETE"
+                      ? "#22c55e"
+                      : gameState.step === "MISSION_FAILED"
+                      ? "#ef4444"
+                      : isSurface
+                      ? "#a855f7"
+                      : isCockpit
+                      ? "#f59e0b"
+                      : "#38bdf8",
+                  boxShadow: "0 0 10px currentColor",
+                }}
+              />
+              <span
+                style={{
+                  fontSize: "11px",
+                  fontWeight: 800,
+                  letterSpacing: "0.1em",
+                  textTransform: "uppercase",
+                  color: "#38bdf8",
+                  fontFamily: "monospace",
+                }}
+              >
+                {directive.phase}
+              </span>
+            </div>
+            <button
+              onClick={() => onToggleControlsOverlay?.()}
               style={{
                 fontSize: "10px",
+                color: "#7dd3fc",
                 fontWeight: 700,
-                letterSpacing: "0.08em",
-                textTransform: "uppercase",
-                color: "#94a3b8",
+                backgroundColor: "rgba(56, 189, 248, 0.15)",
+                border: "1px solid rgba(56, 189, 248, 0.35)",
+                borderRadius: "3px",
+                padding: "2px 8px",
+                cursor: "pointer",
               }}
             >
-              {gameState.step === "MISSION_COMPLETE"
-                ? "MISSION COMPLETE // SUCCESS"
-                : gameState.step === "MISSION_FAILED"
-                ? "MISSION FAILED // CRITICAL"
-                : isSurface
-                ? "SURFACE EXPLORATION // LUNAR BASE ALPHA (0.166 G)"
-                : isCockpit
-                ? "ORBITAL FLIGHT // COCKPIT MODE"
-                : "STATION OPERATIONS // ASTRONAUT MODE"}
-            </span>
+              [C] CONTROLS MANUAL
+            </button>
           </div>
 
-          <div style={{ fontSize: "12px", color: "#f8fafc", fontWeight: 500, lineHeight: 1.4 }}>
-            {gameState.substepText}
+          <div style={{ fontSize: "12px", color: "#ffffff", fontWeight: 700, lineHeight: 1.45 }}>
+            {directive.action}
           </div>
+
+          {gameState.substepText && gameState.substepText !== directive.action && (
+            <div style={{ fontSize: "11px", color: "#94a3b8", fontWeight: 500, borderTop: "1px solid rgba(255, 255, 255, 0.08)", paddingTop: "4px" }}>
+              TELEMETRY: {gameState.substepText}
+            </div>
+          )}
         </div>
 
         {/* Top-Right Telemetry & Pause Button */}
@@ -395,23 +475,37 @@ export function HUD({
           />
         )}
 
-        {/* Dynamic Interaction Pill */}
+        {/* Dynamic Interaction Pill (Keyboard [E] or Direct Mouse Click) */}
         {!isCockpit && gameState.interactionPrompt && (
           <div
+            onClick={() => {
+              if (gameState.interactionTarget) {
+                onInteractHangar?.(gameState.interactionTarget);
+              }
+            }}
             style={{
-              marginTop: "16px",
-              backgroundColor: "rgba(15, 23, 42, 0.95)",
-              border: "1px solid #38bdf8",
-              padding: "6px 16px",
-              fontSize: "12px",
-              fontWeight: 600,
-              color: "#f8fafc",
-              boxShadow: "0 4px 16px rgba(0, 0, 0, 0.6)",
-              backdropFilter: "blur(8px)",
+              marginTop: "18px",
+              backgroundColor: "rgba(11, 16, 26, 0.96)",
+              border: "1.5px solid #38bdf8",
+              borderRadius: "4px",
+              padding: "8px 18px",
+              fontSize: "13px",
+              fontWeight: 700,
+              color: "#ffffff",
+              boxShadow: "0 0 24px rgba(56, 189, 248, 0.5), 0 4px 16px rgba(0, 0, 0, 0.8)",
+              backdropFilter: "blur(10px)",
+              pointerEvents: "auto",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: "10px",
               animation: "pulse 2s infinite ease-in-out",
             }}
           >
-            {gameState.interactionPrompt}
+            <span style={{ backgroundColor: "#0284c7", color: "#ffffff", padding: "2px 8px", borderRadius: "3px", fontSize: "11px", fontWeight: 800 }}>
+              PRESS [E] OR CLICK
+            </span>
+            <span>{gameState.interactionPrompt}</span>
           </div>
         )}
 

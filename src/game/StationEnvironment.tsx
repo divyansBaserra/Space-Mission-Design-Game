@@ -640,11 +640,14 @@ export function StationEnvironment({
   const hasItem = (id: InventoryItemId) => gameState.inventory.includes(id);
 
   const isSurface = gameState.controlMode === "SURFACE_EXPLORATION";
-  const isNearMoon =
+  const isLandedOnMoon =
     isSurface ||
-    gameState.step === "SURFACE_DESCENT" ||
+    gameState.spacecraft.isLanded ||
     gameState.step === "SURFACE_LANDED" ||
-    gameState.step === "EXPLORE_SURFACE" ||
+    gameState.step === "EXPLORE_SURFACE";
+  const isNearMoon =
+    isLandedOnMoon ||
+    gameState.step === "SURFACE_DESCENT" ||
     (gameState.controlMode === "SPACECRAFT_COCKPIT" && gameState.spacecraft.position.z < -80);
 
   return (
@@ -655,32 +658,34 @@ export function StationEnvironment({
       <Stars radius={120} depth={60} count={4000} factor={4} saturation={0} fade speed={0.5} />
       <SpaceDust count={280} />
 
-      {/* Deep Space Sunlight: Extreme Directional Contrast & Blinding Specular Highlights */}
-      <directionalLight
-        position={[45, 28, 20]}
-        intensity={2.8}
-        color="#fffaf0"
-        castShadow
-        shadow-mapSize-width={2048}
-        shadow-mapSize-height={2048}
-        shadow-bias={-0.00012}
-        shadow-camera-near={0.5}
-        shadow-camera-far={120}
-        shadow-camera-left={-25}
-        shadow-camera-right={25}
-        shadow-camera-top={25}
-        shadow-camera-bottom={-25}
-      />
+      {/* Deep Space Sunlight: Active in orbit; isolated from lunar surface to prevent double-exposure */}
+      {!isLandedOnMoon && (
+        <directionalLight
+          position={[45, 28, 20]}
+          intensity={2.2}
+          color="#fffaf0"
+          castShadow
+          shadow-mapSize-width={2048}
+          shadow-mapSize-height={2048}
+          shadow-bias={-0.00012}
+          shadow-camera-near={0.5}
+          shadow-camera-far={120}
+          shadow-camera-left={-25}
+          shadow-camera-right={25}
+          shadow-camera-top={25}
+          shadow-camera-bottom={-25}
+        />
+      )}
       {/* Deep Space Vacuum Ambient Light: Near zero for authentic pitch-black shadows */}
       <ambientLight intensity={0.035} />
 
       {/* Planetary Albedo Bounce Light: Earth blue scatter illuminating underside of spacecraft & station */}
-      {!isSurface && (
+      {!isLandedOnMoon && (
         <directionalLight position={[0, -10, 5]} intensity={0.38} color="#38bdf8" />
       )}
 
       {/* Photorealistic NASA Blue Marble Earth in true low Earth orbit */}
-      {!isSurface ? (
+      {!isLandedOnMoon ? (
         <RealisticEarth
           radius={480}
           position={[0, -520, 20]}
@@ -696,14 +701,16 @@ export function StationEnvironment({
       )}
 
       {/* Real NASA International Space Station Superstructure (Mounted along Station Truss) */}
-      <Suspense fallback={null}>
-        <NASAModelObject
-          url="/assets/models/nasa/iss-station.glb"
-          position={[0, 16.5, 3.5]}
-          rotation={[0, 0, 0]}
-          scale={[0.7, 0.7, 0.7]}
-        />
-      </Suspense>
+      {!isLandedOnMoon && (
+        <Suspense fallback={null}>
+          <NASAModelObject
+            url="/assets/models/nasa/iss-station.glb"
+            position={[0, 16.5, 3.5]}
+            rotation={[0, 0, 0]}
+            scale={[0.7, 0.7, 0.7]}
+          />
+        </Suspense>
+      )}
 
       {/* Orbiting Asteroid Belt (Authentic NASA Asteroid 3D Models) */}
       <group>
@@ -729,10 +736,13 @@ export function StationEnvironment({
       </group>
 
       {/* ==================================================================== */}
-      {/* 1. COMMAND DECK / BRIDGE (X: [-4.5, 4.5], Z: [6, 16], Y: [0, 3])     */}
+      {/* 1. COMMAND DECK, LAB, AIRLOCK & GANTRY (Mounted on Gateway-1 Station) */}
+      {/* Rendered only when aboard or orbiting Gateway-1; hidden on Moon       */}
       {/* ==================================================================== */}
-      {/* Floor */}
-      <mesh position={[0, 0, 11]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+      {!isLandedOnMoon && (
+        <group name="gateway_orbital_station">
+          {/* Floor */}
+          <mesh position={[0, 0, 11]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
         <planeGeometry args={[9, 10]} />
         <meshStandardMaterial color="#1e2229" roughness={0.65} metalness={0.3} />
       </mesh>
@@ -1497,6 +1507,8 @@ export function StationEnvironment({
           color={gameState.satellite.diagnosticRun ? "#22c55e" : "#ef4444"}
         />
       </group>
+        </group>
+      )}
 
       {/* 5. PLANETARY / LUNAR SURFACE LANDING ZONE (LUNAR BASE ALPHA) */}
       {/* Rendered when approaching lunar descent sector or landed on Moon */}
@@ -1504,14 +1516,14 @@ export function StationEnvironment({
         <>
           <LunarDustPlume gameState={gameState} />
           <group position={[0, -18.0, -110.0]}>
-          {/* Cratered Lunar Terrain Ground Plane */}
+          {/* Cratered Lunar Terrain Ground Plane (Dark basaltic regolith tone preventing bloom whiteout) */}
           <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
             <planeGeometry args={[160, 160, 32, 32]} />
             <meshStandardMaterial
               map={moonTexture ?? undefined}
-              color={moonTexture ? "#ffffff" : "#64748b"}
-              roughness={0.92}
-              metalness={0.08}
+              color={moonTexture ? "#555c68" : "#47515e"}
+              roughness={0.94}
+              metalness={0.06}
             />
           </mesh>
 
@@ -1575,10 +1587,10 @@ export function StationEnvironment({
           <pointLight position={[0, 8.4, 0]} intensity={2.0} distance={25} color="#ef4444" />
         </group>
 
-        {/* High-Intensity Lunar Surface Sun with High-Resolution Shadow Maps */}
+        {/* Calibrated Lunar Surface Sun (Authentic solar radiance without bloom whiteout) */}
         <directionalLight
           position={[-35, 50, 25]}
-          intensity={3.2}
+          intensity={1.5}
           color="#fffdf7"
           castShadow
           shadow-mapSize-width={2048}
@@ -1592,10 +1604,10 @@ export function StationEnvironment({
           shadow-camera-bottom={-40}
         />
         {/* Regolith Diffuse Albedo Bounce Light: Charcoal-gray upward scatter from lunar ground */}
-        <directionalLight position={[0, -1, 0]} intensity={0.28} color="#94a3b8" />
+        <directionalLight position={[0, -1, 0]} intensity={0.22} color="#94a3b8" />
         {/* Earthrise Blue Albedo Ambient Vista Light */}
-        <directionalLight position={[60, 95, -160]} intensity={0.24} color="#60a5fa" />
-        <pointLight position={[0, 14.0, 0]} intensity={2.0} distance={65} color="#e0f2fe" />
+        <directionalLight position={[60, 95, -160]} intensity={0.20} color="#60a5fa" />
+        <pointLight position={[0, 14.0, 0]} intensity={0.5} distance={65} color="#e0f2fe" />
 
         {/* Perimeter Blast Shields (Matching Starfield Lunar Base Reference) */}
         {[-8, -4, 0, 4, 8].map((x) => (
@@ -1723,9 +1735,9 @@ export function StationEnvironment({
           { pos: [-2.0, 1.1, -18.0], scale: [2.8, 2.2, 2.5], rot: [0.6, -0.8, 0.1], col: "#475569" },
           { pos: [14.0, 0.85, -16.0], scale: [2.1, 1.7, 1.9], rot: [-0.2, 2.1, -0.4], col: "#334155" },
           { pos: [19.0, 0.95, -6.0], scale: [2.5, 1.9, 2.2], rot: [0.8, 0.3, -0.6], col: "#475569" },
-          { pos: [15.0, 0.75, 12.0], scale: [1.9, 1.5, 1.7], rot: [-0.5, 1.6, 0.3], col: "#334155" },
+          { pos: [18.0, 0.75, 14.0], scale: [1.9, 1.5, 1.7], rot: [-0.5, 1.6, 0.3], col: "#334155" },
           { pos: [-18.0, 0.9, 4.0], scale: [2.2, 1.8, 2.0], rot: [0.4, -1.4, 0.2], col: "#475569" },
-          { pos: [-8.0, 0.65, 14.0], scale: [1.7, 1.3, 1.5], rot: [0.2, 0.9, -0.5], col: "#334155" },
+          { pos: [-16.0, 0.65, 18.0], scale: [1.7, 1.3, 1.5], rot: [0.2, 0.9, -0.5], col: "#334155" },
         ].map((b, i) => (
           <group key={`lunar-boulder-${i}`} position={b.pos as [number, number, number]} rotation={b.rot as [number, number, number]}>
             <mesh castShadow receiveShadow scale={b.scale as [number, number, number]}>

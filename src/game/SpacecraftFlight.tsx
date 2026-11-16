@@ -221,61 +221,86 @@ export function SpacecraftFlight({
       return () => clearTimeout(timer);
     }
   }, [gameState.controlMode]);
+
+  const gameStateRef = useRef(gameState);
+  gameStateRef.current = gameState;
+
+  const callbacksRef = useRef({
+    onDockComplete,
+    onExitCockpit,
+    onTogglePause,
+    onToggleCameraView,
+    onToggleLandingGear,
+    onToggleControlsOverlay,
+    onToggleSector,
+  });
+  callbacksRef.current = {
+    onDockComplete,
+    onExitCockpit,
+    onTogglePause,
+    onToggleCameraView,
+    onToggleLandingGear,
+    onToggleControlsOverlay,
+    onToggleSector,
+  };
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       keysRef.current[e.code] = true;
+      const state = gameStateRef.current;
+      const cb = callbacksRef.current;
 
       // Controls overlay toggle (KeyC)
       if (e.code === "KeyC") {
-        onToggleControlsOverlay?.();
+        cb.onToggleControlsOverlay?.();
         return;
       }
 
       // Sector transition (KeyT: Orbit <-> Lunar Surface)
       if (e.code === "KeyT") {
-        onToggleSector?.();
+        cb.onToggleSector?.();
         return;
       }
 
       // Pause toggle
       if (e.code === "Escape" || e.code === "KeyP") {
-        onTogglePause?.();
+        cb.onTogglePause?.();
         return;
       }
 
       // Exit Cockpit / Disembark back to Astronaut
-      if (e.code === "KeyH" && gameState.controlMode === "SPACECRAFT_COCKPIT") {
-        onExitCockpit?.();
+      if (e.code === "KeyH" && state.controlMode === "SPACECRAFT_COCKPIT") {
+        cb.onExitCockpit?.();
         return;
       }
 
       // Camera view toggle (Cockpit vs Chase)
-      if (e.code === "KeyV" && gameState.controlMode === "SPACECRAFT_COCKPIT") {
+      if (e.code === "KeyV" && state.controlMode === "SPACECRAFT_COCKPIT") {
         const nextMode = cameraViewModeRef.current === "COCKPIT" ? "CHASE" : "COCKPIT";
         cameraViewModeRef.current = nextMode;
         soundManager.playEquip();
-        onToggleCameraView?.();
+        cb.onToggleCameraView?.();
         return;
       }
 
       // Landing Gear toggle (Down vs Up)
-      if (e.code === "KeyG" && gameState.controlMode === "SPACECRAFT_COCKPIT") {
+      if (e.code === "KeyG" && state.controlMode === "SPACECRAFT_COCKPIT") {
         landingGearRef.current = !landingGearRef.current;
         soundManager.playGearDeploy();
-        onToggleLandingGear?.();
+        cb.onToggleLandingGear?.();
         return;
       }
 
       // Manual Docking Capture Key (Enter)
-      if (e.code === "Enter" && gameState.controlMode === "SPACECRAFT_COCKPIT") {
-        const dockingPortPos = gameState.spacecraft.dockingTargetPos;
+      if (e.code === "Enter" && state.controlMode === "SPACECRAFT_COCKPIT") {
+        const dockingPortPos = state.spacecraft.dockingTargetPos;
         const dist = dockingPortPos.distanceTo(posRef.current);
         const speed = velRef.current.length();
-        if (dist <= 3.2 && speed <= 1.2 && !gameState.spacecraft.isDocked) {
+        if (dist <= 3.2 && speed <= 1.2 && !state.spacecraft.isDocked) {
           soundManager.playDockingLatch();
           soundManager.playSuccessFanfare();
           soundManager.playQuindarTone(true);
-          onDockComplete();
+          cb.onDockComplete();
         }
       }
     };
@@ -285,9 +310,10 @@ export function SpacecraftFlight({
     };
 
     const handleMouseMove = (e: MouseEvent) => {
-      if (document.pointerLockElement && !gameState.paused) {
-        const sensitivity = 0.0016 * (gameState.settings?.mouseSensitivity ?? 1.0);
-        const invertY = gameState.settings?.invertY ? -1 : 1;
+      const state = gameStateRef.current;
+      if (document.pointerLockElement && !state.paused) {
+        const sensitivity = 0.0016 * (state.settings?.mouseSensitivity ?? 1.0);
+        const invertY = state.settings?.invertY ? -1 : 1;
         // Inject rotational torque into angular velocity (Newtonian rotational inertia)
         angularVelRef.current.y -= e.movementX * sensitivity * 4.2;
         angularVelRef.current.x -= e.movementY * sensitivity * invertY * 4.2;
@@ -305,20 +331,7 @@ export function SpacecraftFlight({
       window.removeEventListener("keyup", handleKeyUp);
       window.removeEventListener("mousemove", handleMouseMove);
     };
-  }, [
-    gameState.controlMode,
-    gameState.paused,
-    gameState.settings,
-    gameState.spacecraft.dockingTargetPos,
-    gameState.spacecraft.isDocked,
-    onDockComplete,
-    onExitCockpit,
-    onTogglePause,
-    onToggleCameraView,
-    onToggleLandingGear,
-    onToggleControlsOverlay,
-    onToggleSector,
-  ]);
+  }, [gameState.controlMode]);
 
   // Flight simulation loop
   useFrame((_, delta) => {

@@ -1409,9 +1409,6 @@ export default function SpaceMissionGame() {
   if (stage === "FIRST_PERSON_GAME") {
     return (
       <main style={{ position: "relative", width: "100vw", height: "100vh", overflow: "hidden", backgroundColor: "#06080c" }}>
-        {/* Prominent Glowing NASA Evaluation Top Banner */}
-        <NasaJudgesGithubBanner />
-
         <GameManager gameMode="ORBITAL_REPAIR" onReturnToHub={() => setStage("MAIN_MENU")} onLaunchAegis={() => setStage("PROJECT_AEGIS_GAME")} onLaunchEuropa={() => setStage("PROJECT_EUROPA_GAME")} />
       </main>
     );
@@ -1423,9 +1420,6 @@ export default function SpaceMissionGame() {
   if (stage === "FLIGHT_SIM_GAME") {
     return (
       <main style={{ position: "relative", width: "100vw", height: "100vh", overflow: "hidden", backgroundColor: "#06080c" }}>
-        {/* Prominent Glowing NASA Evaluation Top Banner */}
-        <NasaJudgesGithubBanner />
-
         <GameManager gameMode="FLIGHT_SIM" onReturnToHub={() => setStage("MAIN_MENU")} onLaunchAegis={() => setStage("PROJECT_AEGIS_GAME")} onLaunchEuropa={() => setStage("PROJECT_EUROPA_GAME")} />
       </main>
     );
@@ -1437,9 +1431,6 @@ export default function SpaceMissionGame() {
   if (stage === "HANGAR_GAME") {
     return (
       <main style={{ position: "relative", width: "100vw", height: "100vh", overflow: "hidden", backgroundColor: "#06080c" }}>
-        {/* Prominent Glowing NASA Evaluation Top Banner */}
-        <NasaJudgesGithubBanner />
-
         <GameManager gameMode="HANGAR_SANDBOX" onReturnToHub={() => setStage("MAIN_MENU")} onLaunchAegis={() => setStage("PROJECT_AEGIS_GAME")} onLaunchEuropa={() => setStage("PROJECT_EUROPA_GAME")} />
       </main>
     );
@@ -1451,9 +1442,6 @@ export default function SpaceMissionGame() {
   if (stage === "PROJECT_AEGIS_GAME") {
     return (
       <main style={{ position: "relative", width: "100vw", height: "100vh", overflow: "hidden", backgroundColor: "#040608" }}>
-        {/* Prominent Glowing NASA Evaluation Top Banner */}
-        <NasaJudgesGithubBanner />
-
         <AegisGameManager onReturnToHub={() => setStage("MAIN_MENU")} />
       </main>
     );
@@ -1465,9 +1453,6 @@ export default function SpaceMissionGame() {
   if (stage === "PROJECT_EUROPA_GAME") {
     return (
       <main style={{ position: "relative", width: "100vw", height: "100vh", overflow: "hidden", backgroundColor: "#020408" }}>
-        {/* Prominent Glowing NASA Evaluation Top Banner */}
-        <NasaJudgesGithubBanner />
-
         <EuropaGameManager onReturnToHub={() => setStage("MAIN_MENU")} />
       </main>
     );
