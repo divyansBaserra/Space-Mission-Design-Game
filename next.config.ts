@@ -63,6 +63,7 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false, // Prevents leaking 'x-powered-by: Next.js'
+  devIndicators: false, // Disables Next.js bottom-left dev tools overlay badge
   transpilePackages: ["three", "@react-three/fiber", "@react-three/drei"],
   typescript: {
     // Type-safety verified independently via strict `bun x tsc --noEmit`

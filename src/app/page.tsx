@@ -475,6 +475,48 @@ interface CareerSaveData {
 }
 
 function NasaJudgesGithubBanner({ inline = false }: { inline?: boolean }) {
+  if (inline) {
+    return (
+      <a
+        href="https://github.com/divyansBaserra/Space-Mission-Design-Game"
+        target="_blank"
+        rel="noopener noreferrer"
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "8px",
+          padding: "6px 12px",
+          background: "linear-gradient(135deg, rgba(9, 13, 22, 0.95) 0%, rgba(17, 24, 39, 0.9) 100%)",
+          border: "1px solid #38bdf8",
+          borderRadius: "4px",
+          boxShadow: "0 0 15px rgba(56, 189, 248, 0.3)",
+          textDecoration: "none",
+          cursor: "pointer",
+          flexShrink: 0,
+          whiteSpace: "nowrap",
+          transition: "all 0.2s ease",
+        }}
+        title="Inspect official NASA Space Apps submission codebase on GitHub"
+        onMouseEnter={(e) => {
+          e.currentTarget.style.borderColor = "#67e8f9";
+          e.currentTarget.style.boxShadow = "0 0 25px rgba(56, 189, 248, 0.6)";
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.borderColor = "#38bdf8";
+          e.currentTarget.style.boxShadow = "0 0 15px rgba(56, 189, 248, 0.3)";
+        }}
+      >
+        <span style={{ width: "6px", height: "6px", borderRadius: "50%", backgroundColor: "#22c55e", boxShadow: "0 0 8px #22c55e" }} />
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="#38bdf8">
+          <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z" />
+        </svg>
+        <span style={{ fontSize: "11px", fontWeight: 700, color: "#ffffff", letterSpacing: "0.04em", fontFamily: "monospace" }}>
+          GITHUB REPO &rarr;
+        </span>
+      </a>
+    );
+  }
+
   return (
     <a
       href="https://github.com/divyansBaserra/Space-Mission-Design-Game"
@@ -1486,20 +1528,20 @@ export default function SpaceMissionGame() {
         {/* Foreground Minimalist Game UI Overlay */}
         <div style={{ position: "relative", zIndex: 10, display: "flex", flexDirection: "column", height: "100%", padding: "var(--space-6) var(--space-8)", justifyContent: "space-between", pointerEvents: "none", overflowY: "auto" }}>
           {/* Top Bar with Integrated Non-Overlapping Layout */}
-          <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", pointerEvents: "auto", flexWrap: "wrap", gap: "16px", width: "100%", marginBottom: "16px" }}>
+          <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", pointerEvents: "auto", flexWrap: "nowrap", gap: "16px", width: "100%", marginBottom: "16px" }}>
             {/* Left Header: Title + Celestial Vista Switcher */}
-            <div style={{ display: "flex", alignItems: "center", gap: "20px", flexWrap: "wrap" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "16px", flexWrap: "nowrap", flexShrink: 0 }}>
               <div>
                 <div className="font-mono" style={{ fontSize: "11px", color: "var(--color-status-telemetry)", letterSpacing: "0.15em", textTransform: "uppercase", fontWeight: 700 }}>
                   NASA Space Apps 2026 // Orbital Engineering
                 </div>
-                <h1 style={{ fontSize: "var(--text-2xl)", fontWeight: 700, letterSpacing: "-0.02em", color: "#f8fafc", marginTop: "2px" }}>
+                <h1 style={{ fontSize: "var(--text-xl)", fontWeight: 700, letterSpacing: "-0.02em", color: "#f8fafc", marginTop: "2px", whiteSpace: "nowrap" }}>
                   SPACE MISSION DESIGN GAME
                 </h1>
               </div>
 
               {/* Celestial Vista Switcher */}
-              <div style={{ display: "flex", gap: "4px", backgroundColor: "rgba(15, 23, 42, 0.85)", padding: "4px", border: "1px solid rgba(56, 189, 248, 0.3)", borderRadius: "4px", backdropFilter: "blur(8px)" }}>
+              <div style={{ display: "flex", gap: "4px", backgroundColor: "rgba(15, 23, 42, 0.85)", padding: "4px", border: "1px solid rgba(56, 189, 248, 0.3)", borderRadius: "4px", backdropFilter: "blur(8px)", flexShrink: 0 }}>
                 <button
                   onClick={() => {
                     setMainMenuCosmicMode("BLACK_HOLE");
@@ -1515,6 +1557,7 @@ export default function SpaceMissionGame() {
                     borderRadius: "2px",
                     cursor: "pointer",
                     letterSpacing: "0.04em",
+                    whiteSpace: "nowrap",
                   }}
                   title="Interstellar-style Gravitational Lensing Black Hole with Relativistic Accretion Disk"
                 >
@@ -1535,6 +1578,7 @@ export default function SpaceMissionGame() {
                     borderRadius: "2px",
                     cursor: "pointer",
                     letterSpacing: "0.04em",
+                    whiteSpace: "nowrap",
                   }}
                   title="Photorealistic Blue Marble Earth with Rayleigh Scattering"
                 >
@@ -1544,19 +1588,19 @@ export default function SpaceMissionGame() {
             </div>
 
             {/* Right Header: Career Telemetry + Embedded Inline NASA GitHub Banner */}
-            <div style={{ display: "flex", alignItems: "center", gap: "14px", flexWrap: "wrap" }}>
-              <div style={{ display: "flex", gap: "var(--space-3)", backgroundColor: "rgba(12, 14, 18, 0.85)", padding: "8px 14px", border: "1px solid var(--color-border-subtle)", borderRadius: "4px", backdropFilter: "blur(8px)" }}>
-                <div style={{ fontSize: "12px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "nowrap", flexShrink: 0 }}>
+              <div style={{ display: "flex", gap: "var(--space-3)", backgroundColor: "rgba(12, 14, 18, 0.85)", padding: "8px 14px", border: "1px solid var(--color-border-subtle)", borderRadius: "4px", backdropFilter: "blur(8px)", flexShrink: 0 }}>
+                <div style={{ fontSize: "12px", whiteSpace: "nowrap" }}>
                   <span style={{ color: "var(--color-text-muted)" }}>Level: </span>
                   <strong className="font-mono" style={{ color: "var(--color-text-primary)" }}>{Math.floor(careerScore / 1000) + 1}</strong>
                 </div>
                 <div style={{ width: "1px", height: "14px", backgroundColor: "var(--color-border-default)" }} />
-                <div style={{ fontSize: "12px" }}>
+                <div style={{ fontSize: "12px", whiteSpace: "nowrap" }}>
                   <span style={{ color: "var(--color-text-muted)" }}>Score: </span>
                   <strong className="font-mono" style={{ color: "var(--color-text-primary)" }}>{careerScore.toLocaleString()} pts</strong>
                 </div>
                 <div style={{ width: "1px", height: "14px", backgroundColor: "var(--color-border-default)" }} />
-                <div style={{ fontSize: "12px" }}>
+                <div style={{ fontSize: "12px", whiteSpace: "nowrap" }}>
                   <span style={{ color: "var(--color-text-muted)" }}>Budget: </span>
                   <strong className="font-mono" style={{ color: "var(--color-status-nominal)" }}>{careerCredits.toLocaleString()} Cr</strong>
                 </div>

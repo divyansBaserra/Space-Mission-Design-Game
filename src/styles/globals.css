@@ -146,3 +146,15 @@ input, select, textarea {
 ::-webkit-scrollbar-thumb:hover {
   background: var(--color-border-strong);
 }
+
+/* Hide Next.js dev indicator overlay badge */
+[data-nextjs-dev-tools-button],
+[data-nextjs-toast],
+nextjs-portal,
+#nextjs-dev-tools,
+div[data-nextjs-route-announcer] {
+  display: none !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  visibility: hidden !important;
+}
