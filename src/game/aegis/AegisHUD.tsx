@@ -348,18 +348,43 @@ export function AegisHUD({
             </span>
           </div>
 
+          {/* Dynamic Guidance Directional Cue */}
+          <div
+            style={{
+              padding: "4px 14px",
+              borderRadius: "3px",
+              fontSize: "11px",
+              fontWeight: 800,
+              backgroundColor: isWithinCep ? "rgba(34, 197, 94, 0.25)" : "rgba(245, 158, 11, 0.25)",
+              border: `1px solid ${isWithinCep ? "#22c55e" : "#f59e0b"}`,
+              color: isWithinCep ? "#22c55e" : "#fbbf24",
+              fontFamily: "var(--font-mono)",
+              textAlign: "center",
+            }}
+          >
+            {isWithinCep
+              ? "🎯 TARGET LOCKED INSIDE 3M CEP BULLSEYE"
+              : lateralOffsetX > 1.0
+              ? "← STEER LEFT [A] TO RECENTER"
+              : lateralOffsetX < -1.0
+              ? "STEER RIGHT [D] TO RECENTER →"
+              : lateralOffsetY > 1.0
+              ? "↑ PITCH UP [W] TO RECENTER"
+              : "↓ PITCH DOWN [S] TO RECENTER"}
+          </div>
+
           {/* Micro-thruster Steering Pad */}
-          <div style={{ display: "flex", gap: "4px" }}>
-            <button onClick={() => onFireRcs(-1, 0)} style={{ padding: "8px 14px", backgroundColor: "rgba(15, 23, 42, 0.85)", border: "1px solid #38bdf8", color: "#38bdf8", fontWeight: 700, fontSize: "11px", cursor: "pointer" }}>
+          <div style={{ display: "flex", gap: "6px" }}>
+            <button onClick={() => onFireRcs(-1, 0)} style={{ padding: "10px 16px", backgroundColor: "rgba(15, 23, 42, 0.9)", border: "1.5px solid #38bdf8", color: "#38bdf8", fontWeight: 800, fontSize: "12px", cursor: "pointer", borderRadius: "4px", boxShadow: "0 0 10px rgba(56, 189, 248, 0.2)" }}>
               [A] LEFT
             </button>
-            <button onClick={() => onFireRcs(0, -1)} style={{ padding: "8px 14px", backgroundColor: "rgba(15, 23, 42, 0.85)", border: "1px solid #38bdf8", color: "#38bdf8", fontWeight: 700, fontSize: "11px", cursor: "pointer" }}>
+            <button onClick={() => onFireRcs(0, -1)} style={{ padding: "10px 16px", backgroundColor: "rgba(15, 23, 42, 0.9)", border: "1.5px solid #38bdf8", color: "#38bdf8", fontWeight: 800, fontSize: "12px", cursor: "pointer", borderRadius: "4px", boxShadow: "0 0 10px rgba(56, 189, 248, 0.2)" }}>
               [W] PITCH UP
             </button>
-            <button onClick={() => onFireRcs(0, 1)} style={{ padding: "8px 14px", backgroundColor: "rgba(15, 23, 42, 0.85)", border: "1px solid #38bdf8", color: "#38bdf8", fontWeight: 700, fontSize: "11px", cursor: "pointer" }}>
+            <button onClick={() => onFireRcs(0, 1)} style={{ padding: "10px 16px", backgroundColor: "rgba(15, 23, 42, 0.9)", border: "1.5px solid #38bdf8", color: "#38bdf8", fontWeight: 800, fontSize: "12px", cursor: "pointer", borderRadius: "4px", boxShadow: "0 0 10px rgba(56, 189, 248, 0.2)" }}>
               [S] PITCH DOWN
             </button>
-            <button onClick={() => onFireRcs(1, 0)} style={{ padding: "8px 14px", backgroundColor: "rgba(15, 23, 42, 0.85)", border: "1px solid #38bdf8", color: "#38bdf8", fontWeight: 700, fontSize: "11px", cursor: "pointer" }}>
+            <button onClick={() => onFireRcs(1, 0)} style={{ padding: "10px 16px", backgroundColor: "rgba(15, 23, 42, 0.9)", border: "1.5px solid #38bdf8", color: "#38bdf8", fontWeight: 800, fontSize: "12px", cursor: "pointer", borderRadius: "4px", boxShadow: "0 0 10px rgba(56, 189, 248, 0.2)" }}>
               [D] RIGHT
             </button>
           </div>

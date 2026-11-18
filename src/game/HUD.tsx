@@ -91,17 +91,17 @@ export function HUD({
   const getStepDirectives = () => {
     if (isSurface) {
       return {
-        phase: "PHASE 5: LUNAR BASE ALPHA EVA",
+        phase: "STEP 7/7: SHACKLETON LUNAR BASE ALPHA",
         action: gameState.alsepDeployed
-          ? "ALSEP Station active! Walk towards the glowing cyan marker to collect CORE-GEO-01 sample, then return to ORV-1 cockpit [H]."
-          : "1. Press [E] or [4] to deploy Apollo ALSEP Station. 2. Walk to glowing cyan beacon to collect CORE-GEO-01 Sample. 3. Re-enter ORV-1 cockpit [H].",
+          ? "ALSEP Station active! Walk to cyan marker to collect CORE-GEO-01 sample, then return to ORV-1 cockpit [H]."
+          : "Landed on PAD-01. Press [H] to disembark. 1. Deploy Apollo ALSEP Station [4/E]. 2. Collect CORE-GEO-01 sample.",
       };
     }
     if (isCockpit) {
       return {
-        phase: "PHASE 4: ORBITAL SHUTTLE FLIGHT & LANDING",
+        phase: "STEP 6/7: ORV-1 SPACECRAFT PILOTING",
         action: gameState.spacecraft.isLanded
-          ? "TOUCHDOWN CONFIRMED! Press [H] to disembark onto Lunar Base Alpha."
+          ? "TOUCHDOWN CONFIRMED ON PAD-01! Press [H] to disembark onto Lunar Base Alpha."
           : gameState.spacecraft.position.z < -45
           ? "LUNAR DESCENT: Deploy landing gear [G]. Control vertical speed (< 2.0 m/s) with [W/S] thrusters for soft touchdown on PAD-01."
           : "ORBITAL FLIGHT: Fly ORV-1 using [W/S] thrust, [A/D] yaw, [Q/E] roll. Dock at DOCK-01 or press [T] to descend to Moon.",
@@ -110,30 +110,30 @@ export function HUD({
     switch (gameState.step) {
       case "BRIEFING":
         return {
-          phase: "PHASE 1: COMMAND BRIEFING",
+          phase: "STEP 1/7: COMMAND BRIEFING",
           action: "Walk forward to the center Holo-Table and press [E] to review the Artemis-VII Flight Directive.",
         };
       case "COLLECT_EQUIPMENT":
         return {
-          phase: "PHASE 2: GEAR PREPARATION",
-          action: "Pick up the Aerospace Toolkit [E] from the left bench and GaAs Solar Wing [E] from the right bench.",
+          phase: "STEP 2/7: GEAR PREPARATION",
+          action: "Pick up 3 repair parts: [1] Toolkit (Left), [2] Solar Wing (Right), [3] S-Band Antenna (Right) — or click [⚡ 1-CLICK EQUIP ALL GEAR].",
         };
       case "ENTER_AIRLOCK":
       case "CYCLE_AIRLOCK_DEPRESS":
         return {
-          phase: "PHASE 3: AIRLOCK DEPRESSURIZATION",
-          action: "Walk through the partition door into the airlock chamber and press [E] on the console to cycle to vacuum.",
+          phase: "STEP 3/7: AIRLOCK DEPRESSURIZATION",
+          action: "Walk into the airlock chamber [Z = -8m] and press [E] on the wall console to cycle to vacuum.",
         };
       case "EVA_APPROACH_SATELLITE":
       case "REPAIR_SATELLITE":
         return {
-          phase: "PHASE 4: SATELLITE EVA REPAIR",
-          action: "Walk along the gantry to AERO-3X [Z = -22m]. Equip Toolkit [1] to remove damaged wing, then Solar Wing [2] to install.",
+          phase: "STEP 4/7: SATELLITE EVA REPAIR",
+          action: "Walk along the gantry to AERO-3X [Z = -22m]. Press [E] to execute 4-step repair (Detach Wing -> Mount Solar Array -> Install Antenna -> Run Telemetry).",
         };
       case "BOARD_SPACECRAFT":
         return {
-          phase: "PHASE 5: BOARD SHUTTLE ORV-1",
-          action: "Satellite restored! Walk forward along the gantry to the ORV-1 shuttle berth [Z = -28m] and press [E] to enter cockpit.",
+          phase: "STEP 5/7: BOARD UTILITY SHUTTLE",
+          action: "Satellite restored! Proceed along the gantry to ORV-1 shuttle berth [Z = -28m] and press [E] to enter cockpit.",
         };
       case "HANGAR_ASSEMBLY":
         return {
@@ -943,7 +943,11 @@ export function HUD({
           justifyContent: "space-between",
           alignItems: "flex-end",
           padding: "16px 24px",
-          background: "linear-gradient(0deg, rgba(8, 10, 14, 0.9) 0%, rgba(8, 10, 14, 0) 100%)",
+          flexWrap: "wrap",
+          gap: "12px",
+          maxWidth: "100%",
+          boxSizing: "border-box",
+          background: "linear-gradient(0deg, rgba(8, 10, 14, 0.92) 0%, rgba(8, 10, 14, 0) 100%)",
         }}
       >
         {isCockpit ? (

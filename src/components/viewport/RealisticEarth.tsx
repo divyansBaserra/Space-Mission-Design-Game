@@ -66,10 +66,11 @@ const AtmosphericHaloShader = {
       float sunsetFactor = smoothstep(-0.2, 0.15, sunDot) * (1.0 - smoothstep(0.15, 0.5, sunDot));
       vec3 scatterColor = mix(dayGlowColor, sunsetGlowColor, sunsetFactor * 0.4);
 
-      float alpha = halo * intensity * dayFactor * 0.35;
+      float alpha = clamp(halo * intensity * dayFactor * 0.25, 0.0, 0.35);
       if (alpha <= 0.001) discard;
 
-      gl_FragColor = vec4(scatterColor, alpha);
+      // Safe additive blending: scale RGB by alpha to prevent blinding specular whiteout
+      gl_FragColor = vec4(scatterColor * alpha, alpha);
     }
   `,
 };
@@ -103,16 +104,17 @@ const SurfaceLimbShader = {
 
       // Glance angle
       float rim = 1.0 - clamp(dot(viewDir, norm), 0.0, 1.0);
-      float rimFactor = pow(rim, 3.8);
+      float rimFactor = pow(rim, 4.2);
 
       vec3 sunDir = normalize(sunDirection);
       float sunDot = dot(norm, sunDir);
       float dayFactor = smoothstep(-0.1, 0.3, sunDot);
 
-      float alpha = rimFactor * 0.45 * dayFactor;
+      float alpha = clamp(rimFactor * 0.22 * dayFactor, 0.0, 0.25);
       if (alpha <= 0.001) discard;
 
-      gl_FragColor = vec4(limbColor, alpha);
+      // Safe additive blending: scale RGB by alpha to eliminate white clipping
+      gl_FragColor = vec4(limbColor * alpha, alpha);
     }
   `,
 };
@@ -177,7 +179,7 @@ export function RealisticEarth({
         sunDirection: { value: sunDirVector },
         dayGlowColor: { value: new THREE.Color("#38bdf8") }, // Delicate Rayleigh cyan
         sunsetGlowColor: { value: new THREE.Color("#f59e0b") }, // Rayleigh sunset amber
-        intensity: { value: 0.85 },
+        intensity: { value: 0.35 },
       },
       blending: THREE.AdditiveBlending,
       side: THREE.BackSide,
@@ -229,11 +231,11 @@ export function RealisticEarth({
               normalMap={textures.normal}
               normalScale={new THREE.Vector2(0.85, 0.85)}
               roughnessMap={textures.specular}
-              roughness={0.65}
-              metalness={0.08}
+              roughness={0.78}
+              metalness={0.04}
               emissiveMap={textures.lights}
               emissive={new THREE.Color("#fbbf24")}
-              emissiveIntensity={0.2}
+              emissiveIntensity={0.08}
             />
           ) : (
             <meshStandardMaterial color="#0b264a" roughness={0.5} metalness={0.1} />

@@ -267,6 +267,7 @@ export function SpacecraftFlight({
 
       // Controls overlay toggle (KeyC)
       if (isKeyC) {
+        e.preventDefault();
         if (document.pointerLockElement) {
           document.exitPointerLock?.();
         }
@@ -276,12 +277,14 @@ export function SpacecraftFlight({
 
       // Sector transition (KeyT: Orbit <-> Lunar Surface)
       if (isKeyT) {
+        e.preventDefault();
         cb.onToggleSector?.();
         return;
       }
 
       // Pause toggle
       if (e.code === "Escape" || isKeyP) {
+        e.preventDefault();
         if (document.pointerLockElement) {
           document.exitPointerLock?.();
         }
@@ -291,12 +294,14 @@ export function SpacecraftFlight({
 
       // Exit Cockpit / Disembark back to Astronaut
       if (isKeyH) {
+        e.preventDefault();
         cb.onExitCockpit?.();
         return;
       }
 
       // Camera view toggle (Cockpit vs Chase)
       if (isKeyV) {
+        e.preventDefault();
         const nextMode = cameraViewModeRef.current === "COCKPIT" ? "CHASE" : "COCKPIT";
         cameraViewModeRef.current = nextMode;
         soundManager.playEquip();
@@ -306,6 +311,7 @@ export function SpacecraftFlight({
 
       // Landing Gear toggle (Down vs Up)
       if (isKeyG) {
+        e.preventDefault();
         landingGearRef.current = !landingGearRef.current;
         soundManager.playGearDeploy();
         cb.onToggleLandingGear?.();

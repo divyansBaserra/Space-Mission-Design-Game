@@ -201,18 +201,28 @@ export function AegisGameManager({ onReturnToHub }: AegisGameManagerProps) {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
 
       const isSpace = e.code === "Space" || e.key === " ";
+      const isEnter = e.code === "Enter" || e.key === "Enter";
       const isKeyE = e.code === "KeyE" || e.key?.toLowerCase() === "e";
       const isKeyW = e.code === "KeyW" || e.key?.toLowerCase() === "w" || e.code === "ArrowUp";
       const isKeyA = e.code === "KeyA" || e.key?.toLowerCase() === "a" || e.code === "ArrowLeft";
       const isKeyS = e.code === "KeyS" || e.key?.toLowerCase() === "s" || e.code === "ArrowDown";
       const isKeyD = e.code === "KeyD" || e.key?.toLowerCase() === "d" || e.code === "ArrowRight";
 
-      if (isSpace && currentAct === "ACT_I_MARS_OBERTH") {
+      if ((isSpace || isEnter) && currentAct === "ACT_I_MARS_OBERTH") {
         e.preventDefault();
-        handleIgniteOberthBurn();
-      } else if (isKeyE && currentAct === "ACT_II_SMART_NAV") {
-        e.preventDefault();
-        handleEngageSmartNav();
+        if (velocityKms >= 11.3) {
+          handleNextAct();
+        } else {
+          handleIgniteOberthBurn();
+        }
+      } else if (currentAct === "ACT_II_SMART_NAV") {
+        if (isKeyE || (isSpace && !isSmartNavLocked)) {
+          e.preventDefault();
+          handleEngageSmartNav();
+        } else if ((isEnter || isSpace) && isSmartNavLocked) {
+          e.preventDefault();
+          handleNextAct();
+        }
       } else if (currentAct === "ACT_III_TERMINAL_RUN" && !impactTriggered) {
         if (isKeyA) {
           e.preventDefault();
@@ -232,7 +242,7 @@ export function AegisGameManager({ onReturnToHub }: AegisGameManagerProps) {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [currentAct, impactTriggered, handleIgniteOberthBurn, handleEngageSmartNav, handleFireRcs]);
+  }, [currentAct, impactTriggered, velocityKms, isSmartNavLocked, handleIgniteOberthBurn, handleEngageSmartNav, handleFireRcs, handleNextAct]);
 
   return (
     <div style={{ position: "relative", width: "100vw", height: "100vh", overflow: "hidden", backgroundColor: "#040608" }}>

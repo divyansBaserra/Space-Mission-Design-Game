@@ -807,28 +807,30 @@ export function StationEnvironment({
         </Suspense>
       )}
 
-      {/* Orbiting Asteroid Belt (Authentic NASA Asteroid 3D Models) */}
-      <group>
-        {[
-          { pos: [-42, 14, -55], scale: 0.007, rot: [0.4, 0.2, 0.1] },
-          { pos: [48, -10, -68], scale: 0.009, rot: [0.1, 0.8, 0.3] },
-          { pos: [-32, -14, -88], scale: 0.006, rot: [0.6, 0.1, 0.5] },
-          { pos: [36, 24, -98], scale: 0.008, rot: [0.2, 0.4, 0.9] },
-          { pos: [-20, 32, -35], scale: 0.005, rot: [0.7, 0.6, 0.2] },
-          { pos: [58, 12, -42], scale: 0.011, rot: [0.3, 0.9, 0.4] },
-          { pos: [15, -22, -125], scale: 0.012, rot: [0.5, 0.3, 0.7] },
-          { pos: [-45, -16, -115], scale: 0.008, rot: [0.8, 0.5, 0.2] },
-        ].map((ast, i) => (
-          <Suspense key={`asteroid-${i}`} fallback={null}>
-            <NASAModelObject
-              url="/assets/models/nasa/asteroid.glb"
-              position={ast.pos as [number, number, number]}
-              rotation={ast.rot as [number, number, number]}
-              scale={[ast.scale, ast.scale, ast.scale]}
-            />
-          </Suspense>
-        ))}
-      </group>
+      {/* Orbiting Asteroid Belt (Authentic NASA Asteroid 3D Models in High Orbit Only) */}
+      {!isNearMoon && (
+        <group>
+          {[
+            { pos: [-42, 14, -55], scale: 0.007, rot: [0.4, 0.2, 0.1] },
+            { pos: [48, -10, -68], scale: 0.009, rot: [0.1, 0.8, 0.3] },
+            { pos: [-32, -14, -88], scale: 0.006, rot: [0.6, 0.1, 0.5] },
+            { pos: [36, 24, -98], scale: 0.008, rot: [0.2, 0.4, 0.9] },
+            { pos: [-20, 32, -35], scale: 0.005, rot: [0.7, 0.6, 0.2] },
+            { pos: [58, 12, -42], scale: 0.011, rot: [0.3, 0.9, 0.4] },
+            { pos: [15, -22, -65], scale: 0.012, rot: [0.5, 0.3, 0.7] },
+            { pos: [-45, -16, -60], scale: 0.008, rot: [0.8, 0.5, 0.2] },
+          ].map((ast, i) => (
+            <Suspense key={`asteroid-${i}`} fallback={null}>
+              <NASAModelObject
+                url="/assets/models/nasa/asteroid.glb"
+                position={ast.pos as [number, number, number]}
+                rotation={ast.rot as [number, number, number]}
+                scale={[ast.scale, ast.scale, ast.scale]}
+              />
+            </Suspense>
+          ))}
+        </group>
+      )}
 
       {/* ==================================================================== */}
       {/* 1. COMMAND DECK, LAB, AIRLOCK & GANTRY (Mounted on Gateway-1 Station) */}
@@ -1605,16 +1607,16 @@ export function StationEnvironment({
             <planeGeometry args={[160, 160, 32, 32]} />
             <meshStandardMaterial
               map={moonTexture ?? undefined}
-              color={moonTexture ? "#374151" : "#2d333b"}
-              roughness={0.96}
-              metalness={0.04}
+              color={moonTexture ? "#1e2329" : "#181a1f"}
+              roughness={0.98}
+              metalness={0.0}
             />
           </mesh>
 
         {/* Illuminated Octagonal Surface Landing Pad (PAD-01) */}
         <mesh position={[0, 0.08, 0]} rotation={[-Math.PI / 2, 0, Math.PI / 8]} receiveShadow>
           <cylinderGeometry args={[9.5, 10.0, 0.15, 8]} />
-          <meshStandardMaterial color="#1e293b" metalness={0.7} roughness={0.4} />
+          <meshStandardMaterial color="#1e293b" metalness={0.5} roughness={0.6} />
         </mesh>
         {/* Landing Pad Inner Touchdown Circle */}
         <mesh position={[0, 0.17, 0]} rotation={[-Math.PI / 2, 0, 0]}>
@@ -1631,7 +1633,7 @@ export function StationEnvironment({
           <meshBasicMaterial color="#eab308" />
         </mesh>
 
-        {/* Perimeter Green/Amber Touchdown Guide Beacons */}
+        {/* Perimeter Green/Amber Touchdown Guide Beacons (Subtle aerospace airfield lights) */}
         {[-8.5, 0, 8.5].map((x) =>
           [-8.5, 8.5].map((z) => (
             <group key={`pad-light-${x}-${z}`} position={[x, 0.35, z]}>
@@ -1643,7 +1645,7 @@ export function StationEnvironment({
                 <sphereGeometry args={[0.12, 12, 12]} />
                 <meshBasicMaterial color="#22c55e" />
               </mesh>
-              <pointLight position={[0, 0.5, 0]} intensity={1.2} distance={8} color="#22c55e" />
+              <pointLight position={[0, 0.5, 0]} intensity={0.35} distance={5} color="#22c55e" />
             </group>
           ))
         )}
@@ -1668,13 +1670,13 @@ export function StationEnvironment({
             <sphereGeometry args={[0.2, 12, 12]} />
             <meshBasicMaterial color="#ef4444" />
           </mesh>
-          <pointLight position={[0, 8.4, 0]} intensity={2.0} distance={25} color="#ef4444" />
+          <pointLight position={[0, 8.4, 0]} intensity={0.8} distance={14} color="#ef4444" />
         </group>
 
         {/* Calibrated Lunar Surface Sun (Authentic solar radiance without bloom whiteout) */}
         <directionalLight
           position={[-35, 50, 25]}
-          intensity={1.15}
+          intensity={0.95}
           color="#fffdf7"
           castShadow
           shadow-mapSize-width={2048}
@@ -1688,16 +1690,16 @@ export function StationEnvironment({
           shadow-camera-bottom={-40}
         />
         {/* Regolith Diffuse Albedo Bounce Light: Charcoal-gray upward scatter from lunar ground */}
-        <directionalLight position={[0, -1, 0]} intensity={0.12} color="#94a3b8" />
+        <directionalLight position={[0, -1, 0]} intensity={0.08} color="#94a3b8" />
         {/* Earthrise Blue Albedo Ambient Vista Light */}
-        <directionalLight position={[60, 95, -160]} intensity={0.15} color="#60a5fa" />
+        <directionalLight position={[60, 95, -160]} intensity={0.10} color="#60a5fa" />
 
-        {/* Perimeter Blast Shields (leaving central access corridor open at X = 0) */}
+        {/* Perimeter Blast Shields (Matte composite with minimal specular reflection) */}
         {[-10, -6, 6, 10].map((x) => (
           <group key={`shield-${x}`} position={[x, 1.1, 14.0]}>
             <mesh receiveShadow castShadow>
               <boxGeometry args={[3.6, 2.0, 0.16]} />
-              <meshStandardMaterial color="#0284c7" metalness={0.7} roughness={0.3} />
+              <meshStandardMaterial color="#1e3a5f" metalness={0.15} roughness={0.85} />
             </mesh>
             {/* Support Strut */}
             <mesh position={[0, -0.5, -0.45]} rotation={[0.4, 0, 0]}>
@@ -1888,12 +1890,12 @@ export function StationEnvironment({
             <meshStandardMaterial color="#334155" metalness={0.7} roughness={0.4} />
           </mesh>
           <NASAModelObject
-            url="/assets/models/nasa/space-shuttle-engine.glb"
+            url="/assets/models/nasa/space-shuttle-a.glb"
             position={[0, 0.4, 0]}
             rotation={[0, Math.PI, 0]}
             scale={[0.18, 0.18, 0.18]}
           />
-          <pointLight position={[0, 1.2, 0]} intensity={1.0} distance={8} color="#38bdf8" />
+          <pointLight position={[0, 1.2, 0]} intensity={0.6} distance={6} color="#38bdf8" />
         </group>
       )}
 
@@ -1902,12 +1904,12 @@ export function StationEnvironment({
         (gameState.controlMode !== "SPACECRAFT_COCKPIT" && gameState.spacecraft.isLanded)) && (
         <group position={[0, -18.0 + 1.8, -110.0]}>
           <NASAModelObject
-            url="/assets/models/nasa/space-shuttle-engine.glb"
+            url="/assets/models/nasa/space-shuttle-a.glb"
             position={[0, 0, 0]}
             rotation={[0, Math.PI, 0]}
             scale={[0.18, 0.18, 0.18]}
           />
-          <pointLight position={[0, 1.2, 0]} intensity={1.2} distance={10} color="#38bdf8" />
+          <pointLight position={[0, 1.2, 0]} intensity={0.6} distance={8} color="#38bdf8" />
         </group>
       )}
 
@@ -1922,7 +1924,7 @@ export function StationEnvironment({
           ]}
         >
           <NASAModelObject
-            url="/assets/models/nasa/space-shuttle-engine.glb"
+            url="/assets/models/nasa/space-shuttle-a.glb"
             position={[0, -0.3, 0]}
             rotation={[0, Math.PI, 0]}
             scale={[0.18, 0.18, 0.18]}

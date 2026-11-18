@@ -92,9 +92,9 @@ export function PostProcessingEffects({ gameState }: PostProcessingProps) {
     const isBloomActive = gameState.settings?.graphicsQuality === "HIGH";
     const bloomPass = new UnrealBloomPass(
       new THREE.Vector2(size.width, size.height),
-      isBloomActive ? 0.08 : 0.0, // subtle aerospace glare, zero when disabled
-      0.35, // radius
-      2.5   // high threshold: strictly isolates high-energy emissive thrusters & lasers; prevents terrain/body whiteout
+      isBloomActive ? 0.04 : 0.0, // subtle aerospace glare, zero when disabled
+      0.3,  // radius
+      2.8   // high threshold: strictly isolates high-energy emissive thrusters & lasers; prevents terrain/body whiteout
     );
     comp.addPass(bloomPass);
 
