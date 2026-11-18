@@ -7,6 +7,7 @@ import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer
 import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
 import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass.js";
 import { ShaderPass } from "three/examples/jsm/postprocessing/ShaderPass.js";
+import { OutputPass } from "three/examples/jsm/postprocessing/OutputPass.js";
 import { GameState } from "./types";
 
 interface PostProcessingProps {
@@ -90,9 +91,9 @@ export function PostProcessingEffects({ gameState }: PostProcessingProps) {
     // 2. Photonic Unreal Bloom Pass (Isolated to extreme emissive thrusters and lasers; zero diffuse blowout)
     const bloomPass = new UnrealBloomPass(
       new THREE.Vector2(size.width, size.height),
-      0.38, // strength (calibrated for subtle aerospace lens glow without washing out geometry)
-      0.4,  // radius
-      1.25  // threshold (isolates intense emissive thrusters and solar glare; prevents whiteout on lunar terrain)
+      0.18, // subtle aerospace glare
+      0.35, // radius
+      2.2   // high threshold: strictly isolates high-energy emissive thrusters & lasers; prevents terrain/body whiteout
     );
     comp.addPass(bloomPass);
 
@@ -100,6 +101,11 @@ export function PostProcessingEffects({ gameState }: PostProcessingProps) {
     const distortionPass = new ShaderPass(SpaceDistortionShader);
     shaderPassRef.current = distortionPass;
     comp.addPass(distortionPass);
+
+    // 4. Output Tone Mapping & sRGB Color Space Pass (Standard in Three.js r150+)
+    // Applies ACESFilmicToneMapping and sRGB transfer function, eliminating linear HDR whiteout clipping
+    const outputPass = new OutputPass();
+    comp.addPass(outputPass);
 
     return comp;
   }, [gl, scene, camera, isHighGfx]);

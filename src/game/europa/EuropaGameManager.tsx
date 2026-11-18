@@ -171,7 +171,15 @@ export default function EuropaGameManager({ onReturnToHub }: EuropaGameManagerPr
   // Global Keyboard Controls
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.code === "Space") {
+      const isSpace = e.code === "Space" || e.key === " ";
+      const isKeyW = e.code === "KeyW" || e.key?.toLowerCase() === "w" || e.code === "ArrowUp";
+      const isKeyS = e.code === "KeyS" || e.key?.toLowerCase() === "s" || e.code === "ArrowDown";
+      const isKeyA = e.code === "KeyA" || e.key?.toLowerCase() === "a" || e.code === "ArrowLeft";
+      const isKeyD = e.code === "KeyD" || e.key?.toLowerCase() === "d" || e.code === "ArrowRight";
+      const isKeyQ = e.code === "KeyQ" || e.key?.toLowerCase() === "q";
+      const isKeyE = e.code === "KeyE" || e.key?.toLowerCase() === "e";
+
+      if (isSpace) {
         e.preventDefault();
         if (act === "ACT_1_SURFACE_DESCENT" && !isLanded) {
           handleIgniteLanding();
@@ -180,33 +188,33 @@ export default function EuropaGameManager({ onReturnToHub }: EuropaGameManagerPr
         } else if (act === "ACT_4_SAMPLE_DISCOVERY" && !sampleCollected) {
           handleExtractSample();
         }
-      } else if (e.code === "KeyW") {
+      } else if (isKeyW) {
         if (act === "ACT_2_CRYO_MELT") {
           handleThrottleReactor(10);
         } else if (act === "ACT_3_ABYSSAL_SUB") {
           handleMoveSub(0, 0, -2.0);
         }
-      } else if (e.code === "KeyS") {
+      } else if (isKeyS) {
         if (act === "ACT_3_ABYSSAL_SUB") {
           handleMoveSub(0, 0, 2.0);
         }
-      } else if (e.code === "KeyA") {
+      } else if (isKeyA) {
         if (act === "ACT_2_CRYO_MELT") {
           handleEvadeMethane(-1);
         } else if (act === "ACT_3_ABYSSAL_SUB") {
           handleMoveSub(-1.5, 0, 0);
         }
-      } else if (e.code === "KeyD") {
+      } else if (isKeyD) {
         if (act === "ACT_2_CRYO_MELT") {
           handleEvadeMethane(1);
         } else if (act === "ACT_3_ABYSSAL_SUB") {
           handleMoveSub(1.5, 0, 0);
         }
-      } else if (e.code === "KeyQ") {
+      } else if (isKeyQ) {
         if (act === "ACT_3_ABYSSAL_SUB") {
           handleMoveSub(0, -1.0, 0);
         }
-      } else if (e.code === "KeyE") {
+      } else if (isKeyE) {
         if (act === "ACT_3_ABYSSAL_SUB") {
           handleMoveSub(0, 1.0, 0);
         }

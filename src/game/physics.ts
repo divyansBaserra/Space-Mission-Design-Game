@@ -18,9 +18,18 @@ export interface PlayerPhysicsState {
 
 export class StationPhysics {
   public colliders: BoxCollider[] = [];
+  private isHangarMode: boolean = false;
 
-  constructor() {
+  constructor(isHangarMode: boolean = false) {
+    this.isHangarMode = isHangarMode;
     this.buildStaticColliders();
+  }
+
+  public setHangarMode(isHangar: boolean) {
+    if (this.isHangarMode !== isHangar) {
+      this.isHangarMode = isHangar;
+      this.buildStaticColliders();
+    }
   }
 
   public buildStaticColliders() {
@@ -65,23 +74,25 @@ export class StationPhysics {
     // East Wall
     this.addBox(4.4, 0.0, -5.0, 4.8, 3.2, 6.0, "ws_east_wall");
 
-    // Workshop Tables
-    // Left Workbench (holds Toolkit)
-    this.addBox(-4.5, 0.0, -1.2, -2.9, 1.2, 2.2, "ws_table_left");
-    // Right Workbench (holds Solar Wing & Antenna)
-    this.addBox(2.9, 0.0, -1.2, 4.5, 1.2, 2.2, "ws_table_right");
-    // Spacesuit Display Rack / Mannequin
-    this.addBox(-4.2, 0.0, 4.2, -2.9, 2.4, 5.4, "ws_spacesuit_rack");
-
-    // HANGAR SANDBOX: Central Magnetic Levitation Assembly Rig
-    this.addBox(-1.1, 0.0, -0.4, 1.1, 0.7, 1.4, "hangar_rig_pedestal");
-    // Hangar Workstation Consoles
-    this.addBox(-4.2, 0.0, -2.4, -3.2, 1.2, -1.2, "hangar_console_chassis");
-    this.addBox(3.2, 0.0, -2.4, 4.2, 1.2, -1.2, "hangar_console_solar");
-    this.addBox(3.2, 0.0, 1.2, 4.2, 1.2, 2.4, "hangar_console_propulsion");
-    this.addBox(-4.2, 0.0, 1.2, -3.2, 1.2, 2.4, "hangar_console_payload");
-    this.addBox(-4.2, 0.0, 3.0, -3.2, 1.2, 4.2, "hangar_console_telecom");
-    this.addBox(-0.6, 0.0, 2.0, 0.6, 1.1, 2.8, "hangar_console_static_fire");
+    if (this.isHangarMode) {
+      // HANGAR SANDBOX: Central Magnetic Levitation Assembly Rig
+      this.addBox(-1.1, 0.0, -0.4, 1.1, 0.7, 1.4, "hangar_rig_pedestal");
+      // Hangar Workstation Consoles
+      this.addBox(-4.2, 0.0, -2.4, -3.2, 1.2, -1.2, "hangar_console_chassis");
+      this.addBox(3.2, 0.0, -2.4, 4.2, 1.2, -1.2, "hangar_console_solar");
+      this.addBox(3.2, 0.0, 1.2, 4.2, 1.2, 2.4, "hangar_console_propulsion");
+      this.addBox(-4.2, 0.0, 1.2, -3.2, 1.2, 2.4, "hangar_console_payload");
+      this.addBox(-4.2, 0.0, 3.0, -3.2, 1.2, 4.2, "hangar_console_telecom");
+      this.addBox(-0.6, 0.0, 2.0, 0.6, 1.1, 2.8, "hangar_console_static_fire");
+    } else {
+      // ORBITAL REPAIR: Left & Right Workbenches
+      // Left Workbench (holds Toolkit)
+      this.addBox(-4.5, 0.0, -1.2, -3.1, 1.2, 2.2, "ws_table_left");
+      // Right Workbench (holds Solar Wing & Antenna)
+      this.addBox(3.1, 0.0, -1.2, 4.5, 1.2, 2.2, "ws_table_right");
+      // Spacesuit Display Rack / Mannequin
+      this.addBox(-4.2, 0.0, 4.2, -2.9, 2.4, 5.4, "ws_spacesuit_rack");
+    }
 
     // Partition Wall between Workshop and Airlock (Z = -5.0, door gap [-1.1, 1.1])
     this.addBox(-4.5, 0.0, -5.2, -1.1, 3.2, -4.8, "partition_ws_airlock_left");

@@ -560,6 +560,50 @@ function HangarSandboxBay({ gameState }: { gameState: GameState }) {
   );
 }
 
+// Holographic 3D Floating Objective Beacon (Visual Waypoint Indicator)
+function ObjectiveBeacon({
+  position,
+  color = "#38bdf8",
+}: {
+  position: [number, number, number];
+  color?: string;
+}) {
+  const beaconGroupRef = useRef<THREE.Group>(null);
+
+  useFrame(({ clock }) => {
+    if (!beaconGroupRef.current) return;
+    const t = clock.getElapsedTime();
+    beaconGroupRef.current.position.y = position[1] + Math.sin(t * 3.5) * 0.14;
+    beaconGroupRef.current.rotation.y = t * 1.8;
+  });
+
+  return (
+    <group ref={beaconGroupRef} position={position}>
+      {/* Outer Rotating Diamond Target Ring */}
+      <mesh rotation={[0, 0, Math.PI / 4]}>
+        <ringGeometry args={[0.36, 0.44, 4]} />
+        <meshBasicMaterial color={color} side={THREE.DoubleSide} transparent opacity={0.85} />
+      </mesh>
+      {/* Inner Pulsing Holographic Core */}
+      <mesh>
+        <octahedronGeometry args={[0.16, 0]} />
+        <meshBasicMaterial color="#ffffff" wireframe />
+      </mesh>
+      {/* Downward Pointer Cone */}
+      <mesh position={[0, -0.38, 0]} rotation={[Math.PI, 0, 0]}>
+        <coneGeometry args={[0.12, 0.28, 8]} />
+        <meshBasicMaterial color={color} />
+      </mesh>
+      {/* Vertical Holographic Light Pillar */}
+      <mesh position={[0, 1.8, 0]}>
+        <cylinderGeometry args={[0.02, 0.02, 3.6, 8]} />
+        <meshBasicMaterial color={color} transparent opacity={0.3} />
+      </mesh>
+      <pointLight position={[0, 0, 0]} intensity={1.4} distance={6} color={color} />
+    </group>
+  );
+}
+
 export function StationEnvironment({
   gameState,
 }: StationEnvironmentProps) {
@@ -571,6 +615,56 @@ export function StationEnvironment({
   const outerDoorRightRef = useRef<THREE.Mesh>(null);
   const satBeaconRef = useRef<THREE.PointLight>(null);
   const holoSatRef = useRef<THREE.Group>(null);
+
+  // Dynamic In-World 3D Objective Target Beacon calculation
+  const activeObjectiveBeacon = useMemo(() => {
+    if (gameState.controlMode === "SURFACE_EXPLORATION") {
+      if (!gameState.lunarSampleCollected) {
+        return { pos: [8.5, -17.2, -98.0] as [number, number, number], color: "#38bdf8" };
+      }
+      if (!gameState.alsepDeployed) {
+        return { pos: [5.0, -17.2, -104.0] as [number, number, number], color: "#eab308" };
+      }
+      return { pos: [0, -16.5, -108.0] as [number, number, number], color: "#22c55e" };
+    }
+
+    if (gameState.controlMode === "SPACECRAFT_COCKPIT") {
+      if (gameState.spacecraft.position.z < -45) {
+        return { pos: [0, -17.5, -110.0] as [number, number, number], color: "#22c55e" };
+      }
+      return { pos: [0, 0, -28.0] as [number, number, number], color: "#38bdf8" };
+    }
+
+    // Astronaut Gateway-1 mode
+    if (gameState.step === "BRIEFING") {
+      return { pos: [0, 1.1, 11.0] as [number, number, number], color: "#38bdf8" };
+    }
+    if (!gameState.inventory.includes("TOOLKIT")) {
+      return { pos: [-3.4, 1.2, 0.5] as [number, number, number], color: "#facc15" };
+    }
+    if (!gameState.inventory.includes("SOLAR_WING")) {
+      return { pos: [3.4, 1.2, -0.2] as [number, number, number], color: "#38bdf8" };
+    }
+    if (!gameState.inventory.includes("SBAND_ANTENNA")) {
+      return { pos: [3.4, 1.2, 1.2] as [number, number, number], color: "#38bdf8" };
+    }
+    if (gameState.airlockStatus === "PRESSURIZED") {
+      return { pos: [-1.85, 1.3, -8.0] as [number, number, number], color: "#ef4444" };
+    }
+    if (!gameState.satellite.diagnosticRun) {
+      return { pos: [0, 1.8, -22.0] as [number, number, number], color: "#f59e0b" };
+    }
+    return { pos: [0, 1.4, -28.0] as [number, number, number], color: "#22c55e" };
+  }, [
+    gameState.controlMode,
+    gameState.step,
+    gameState.inventory,
+    gameState.airlockStatus,
+    gameState.satellite.diagnosticRun,
+    gameState.lunarSampleCollected,
+    gameState.alsepDeployed,
+    gameState.spacecraft.position.z,
+  ]);
 
   // Lunar crater ground texture
   const moonTexture = useMemo(() => {
@@ -659,10 +753,10 @@ export function StationEnvironment({
       <SpaceDust count={280} />
 
       {/* Deep Space Sunlight: Active in orbit; isolated from lunar surface to prevent double-exposure */}
-      {!isLandedOnMoon && (
+      {!isNearMoon && (
         <directionalLight
           position={[45, 28, 20]}
-          intensity={2.2}
+          intensity={1.6}
           color="#fffaf0"
           castShadow
           shadow-mapSize-width={2048}
@@ -680,15 +774,15 @@ export function StationEnvironment({
       <ambientLight intensity={0.035} />
 
       {/* Planetary Albedo Bounce Light: Earth blue scatter illuminating underside of spacecraft & station */}
-      {!isLandedOnMoon && (
+      {!isNearMoon && (
         <directionalLight position={[0, -10, 5]} intensity={0.38} color="#38bdf8" />
       )}
 
       {/* Photorealistic NASA Blue Marble Earth in true low Earth orbit */}
-      {!isLandedOnMoon ? (
+      {!isNearMoon ? (
         <RealisticEarth
-          radius={480}
-          position={[0, -520, 20]}
+          radius={340}
+          position={[0, -420, 20]}
           rotationSpeed={0.008}
         />
       ) : (
@@ -701,7 +795,7 @@ export function StationEnvironment({
       )}
 
       {/* Real NASA International Space Station Superstructure (Mounted along Station Truss) */}
-      {!isLandedOnMoon && (
+      {!isNearMoon && (
         <Suspense fallback={null}>
           <NASAModelObject
             url="/assets/models/nasa/iss-station.glb"
@@ -976,129 +1070,118 @@ export function StationEnvironment({
         <meshStandardMaterial color="#28303d" roughness={0.8} />
       </mesh>
 
-      {/* LEFT WORKBENCH (Tool Assembly Rack - holds Toolkit) */}
-      <group position={[-3.7, 0, 0.5]}>
-        {/* Table structure */}
-        <mesh position={[0, 0.45, 0]} castShadow receiveShadow>
-          <boxGeometry args={[1.1, 0.9, 2.8]} />
-          <meshStandardMaterial color="#1a202c" roughness={0.6} metalness={0.4} />
-        </mesh>
-        <mesh position={[0, 0.91, 0]}>
-          <boxGeometry args={[1.2, 0.04, 2.9]} />
-          <meshStandardMaterial color="#334155" roughness={0.4} metalness={0.6} />
-        </mesh>
+      {/* LEFT & RIGHT WORKBENCHES (Strictly in Orbital Repair / Normal Station Mode) */}
+      {gameState.step !== "HANGAR_ASSEMBLY" ? (
+        <>
+          {/* LEFT WORKBENCH (Tool Assembly Rack - holds Toolkit) */}
+          <group position={[-3.7, 0, 0.5]}>
+            {/* Table structure */}
+            <mesh position={[0, 0.45, 0]} castShadow receiveShadow>
+              <boxGeometry args={[1.1, 0.9, 2.8]} />
+              <meshStandardMaterial color="#1a202c" roughness={0.6} metalness={0.4} />
+            </mesh>
+            <mesh position={[0, 0.91, 0]}>
+              <boxGeometry args={[1.2, 0.04, 2.9]} />
+              <meshStandardMaterial color="#334155" roughness={0.4} metalness={0.6} />
+            </mesh>
 
-        {/* Tool pegboard on wall */}
-        <mesh position={[-0.78, 1.6, 0]}>
-          <boxGeometry args={[0.04, 1.2, 2.6]} />
-          <meshStandardMaterial color="#0f172a" roughness={0.8} />
-        </mesh>
+            {/* Tool pegboard on wall */}
+            <mesh position={[-0.78, 1.6, 0]}>
+              <boxGeometry args={[0.04, 1.2, 2.6]} />
+              <meshStandardMaterial color="#0f172a" roughness={0.8} />
+            </mesh>
 
-        {/* TOOLKIT 3D ITEM (if not collected) */}
-        {!hasItem("TOOLKIT") && (
-          <group position={[0, 0.96, 0]}>
-            {/* Heavy-duty aerospace tool case */}
-            <mesh castShadow>
-              <boxGeometry args={[0.38, 0.12, 0.55]} />
-              <meshStandardMaterial color="#eab308" roughness={0.35} metalness={0.3} />
-            </mesh>
-            {/* Metallic latches & handle */}
-            <mesh position={[0.2, 0.02, 0]}>
-              <boxGeometry args={[0.03, 0.06, 0.25]} />
-              <meshStandardMaterial color="#94a3b8" metalness={0.85} roughness={0.2} />
-            </mesh>
-            {/* Torque driver on top */}
-            <mesh position={[0, 0.08, 0]} rotation={[0, 0.4, 0]}>
-              <cylinderGeometry args={[0.022, 0.022, 0.28, 12]} />
-              <meshStandardMaterial color="#38bdf8" metalness={0.7} roughness={0.3} />
-            </mesh>
-            {/* Interactive hover glow */}
-            <pointLight position={[0, 0.3, 0]} intensity={0.6} distance={1.8} color="#facc15" />
+            {/* TOOLKIT 3D ITEM (if not collected) */}
+            {!hasItem("TOOLKIT") && (
+              <group position={[0, 0.96, 0]}>
+                {/* Heavy-duty aerospace tool case */}
+                <mesh castShadow>
+                  <boxGeometry args={[0.38, 0.12, 0.55]} />
+                  <meshStandardMaterial color="#eab308" roughness={0.35} metalness={0.3} />
+                </mesh>
+                {/* Metallic latches & handle */}
+                <mesh position={[0.2, 0.02, 0]}>
+                  <boxGeometry args={[0.03, 0.06, 0.25]} />
+                  <meshStandardMaterial color="#94a3b8" metalness={0.85} roughness={0.2} />
+                </mesh>
+                {/* Torque driver on top */}
+                <mesh position={[0, 0.08, 0]} rotation={[0, 0.4, 0]}>
+                  <cylinderGeometry args={[0.022, 0.022, 0.28, 12]} />
+                  <meshStandardMaterial color="#38bdf8" metalness={0.7} roughness={0.3} />
+                </mesh>
+                {/* Interactive hover glow */}
+                <pointLight position={[0, 0.3, 0]} intensity={0.6} distance={1.8} color="#facc15" />
+              </group>
+            )}
           </group>
-        )}
-      </group>
 
-      {/* RIGHT WORKBENCH (Component Assembly - holds Solar Wing & Antenna) */}
-      <group position={[3.7, 0, 0.5]}>
-        {/* Table structure */}
-        <mesh position={[0, 0.45, 0]} castShadow receiveShadow>
-          <boxGeometry args={[1.1, 0.9, 2.8]} />
-          <meshStandardMaterial color="#1a202c" roughness={0.6} metalness={0.4} />
-        </mesh>
-        <mesh position={[0, 0.91, 0]}>
-          <boxGeometry args={[1.2, 0.04, 2.9]} />
-          <meshStandardMaterial color="#334155" roughness={0.4} metalness={0.6} />
-        </mesh>
+          {/* RIGHT WORKBENCH (Component Assembly - holds Solar Wing & Antenna) */}
+          <group position={[3.7, 0, 0.5]}>
+            {/* Table structure */}
+            <mesh position={[0, 0.45, 0]} castShadow receiveShadow>
+              <boxGeometry args={[1.1, 0.9, 2.8]} />
+              <meshStandardMaterial color="#1a202c" roughness={0.6} metalness={0.4} />
+            </mesh>
+            <mesh position={[0, 0.91, 0]}>
+              <boxGeometry args={[1.2, 0.04, 2.9]} />
+              <meshStandardMaterial color="#334155" roughness={0.4} metalness={0.6} />
+            </mesh>
 
-        {/* Cleanroom laminar flow hood / test screen */}
-        <mesh position={[0.55, 1.5, 0]}>
-          <boxGeometry args={[0.04, 0.9, 2.4]} />
-          <meshBasicMaterial color="#0369a1" />
-        </mesh>
+            {/* Cleanroom laminar flow hood / test screen */}
+            <mesh position={[0.55, 1.5, 0]}>
+              <boxGeometry args={[0.04, 0.9, 2.4]} />
+              <meshBasicMaterial color="#0369a1" />
+            </mesh>
 
-        {/* SOLAR WING 3D ITEM (if not collected) */}
-        {!hasItem("SOLAR_WING") && (
-          <group position={[0, 0.95, -0.65]}>
-            {/* Folded GaAs solar panel assembly */}
-            <mesh castShadow>
-              <boxGeometry args={[0.26, 0.05, 0.65]} />
-              <meshStandardMaterial color="#1e293b" roughness={0.4} metalness={0.5} />
-            </mesh>
-            {/* Triple junction deep-blue photovoltaic cell grid */}
-            <mesh position={[0, 0.03, 0]}>
-              <boxGeometry args={[0.24, 0.01, 0.62]} />
-              <meshStandardMaterial color="#0284c7" roughness={0.15} metalness={0.6} />
-            </mesh>
-            {/* Gold Kapton backing & titanium hinges */}
-            <mesh position={[-0.14, 0, 0]}>
-              <cylinderGeometry args={[0.015, 0.015, 0.65, 8]} />
-              <meshStandardMaterial color="#d97706" metalness={0.9} roughness={0.25} />
-            </mesh>
-            <pointLight position={[0, 0.25, 0]} intensity={0.6} distance={1.8} color="#38bdf8" />
+            {/* SOLAR WING 3D ITEM (if not collected) */}
+            {!hasItem("SOLAR_WING") && (
+              <group position={[0, 0.95, -0.65]}>
+                {/* Folded GaAs solar panel assembly */}
+                <mesh castShadow>
+                  <boxGeometry args={[0.26, 0.05, 0.65]} />
+                  <meshStandardMaterial color="#1e293b" roughness={0.4} metalness={0.5} />
+                </mesh>
+                {/* Triple junction deep-blue photovoltaic cell grid */}
+                <mesh position={[0, 0.03, 0]}>
+                  <boxGeometry args={[0.24, 0.01, 0.62]} />
+                  <meshStandardMaterial color="#0284c7" roughness={0.15} metalness={0.6} />
+                </mesh>
+                {/* Gold Kapton backing & titanium hinges */}
+                <mesh position={[-0.14, 0, 0]}>
+                  <cylinderGeometry args={[0.015, 0.015, 0.65, 8]} />
+                  <meshStandardMaterial color="#d97706" metalness={0.9} roughness={0.25} />
+                </mesh>
+                <pointLight position={[0, 0.25, 0]} intensity={0.6} distance={1.8} color="#38bdf8" />
+              </group>
+            )}
+
+            {/* S-BAND ANTENNA 3D ITEM (if not collected) */}
+            {!hasItem("SBAND_ANTENNA") && (
+              <group position={[0, 0.95, 0.65]}>
+                {/* Square gold patch antenna with coaxial connector */}
+                <mesh castShadow>
+                  <boxGeometry args={[0.22, 0.03, 0.22]} />
+                  <meshStandardMaterial color="#eab308" metalness={0.88} roughness={0.18} />
+                </mesh>
+                {/* RF ground plane backing */}
+                <mesh position={[0, -0.02, 0]}>
+                  <boxGeometry args={[0.26, 0.02, 0.26]} />
+                  <meshStandardMaterial color="#64748b" metalness={0.7} roughness={0.4} />
+                </mesh>
+                {/* SMA coaxial connector */}
+                <mesh position={[0, -0.05, 0]}>
+                  <cylinderGeometry args={[0.02, 0.02, 0.06, 12]} />
+                  <meshStandardMaterial color="#94a3b8" metalness={0.9} roughness={0.2} />
+                </mesh>
+                <pointLight position={[0, 0.25, 0]} intensity={0.6} distance={1.8} color="#f59e0b" />
+              </group>
+            )}
           </group>
-        )}
-
-        {/* S-BAND ANTENNA 3D ITEM (if not collected) */}
-        {!hasItem("SBAND_ANTENNA") && (
-          <group position={[0, 0.95, 0.65]}>
-            {/* Square gold patch antenna with coaxial connector */}
-            <mesh castShadow>
-              <boxGeometry args={[0.22, 0.03, 0.22]} />
-              <meshStandardMaterial color="#eab308" metalness={0.88} roughness={0.18} />
-            </mesh>
-            {/* RF ground plane backing */}
-            <mesh position={[0, -0.02, 0]}>
-              <boxGeometry args={[0.26, 0.02, 0.26]} />
-              <meshStandardMaterial color="#64748b" metalness={0.7} roughness={0.4} />
-            </mesh>
-            {/* SMA coaxial connector */}
-            <mesh position={[0, -0.05, 0]}>
-              <cylinderGeometry args={[0.02, 0.02, 0.06, 12]} />
-              <meshStandardMaterial color="#94a3b8" metalness={0.9} roughness={0.2} />
-            </mesh>
-            <pointLight position={[0, 0.25, 0]} intensity={0.6} distance={1.8} color="#f59e0b" />
-          </group>
-        )}
-      </group>
-
-      {/* Workshop Spacesuit Rack (Real NASA EMU Spacesuit) */}
-      <group position={[4.1, 0.95, -3.5]}>
-        <mesh position={[0, -0.9, 0]}>
-          <boxGeometry args={[0.9, 0.1, 0.9]} />
-          <meshStandardMaterial color="#1e293b" roughness={0.6} />
-        </mesh>
-        <Suspense fallback={null}>
-          <NASAModelObject
-            url="/assets/models/nasa/astronaut-engine.glb"
-            position={[0, 0, 0]}
-            rotation={[0, -Math.PI / 2, 0]}
-            scale={[0.024, 0.024, 0.024]}
-          />
-        </Suspense>
-      </group>
-
-      {/* 3D Modular Spacecraft Hangar & Construction Rig */}
-      <HangarSandboxBay gameState={gameState} />
+        </>
+      ) : (
+        /* 3D Modular Spacecraft Hangar & Construction Rig (Strictly in Hangar Sandbox) */
+        <HangarSandboxBay gameState={gameState} />
+      )}
 
       {/* Partition Wall to Airlock (Z = -5, Doorway [-1.1, 1.1]) */}
       <mesh position={[-2.85, 1.5, -5]}>
@@ -1521,9 +1604,9 @@ export function StationEnvironment({
             <planeGeometry args={[160, 160, 32, 32]} />
             <meshStandardMaterial
               map={moonTexture ?? undefined}
-              color={moonTexture ? "#555c68" : "#47515e"}
-              roughness={0.94}
-              metalness={0.06}
+              color={moonTexture ? "#374151" : "#2d333b"}
+              roughness={0.96}
+              metalness={0.04}
             />
           </mesh>
 
@@ -1590,7 +1673,7 @@ export function StationEnvironment({
         {/* Calibrated Lunar Surface Sun (Authentic solar radiance without bloom whiteout) */}
         <directionalLight
           position={[-35, 50, 25]}
-          intensity={1.5}
+          intensity={1.15}
           color="#fffdf7"
           castShadow
           shadow-mapSize-width={2048}
@@ -1604,13 +1687,12 @@ export function StationEnvironment({
           shadow-camera-bottom={-40}
         />
         {/* Regolith Diffuse Albedo Bounce Light: Charcoal-gray upward scatter from lunar ground */}
-        <directionalLight position={[0, -1, 0]} intensity={0.22} color="#94a3b8" />
+        <directionalLight position={[0, -1, 0]} intensity={0.12} color="#94a3b8" />
         {/* Earthrise Blue Albedo Ambient Vista Light */}
-        <directionalLight position={[60, 95, -160]} intensity={0.20} color="#60a5fa" />
-        <pointLight position={[0, 14.0, 0]} intensity={0.5} distance={65} color="#e0f2fe" />
+        <directionalLight position={[60, 95, -160]} intensity={0.15} color="#60a5fa" />
 
-        {/* Perimeter Blast Shields (Matching Starfield Lunar Base Reference) */}
-        {[-8, -4, 0, 4, 8].map((x) => (
+        {/* Perimeter Blast Shields (leaving central access corridor open at X = 0) */}
+        {[-10, -6, 6, 10].map((x) => (
           <group key={`shield-${x}`} position={[x, 1.1, 14.0]}>
             <mesh receiveShadow castShadow>
               <boxGeometry args={[3.6, 2.0, 0.16]} />
@@ -1624,16 +1706,16 @@ export function StationEnvironment({
           </group>
         ))}
 
-        {/* Cryogenic Storage Tanks & Habitat Support (Matching Reference 6) */}
+        {/* Cryogenic Storage Tanks & Habitat Support (Matte finish preventing blown specular whiteout) */}
         {[8.5, 11.8].map((x) => (
           <group key={`tank-${x}`} position={[x, 2.8, 16.0]}>
             <mesh receiveShadow castShadow>
               <cylinderGeometry args={[1.1, 1.1, 5.2, 24]} />
-              <meshStandardMaterial color="#e2e8f0" metalness={0.7} roughness={0.25} />
+              <meshStandardMaterial color="#475569" metalness={0.4} roughness={0.65} />
             </mesh>
             <mesh position={[0, 2.6, 0]}>
               <sphereGeometry args={[1.1, 24, 16]} />
-              <meshStandardMaterial color="#cbd5e1" metalness={0.7} roughness={0.25} />
+              <meshStandardMaterial color="#334155" metalness={0.4} roughness={0.65} />
             </mesh>
           </group>
         ))}
@@ -1654,6 +1736,21 @@ export function StationEnvironment({
               <sphereGeometry args={[0.04, 8, 8]} />
               <meshBasicMaterial color="#38bdf8" />
             </mesh>
+          </group>
+        )}
+
+        {/* Designated Apollo ALSEP Science Deployment Site Marker */}
+        {!gameState.alsepDeployed && (
+          <group position={[5.0, 0.08, 6.0]}>
+            <mesh rotation={[-Math.PI / 2, 0, 0]}>
+              <ringGeometry args={[1.6, 1.9, 32]} />
+              <meshBasicMaterial color="#eab308" transparent opacity={0.7} />
+            </mesh>
+            <mesh position={[0, 0.6, 0]}>
+              <boxGeometry args={[0.3, 0.3, 0.3]} />
+              <meshBasicMaterial color="#eab308" wireframe />
+            </mesh>
+            <pointLight position={[0, 0.8, 0]} intensity={1.2} distance={6} color="#eab308" />
           </group>
         )}
 
@@ -1869,6 +1966,14 @@ export function StationEnvironment({
             </group>
           )}
         </group>
+      )}
+
+      {/* Holographic 3D In-World Mission Objective Target Waypoint */}
+      {activeObjectiveBeacon && (
+        <ObjectiveBeacon
+          position={activeObjectiveBeacon.pos}
+          color={activeObjectiveBeacon.color}
+        />
       )}
     </group>
   );

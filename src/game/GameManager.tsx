@@ -91,7 +91,8 @@ interface GameManagerProps {
 }
 
 export function GameManager({ onReturnToHub, gameMode = "ORBITAL_REPAIR", onLaunchAegis, onLaunchEuropa }: GameManagerProps) {
-  const physics = useMemo(() => new StationPhysics(), []);
+  const isInitialHangar = gameMode === "HANGAR_SANDBOX";
+  const physics = useMemo(() => new StationPhysics(isInitialHangar), [isInitialHangar]);
 
   const [gameState, setGameState] = useState<GameState>(() => {
     if (gameMode === "FLIGHT_SIM") {
@@ -237,6 +238,11 @@ export function GameManager({ onReturnToHub, gameMode = "ORBITAL_REPAIR", onLaun
     return () => clearInterval(interval);
   }, [gameState.step, gameState.paused]);
 
+  // Synchronize physics collider partition between Orbital Repair and Hangar Sandbox
+  useEffect(() => {
+    physics.setHangarMode(gameState.step === "HANGAR_ASSEMBLY");
+  }, [physics, gameState.step]);
+
   // Restart Mission handler
   const handleRestartMission = useCallback(() => {
     setGameState((prev) => ({
@@ -326,6 +332,9 @@ export function GameManager({ onReturnToHub, gameMode = "ORBITAL_REPAIR", onLaun
 
   // Controls overlay toggle (Hotkey [C] or HUD button)
   const handleToggleControlsOverlay = useCallback(() => {
+    if (typeof document !== "undefined" && document.pointerLockElement) {
+      document.exitPointerLock?.();
+    }
     setGameState((prev) => ({
       ...prev,
       showControlsOverlay: !prev.showControlsOverlay,
@@ -503,6 +512,9 @@ export function GameManager({ onReturnToHub, gameMode = "ORBITAL_REPAIR", onLaun
       setGameState((prev) => {
         // 1. Briefing Table
         if (targetId === "briefing_table") {
+          if (typeof document !== "undefined" && document.pointerLockElement) {
+            document.exitPointerLock?.();
+          }
           setShowBriefingModal(true);
           soundManager.playPickup();
           return prev;
@@ -516,6 +528,10 @@ export function GameManager({ onReturnToHub, gameMode = "ORBITAL_REPAIR", onLaun
             nextInv.includes("TOOLKIT") &&
             nextInv.includes("SOLAR_WING") &&
             nextInv.includes("SBAND_ANTENNA");
+
+          if (allCollected) {
+            soundManager.speakRadioComm("All EVA equipment secured. Proceed to the airlock chamber to depressurize.", "HOUSTON");
+          }
 
           return {
             ...prev,
@@ -537,6 +553,10 @@ export function GameManager({ onReturnToHub, gameMode = "ORBITAL_REPAIR", onLaun
             nextInv.includes("SOLAR_WING") &&
             nextInv.includes("SBAND_ANTENNA");
 
+          if (allCollected) {
+            soundManager.speakRadioComm("All EVA equipment secured. Proceed to the airlock chamber to depressurize.", "HOUSTON");
+          }
+
           return {
             ...prev,
             inventory: nextInv,
@@ -556,6 +576,10 @@ export function GameManager({ onReturnToHub, gameMode = "ORBITAL_REPAIR", onLaun
             nextInv.includes("TOOLKIT") &&
             nextInv.includes("SOLAR_WING") &&
             nextInv.includes("SBAND_ANTENNA");
+
+          if (allCollected) {
+            soundManager.speakRadioComm("All EVA equipment secured. Proceed to the airlock chamber to depressurize.", "HOUSTON");
+          }
 
           return {
             ...prev,

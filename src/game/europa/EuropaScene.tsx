@@ -367,8 +367,9 @@ function Act3And4AbyssalScene({
 
   return (
     <group>
-      {/* Abyssal pitch-black water column (130 MPa) */}
-      <ambientLight intensity={0.08} />
+      {/* Abyssal water volume (130 MPa crushing depth with deep oceanic ambient glow) */}
+      <ambientLight intensity={0.36} color="#0284c7" />
+      <directionalLight position={[0, 10, -5]} intensity={0.25} color="#38bdf8" />
 
       {/* Floating Marine Snow Particle Field */}
       <points ref={marineSnowRef}>
@@ -448,25 +449,16 @@ function Act3And4AbyssalScene({
           <meshStandardMaterial color="#38bdf8" metalness={0.9} roughness={0.1} transparent opacity={0.6} />
         </mesh>
 
-        {/* Dual High-Intensity Volumetric Xenon Spotlights */}
-        <spotLight
-          position={[0.5, 0.1, -1.2]}
-          target-position={[0.5, -0.5, -15]}
-          color="#e0f2fe"
-          intensity={8.0}
-          angle={Math.PI / 5}
-          penumbra={0.6}
-          distance={35}
-        />
-        <spotLight
-          position={[-0.5, 0.1, -1.2]}
-          target-position={[-0.5, -0.5, -15]}
-          color="#e0f2fe"
-          intensity={8.0}
-          angle={Math.PI / 5}
-          penumbra={0.6}
-          distance={35}
-        />
+        {/* Submarine Hull Ambient Aura & Running Lights */}
+        <pointLight position={[0, 1.2, 0]} intensity={2.2} distance={12} color="#93c5fd" />
+        <pointLight position={[0.85, 0, 0]} intensity={1.5} distance={5} color="#22c55e" />
+        <pointLight position={[-0.85, 0, 0]} intensity={1.5} distance={5} color="#ef4444" />
+        <pointLight position={[0, 0.4, 1.2]} intensity={1.8} distance={6} color="#f8fafc" />
+
+        {/* Dual High-Intensity Forward Xenon Headlights */}
+        <pointLight position={[0.45, -0.1, -1.8]} color="#e0f2fe" intensity={5.5} distance={30} />
+        <pointLight position={[-0.45, -0.1, -1.8]} color="#e0f2fe" intensity={5.5} distance={30} />
+        <pointLight position={[0, 0, -1.1]} color="#38bdf8" intensity={2.4} distance={8} />
 
         {/* Vector Thruster Ducts */}
         {[-0.85, 0.85].map((x, idx) => (

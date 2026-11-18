@@ -53,6 +53,7 @@ export function PlayerController({
   const keysRef = useRef<{ [code: string]: boolean }>({});
   const lastFootstepDistRef = useRef<number>(0);
   const lastThrusterTimeRef = useRef<number>(0);
+  const currentTargetIdRef = useRef<string | null>(null);
   const bobbingTimerRef = useRef<number>(0);
 
   // Helmet flashlight
@@ -143,30 +144,47 @@ export function PlayerController({
   // Pointer lock & keyboard event listeners: attached once to gl context
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      keysRef.current[e.code] = true;
       const state = gameStateRef.current;
+      // If player is in spacecraft cockpit, let SpacecraftFlight exclusively handle controls
+      if (state.controlMode === "SPACECRAFT_COCKPIT") return;
+
+      keysRef.current[e.code] = true;
+      if (e.key) keysRef.current[e.key.toLowerCase()] = true;
       const cb = callbacksRef.current;
 
+      const isKeyC = e.code === "KeyC" || e.key?.toLowerCase() === "c";
+      const isKeyE = e.code === "KeyE" || e.key?.toLowerCase() === "e";
+      const isKeyT = e.code === "KeyT" || e.key?.toLowerCase() === "t";
+      const isKeyG = e.code === "KeyG" || e.key?.toLowerCase() === "g";
+      const isKeyF = e.code === "KeyF" || e.key?.toLowerCase() === "f";
+      const isKeyR = e.code === "KeyR" || e.key?.toLowerCase() === "r";
+      const isKeyB = e.code === "KeyB" || e.key?.toLowerCase() === "b";
+      const isKeyP = e.code === "KeyP" || e.key?.toLowerCase() === "p";
+      const isKeyL = e.code === "KeyL" || e.key?.toLowerCase() === "l";
+
       // Controls overlay toggle (KeyC)
-      if (e.code === "KeyC") {
+      if (isKeyC) {
+        if (document.pointerLockElement) {
+          document.exitPointerLock?.();
+        }
         cb.onToggleControlsOverlay?.();
         return;
       }
 
       // Sector transition (KeyT: Orbit <-> Lunar Surface)
-      if (e.code === "KeyT") {
+      if (isKeyT) {
         cb.onToggleSector?.();
         return;
       }
 
       // Magnetic boots lock toggle (KeyG)
-      if (e.code === "KeyG") {
+      if (isKeyG) {
         cb.onToggleMagBoots?.();
         return;
       }
 
       // Emergency airlock / gantry tether return (KeyR or KeyB) when in microgravity EVA outside
-      if ((e.code === "KeyR" || e.code === "KeyB") && playerPosRef.current.z < -10.5 && state.controlMode === "ASTRONAUT") {
+      if ((isKeyR || isKeyB) && playerPosRef.current.z < -10.5 && state.controlMode === "ASTRONAUT") {
         playerPosRef.current.set(0, 0.05, -14.0);
         velocityRef.current.set(0, 0, 0);
         isGroundedRef.current = true;
@@ -177,27 +195,30 @@ export function PlayerController({
       }
 
       // Pause toggle
-      if (e.code === "Escape" || e.code === "KeyP") {
+      if (e.code === "Escape" || isKeyP) {
+        if (document.pointerLockElement) {
+          document.exitPointerLock?.();
+        }
         cb.onTogglePause?.();
         return;
       }
 
-      // Quickbar item equip keys (1, 2, 3)
-      if (e.code === "Digit1" && state.inventory.includes("TOOLKIT")) {
+      // Quickbar item equip keys (1, 2, 3, 4)
+      if ((e.code === "Digit1" || e.key === "1") && state.inventory.includes("TOOLKIT")) {
         cb.onEquipItem?.("TOOLKIT");
       }
-      if (e.code === "Digit2" && state.inventory.includes("SOLAR_WING")) {
+      if ((e.code === "Digit2" || e.key === "2") && state.inventory.includes("SOLAR_WING")) {
         cb.onEquipItem?.("SOLAR_WING");
       }
-      if (e.code === "Digit3" && state.inventory.includes("SBAND_ANTENNA")) {
+      if ((e.code === "Digit3" || e.key === "3") && state.inventory.includes("SBAND_ANTENNA")) {
         cb.onEquipItem?.("SBAND_ANTENNA");
       }
-      if (e.code === "Digit4" && state.inventory.includes("ALSEP_KIT")) {
+      if ((e.code === "Digit4" || e.key === "4") && state.inventory.includes("ALSEP_KIT")) {
         cb.onInteract("deploy_alsep");
       }
 
       // Flashlight toggle or Hangar Solar Deployment toggle
-      if (e.code === "KeyF") {
+      if (isKeyF) {
         if (state.step === "HANGAR_ASSEMBLY") {
           cb.onInteract("hangar_solar_toggle");
           return;
@@ -208,26 +229,31 @@ export function PlayerController({
 
       // Hangar Quick Actions
       if (state.step === "HANGAR_ASSEMBLY") {
-        if (e.code === "KeyR") {
+        if (isKeyR) {
           cb.onInteract("hangar_static_fire");
           return;
         }
-        if (e.code === "KeyL") {
+        if (isKeyL) {
           cb.onInteract("hangar_launch");
           return;
         }
       }
 
-      // Interaction key
-      if (e.code === "KeyE") {
-        if (state.interactionTarget) {
-          cb.onInteract(state.interactionTarget);
+      // Interaction key [E] (Reads synchronous currentTargetIdRef for zero latency)
+      if (isKeyE) {
+        const target = currentTargetIdRef.current || state.interactionTarget;
+        if (target) {
+          if (target === "briefing_table" && document.pointerLockElement) {
+            document.exitPointerLock?.();
+          }
+          cb.onInteract(target);
         }
       }
     };
 
     const handleKeyUp = (e: KeyboardEvent) => {
       keysRef.current[e.code] = false;
+      if (e.key) keysRef.current[e.key.toLowerCase()] = false;
     };
 
     const handleMouseMove = (e: MouseEvent) => {
@@ -303,16 +329,16 @@ export function PlayerController({
 
     // Movement calculation
     const moveInput = new THREE.Vector3();
-    if (keys["KeyW"]) moveInput.z -= 1;
-    if (keys["KeyS"]) moveInput.z += 1;
-    if (keys["KeyA"]) moveInput.x -= 1;
-    if (keys["KeyD"]) moveInput.x += 1;
+    if (keys["KeyW"] || keys["w"]) moveInput.z -= 1;
+    if (keys["KeyS"] || keys["s"]) moveInput.z += 1;
+    if (keys["KeyA"] || keys["a"]) moveInput.x -= 1;
+    if (keys["KeyD"] || keys["d"]) moveInput.x += 1;
 
     if (moveInput.lengthSq() > 0) {
       moveInput.normalize();
     }
 
-    const isSprinting = !!keys["ShiftLeft"] && !isEva;
+    const isSprinting = (!!keys["ShiftLeft"] || !!keys["ShiftRight"] || !!keys["shift"]) && !isEva;
     const baseSpeed = isEva ? 2.8 : isSprinting ? 5.2 : 3.2;
 
     // Camera forward and right vectors projected onto XZ
@@ -332,7 +358,7 @@ export function PlayerController({
       velocityRef.current.z = desiredVelZ;
 
       // Floaty Moon Jump
-      if (keys["Space"] && isGroundedRef.current) {
+      if ((keys["Space"] || keys[" "]) && isGroundedRef.current) {
         velocityRef.current.y = 3.8;
         isGroundedRef.current = false;
         dustTriggerRef.current.jumpCount++;
@@ -399,7 +425,7 @@ export function PlayerController({
       velocityRef.current.z = desiredVelZ;
 
       // Jump
-      if (keys["Space"] && isGroundedRef.current) {
+      if ((keys["Space"] || keys[" "]) && isGroundedRef.current) {
         velocityRef.current.y = 4.2;
         isGroundedRef.current = false;
         soundManager.playJump();
@@ -497,11 +523,11 @@ export function PlayerController({
         if (moveInput.x !== 0) {
           rcsAcc.addScaledVector(right, moveInput.x * rcsThrust);
         }
-        if (keys["Space"]) {
+        if (keys["Space"] || keys[" "]) {
           rcsAcc.y += rcsThrust; // Thrust UP
         }
-        if (keys["ControlLeft"] || keys["KeyX"] || keys["KeyZ"]) {
-          rcsAcc.y -= rcsThrust; // Thrust DOWN (Left Ctrl / X / Z)
+        if (keys["ControlLeft"] || keys["ControlRight"] || keys["control"] || keys["KeyX"] || keys["x"] || keys["KeyZ"] || keys["z"]) {
+          rcsAcc.y -= rcsThrust; // Thrust DOWN
         }
 
         // Apply RCS acceleration
@@ -644,43 +670,44 @@ export function PlayerController({
         targetPrompt = "[E] Collect Lunar Regolith Core Sample (CORE-GEO-01)";
       }
 
-      // 5. Deploy Apollo ALSEP Lunar Science Station (only when not near other specific targets)
-      if (!targetId && gameState.inventory.includes("ALSEP_KIT") && !gameState.alsepDeployed) {
+      // 5. Deploy Apollo ALSEP Lunar Science Station (at designated deployment site [5.0, -18.0, -104.0])
+      const distToAlsepSite = p.distanceTo(new THREE.Vector3(5.0, -18.0, -104.0));
+      if (distToAlsepSite < 4.5 && gameState.inventory.includes("ALSEP_KIT") && !gameState.alsepDeployed) {
         targetId = "deploy_alsep";
         targetPrompt = "[E / 4] Deploy Apollo ALSEP Lunar Science Station";
       }
     } else {
       // 1. Briefing Table (Command Deck: [0, 0, 11])
       const distToBriefing = p.distanceTo(new THREE.Vector3(0, 0, 11));
-      if (distToBriefing < 2.5) {
+      if (distToBriefing < 3.2) {
         targetId = "briefing_table";
         targetPrompt = "[E] Review Mission Briefing";
       }
 
       // 2. Left Workbench - Toolkit
       const distToToolkit = p.distanceTo(new THREE.Vector3(-3.4, 0, 0.5));
-      if (distToToolkit < 2.0 && !gameState.inventory.includes("TOOLKIT")) {
+      if (distToToolkit < 3.0 && !gameState.inventory.includes("TOOLKIT")) {
         targetId = "ws_toolkit";
         targetPrompt = "[E] Pick up Aerospace Toolkit";
       }
 
       // 3. Right Workbench - Solar Wing
       const distToSolar = p.distanceTo(new THREE.Vector3(3.4, 0, -0.2));
-      if (distToSolar < 2.0 && !gameState.inventory.includes("SOLAR_WING")) {
+      if (distToSolar < 3.0 && !gameState.inventory.includes("SOLAR_WING")) {
         targetId = "ws_solar_wing";
         targetPrompt = "[E] Pick up GaAs Solar Array (28W)";
       }
 
       // 4. Right Workbench - S-Band Antenna
       const distToAntenna = p.distanceTo(new THREE.Vector3(3.4, 0, 1.2));
-      if (distToAntenna < 2.0 && !gameState.inventory.includes("SBAND_ANTENNA")) {
+      if (distToAntenna < 3.0 && !gameState.inventory.includes("SBAND_ANTENNA")) {
         targetId = "ws_sband_antenna";
         targetPrompt = "[E] Pick up S-Band Transceiver";
       }
 
       // 5. Airlock Console
       const distToAirlockConsole = p.distanceTo(new THREE.Vector3(-1.85, 0, -8.0));
-      if (distToAirlockConsole < 2.4) {
+      if (distToAirlockConsole < 3.0) {
         targetId = "airlock_console";
         if (gameState.airlockStatus === "PRESSURIZED") {
           targetPrompt = "[E] Cycle Airlock (Depressurize to Vacuum)";
@@ -693,7 +720,7 @@ export function PlayerController({
 
       // 6. Damaged Satellite `AERO-3X`
       const distToSatellite = p.distanceTo(new THREE.Vector3(0, 0, -22.0));
-      if (distToSatellite < 3.2) {
+      if (distToSatellite < 4.2) {
         targetId = "satellite_repair";
         if (!gameState.satellite.wingRemoved) {
           targetPrompt = gameState.inventory.includes("TOOLKIT")
@@ -716,14 +743,14 @@ export function PlayerController({
 
       // 7. Life Support Recharging Station (Command Deck West Wall)
       const distToLifeSupport = p.distanceTo(new THREE.Vector3(-4.3, 1.3, 8.5));
-      if (distToLifeSupport < 2.4) {
+      if (distToLifeSupport < 3.0) {
         targetId = "life_support";
         targetPrompt = "[E] Refill Suit Oxygen & Recharge Battery";
       }
 
       // 8. Board Spacecraft Shuttle ORV-1 (Exterior Gantry Berth)
       const distToSpacecraft = p.distanceTo(new THREE.Vector3(0, 0.8, -28.0));
-      if (distToSpacecraft < 4.2) {
+      if (distToSpacecraft < 4.5) {
         targetId = "board_spacecraft";
         targetPrompt = gameState.satellite.diagnosticRun
           ? "[E] Enter Spacecraft Cockpit (Prepare for Flight)"
@@ -734,55 +761,56 @@ export function PlayerController({
       if (gameState.step === "HANGAR_ASSEMBLY" || p.z < 6.0) {
         // Station 1: Chassis Selection Workstation ([-3.7, 0, -1.8])
         const distChassisWs = p.distanceTo(new THREE.Vector3(-3.5, 0, -1.8));
-        if (distChassisWs < 2.2) {
+        if (distChassisWs < 2.8) {
           targetId = "hangar_chassis";
           targetPrompt = `[E] Cycle Spacecraft Chassis (Current: ${gameState.hangarCraft?.chassis || "3U"})`;
         }
 
         // Station 2: Solar Array Workstation ([3.7, 0, -1.8])
         const distSolarWs = p.distanceTo(new THREE.Vector3(3.5, 0, -1.8));
-        if (distSolarWs < 2.2) {
+        if (distSolarWs < 2.8) {
           targetId = "hangar_solar";
           targetPrompt = `[E] Cycle Solar Arrays (Current: ${gameState.hangarCraft?.solar || "SINGLE_WING"})`;
         }
 
         // Station 3: Propulsion Workstation ([3.7, 0, 1.8])
         const distPropWs = p.distanceTo(new THREE.Vector3(3.5, 0, 1.8));
-        if (distPropWs < 2.2) {
+        if (distPropWs < 2.8) {
           targetId = "hangar_propulsion";
           targetPrompt = `[E] Cycle Propulsion Engine (Current: ${gameState.hangarCraft?.propulsion || "HYDRAZINE"})`;
         }
 
         // Station 4: Science Payload Workstation ([-3.7, 0, 1.8])
         const distPayloadWs = p.distanceTo(new THREE.Vector3(-3.5, 0, 1.8));
-        if (distPayloadWs < 2.2) {
+        if (distPayloadWs < 2.8) {
           targetId = "hangar_payload";
           targetPrompt = `[E] Cycle Mission Payload (Current: ${gameState.hangarCraft?.payload || "IMAGER"})`;
         }
 
         // Station 5: Telecom Relay Workstation ([-3.7, 0, 3.8])
         const distTelecomWs = p.distanceTo(new THREE.Vector3(-3.5, 0, 3.8));
-        if (distTelecomWs < 2.2) {
+        if (distTelecomWs < 2.8) {
           targetId = "hangar_telecom";
           targetPrompt = `[E] Cycle Telecom Transceiver (Current: ${gameState.hangarCraft?.telecom || "SBAND"})`;
         }
 
         // Station 6: Static Fire Propulsion Stand ([0, 0, 2.2])
         const distStaticFire = p.distanceTo(new THREE.Vector3(0, 0, 2.2));
-        if (distStaticFire < 2.0) {
+        if (distStaticFire < 2.6) {
           targetId = "hangar_static_fire";
           targetPrompt = "[E / R] Static-Fire Thruster Test Plume";
         }
 
         // Station 7: Departure / Launch Airlock Gate ([0, 0, -4.6])
         const distLaunchGate = p.distanceTo(new THREE.Vector3(0, 0, -4.6));
-        if (distLaunchGate < 2.4) {
+        if (distLaunchGate < 2.8) {
           targetId = "hangar_launch";
           targetPrompt = "[E / L] Launch Spacecraft to 3D Orbit";
         }
       }
     }
 
+    currentTargetIdRef.current = targetId;
     onSetInteractionPrompt(targetId, targetPrompt);
   });
 

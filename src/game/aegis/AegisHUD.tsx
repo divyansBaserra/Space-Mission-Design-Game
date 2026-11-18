@@ -118,6 +118,32 @@ export function AegisHUD({
         </div>
       </div>
 
+      {/* High-Visibility Mission Objective Directive */}
+      <div
+        style={{
+          alignSelf: "center",
+          backgroundColor: "rgba(15, 23, 42, 0.95)",
+          border: "1.5px solid #38bdf8",
+          borderRadius: "6px",
+          padding: "8px 22px",
+          boxShadow: "0 0 25px rgba(56, 189, 248, 0.35)",
+          display: "flex",
+          alignItems: "center",
+          gap: "12px",
+          pointerEvents: "auto",
+        }}
+      >
+        <span style={{ backgroundColor: "#0284c7", color: "#ffffff", padding: "3px 8px", borderRadius: "3px", fontSize: "10px", fontWeight: 800 }}>
+          MISSION DIRECTIVE
+        </span>
+        <span style={{ fontSize: "12px", color: "#f8fafc", fontWeight: 700 }}>
+          {currentAct === "ACT_I_MARS_OBERTH" && "Mars Gravity Assist: Ignite retrograde Oberth burn [SPACE] to accelerate past 11.4 km/s egress."}
+          {currentAct === "ACT_II_SMART_NAV" && "Autonomous Guidance: Engage SMART Nav optical lock [E] onto Dimorphos center of mass."}
+          {currentAct === "ACT_III_TERMINAL_RUN" && "Hypervelocity Impact Run: Steer RCS thrusters [W / A / S / D] to align within the 3-meter CEP bullseye."}
+          {currentAct === "ACT_IV_LICIACUBE" && "Planetary Defense Confirmed: LICIACube companion verifies 32-minute orbital period reduction."}
+        </span>
+      </div>
+
       {/* ------------------------------------------------------------------ */}
       {/* CENTER CLUSTERS: Context-Sensitive Action Canvas                   */}
       {/* ------------------------------------------------------------------ */}

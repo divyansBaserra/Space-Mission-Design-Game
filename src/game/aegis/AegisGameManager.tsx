@@ -200,23 +200,30 @@ export function AegisGameManager({ onReturnToHub }: AegisGameManagerProps) {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
 
-      if (e.code === "Space" && currentAct === "ACT_I_MARS_OBERTH") {
+      const isSpace = e.code === "Space" || e.key === " ";
+      const isKeyE = e.code === "KeyE" || e.key?.toLowerCase() === "e";
+      const isKeyW = e.code === "KeyW" || e.key?.toLowerCase() === "w" || e.code === "ArrowUp";
+      const isKeyA = e.code === "KeyA" || e.key?.toLowerCase() === "a" || e.code === "ArrowLeft";
+      const isKeyS = e.code === "KeyS" || e.key?.toLowerCase() === "s" || e.code === "ArrowDown";
+      const isKeyD = e.code === "KeyD" || e.key?.toLowerCase() === "d" || e.code === "ArrowRight";
+
+      if (isSpace && currentAct === "ACT_I_MARS_OBERTH") {
         e.preventDefault();
         handleIgniteOberthBurn();
-      } else if (e.code === "KeyE" && currentAct === "ACT_II_SMART_NAV") {
+      } else if (isKeyE && currentAct === "ACT_II_SMART_NAV") {
         e.preventDefault();
         handleEngageSmartNav();
       } else if (currentAct === "ACT_III_TERMINAL_RUN" && !impactTriggered) {
-        if (e.code === "KeyA" || e.code === "ArrowLeft") {
+        if (isKeyA) {
           e.preventDefault();
           handleFireRcs(-1, 0);
-        } else if (e.code === "KeyD" || e.code === "ArrowRight") {
+        } else if (isKeyD) {
           e.preventDefault();
           handleFireRcs(1, 0);
-        } else if (e.code === "KeyW" || e.code === "ArrowUp") {
+        } else if (isKeyW) {
           e.preventDefault();
           handleFireRcs(0, -1);
-        } else if (e.code === "KeyS" || e.code === "ArrowDown") {
+        } else if (isKeyS) {
           e.preventDefault();
           handleFireRcs(0, 1);
         }

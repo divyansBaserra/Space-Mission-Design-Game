@@ -179,7 +179,7 @@ export function RealisticEarth({
         sunDirection: { value: sunDirVector },
         dayGlowColor: { value: new THREE.Color("#38bdf8") }, // Delicate Rayleigh cyan
         sunsetGlowColor: { value: new THREE.Color("#f59e0b") }, // Rayleigh sunset amber
-        intensity: { value: 1.1 },
+        intensity: { value: 0.85 },
       },
       blending: THREE.AdditiveBlending,
       side: THREE.BackSide,

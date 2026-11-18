@@ -246,36 +246,53 @@ export function SpacecraftFlight({
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      keysRef.current[e.code] = true;
       const state = gameStateRef.current;
+      // If not in cockpit mode, do not process spacecraft flight hotkeys
+      if (state.controlMode !== "SPACECRAFT_COCKPIT") return;
+
+      keysRef.current[e.code] = true;
+      if (e.key) keysRef.current[e.key.toLowerCase()] = true;
       const cb = callbacksRef.current;
 
+      const isKeyC = e.code === "KeyC" || e.key?.toLowerCase() === "c";
+      const isKeyT = e.code === "KeyT" || e.key?.toLowerCase() === "t";
+      const isKeyP = e.code === "KeyP" || e.key?.toLowerCase() === "p";
+      const isKeyH = e.code === "KeyH" || e.key?.toLowerCase() === "h";
+      const isKeyV = e.code === "KeyV" || e.key?.toLowerCase() === "v";
+      const isKeyG = e.code === "KeyG" || e.key?.toLowerCase() === "g";
+
       // Controls overlay toggle (KeyC)
-      if (e.code === "KeyC") {
+      if (isKeyC) {
+        if (document.pointerLockElement) {
+          document.exitPointerLock?.();
+        }
         cb.onToggleControlsOverlay?.();
         return;
       }
 
       // Sector transition (KeyT: Orbit <-> Lunar Surface)
-      if (e.code === "KeyT") {
+      if (isKeyT) {
         cb.onToggleSector?.();
         return;
       }
 
       // Pause toggle
-      if (e.code === "Escape" || e.code === "KeyP") {
+      if (e.code === "Escape" || isKeyP) {
+        if (document.pointerLockElement) {
+          document.exitPointerLock?.();
+        }
         cb.onTogglePause?.();
         return;
       }
 
       // Exit Cockpit / Disembark back to Astronaut
-      if (e.code === "KeyH" && state.controlMode === "SPACECRAFT_COCKPIT") {
+      if (isKeyH) {
         cb.onExitCockpit?.();
         return;
       }
 
       // Camera view toggle (Cockpit vs Chase)
-      if (e.code === "KeyV" && state.controlMode === "SPACECRAFT_COCKPIT") {
+      if (isKeyV) {
         const nextMode = cameraViewModeRef.current === "COCKPIT" ? "CHASE" : "COCKPIT";
         cameraViewModeRef.current = nextMode;
         soundManager.playEquip();
@@ -284,7 +301,7 @@ export function SpacecraftFlight({
       }
 
       // Landing Gear toggle (Down vs Up)
-      if (e.code === "KeyG" && state.controlMode === "SPACECRAFT_COCKPIT") {
+      if (isKeyG) {
         landingGearRef.current = !landingGearRef.current;
         soundManager.playGearDeploy();
         cb.onToggleLandingGear?.();
@@ -307,6 +324,7 @@ export function SpacecraftFlight({
 
     const handleKeyUp = (e: KeyboardEvent) => {
       keysRef.current[e.code] = false;
+      if (e.key) keysRef.current[e.key.toLowerCase()] = false;
     };
 
     const handleMouseMove = (e: MouseEvent) => {
@@ -358,11 +376,11 @@ export function SpacecraftFlight({
     if (keys["ArrowDown"]) angularVelRef.current.x -= 2.6 * dt;
 
     // Roll input (Q / E)
-    if (keys["KeyQ"]) {
+    if (keys["KeyQ"] || keys["q"]) {
       angularVelRef.current.z += 2.4 * dt;
       if (Math.random() < 0.15) soundManager.playRcsBurst();
     }
-    if (keys["KeyE"]) {
+    if (keys["KeyE"] || keys["e"]) {
       angularVelRef.current.z -= 2.4 * dt;
       if (Math.random() < 0.15) soundManager.playRcsBurst();
     }
@@ -390,7 +408,7 @@ export function SpacecraftFlight({
       velRef.current.set(0, 0, 0);
 
       // Check for liftoff ascent thrust (Space or W)
-      if ((keys["Space"] || keys["KeyW"]) && propRef.current > 0) {
+      if ((keys["Space"] || keys[" "] || keys["KeyW"] || keys["w"]) && propRef.current > 0) {
         isLandedRef.current = false;
         velRef.current.y = 4.2;
         isThrusting = true;
@@ -398,38 +416,38 @@ export function SpacecraftFlight({
       }
     } else {
       // Free flight dynamics
-      const isBoosting = !!keys["ShiftLeft"] || !!keys["ShiftRight"];
+      const isBoosting = !!keys["ShiftLeft"] || !!keys["ShiftRight"] || !!keys["shift"];
       const baseThrustAcc = isBoosting ? 9.8 : 4.4; // m/s^2
       const translation = new THREE.Vector3();
 
       if (propRef.current > 0) {
-        if (keys["KeyW"]) {
+        if (keys["KeyW"] || keys["w"]) {
           translation.addScaledVector(forward, baseThrustAcc);
           isThrusting = true;
         }
-        if (keys["KeyS"]) {
+        if (keys["KeyS"] || keys["s"]) {
           translation.addScaledVector(forward, -baseThrustAcc * 0.7);
           isThrusting = true;
         }
-        if (keys["KeyA"]) {
+        if (keys["KeyA"] || keys["a"]) {
           translation.addScaledVector(right, -baseThrustAcc * 0.6);
           isThrusting = true;
         }
-        if (keys["KeyD"]) {
+        if (keys["KeyD"] || keys["d"]) {
           translation.addScaledVector(right, baseThrustAcc * 0.6);
           isThrusting = true;
         }
-        if (keys["Space"]) {
+        if (keys["Space"] || keys[" "]) {
           translation.addScaledVector(up, baseThrustAcc * 0.7);
           isThrusting = true;
         }
-        if (keys["ControlLeft"] || keys["KeyX"]) {
+        if (keys["ControlLeft"] || keys["ControlRight"] || keys["control"] || keys["KeyX"] || keys["x"]) {
           translation.addScaledVector(up, -baseThrustAcc * 0.7);
           isThrusting = true;
         }
 
         // Continuous Low-Frequency Thruster Rumble with dynamic throttle pitch modulation
-        if ((keys["KeyW"] || keys["KeyS"]) && propRef.current > 0) {
+        if ((keys["KeyW"] || keys["w"] || keys["KeyS"] || keys["s"]) && propRef.current > 0) {
           soundManager.startThrusterRumble();
           soundManager.updateThrusterThrottle(isBoosting ? 1.0 : 0.45);
         } else {

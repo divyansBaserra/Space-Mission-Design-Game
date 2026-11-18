@@ -153,6 +153,32 @@ export default function EuropaHUD({
         </div>
       </header>
 
+      {/* High-Visibility Mission Objective Directive */}
+      <div
+        style={{
+          alignSelf: "center",
+          backgroundColor: "rgba(15, 23, 42, 0.95)",
+          border: "1.5px solid #0284c7",
+          borderRadius: "6px",
+          padding: "8px 22px",
+          boxShadow: "0 0 25px rgba(2, 132, 199, 0.35)",
+          display: "flex",
+          alignItems: "center",
+          gap: "12px",
+          pointerEvents: "auto",
+        }}
+      >
+        <span style={{ backgroundColor: "#0284c7", color: "#ffffff", padding: "3px 8px", borderRadius: "3px", fontSize: "10px", fontWeight: 800 }}>
+          MISSION DIRECTIVE
+        </span>
+        <span style={{ fontSize: "12px", color: "#f8fafc", fontWeight: 700 }}>
+          {act === "ACT_1_SURFACE_DESCENT" && "Surface Descent: Ignite deceleration burn [SPACE / IGNITE] to touch down on Europan ice."}
+          {act === "ACT_2_CRYO_MELT" && "Cryogenic Penetration: Throttle 900°C nuclear probe [W / THROTTLE] to melt through 20 km crust. Evade methane [A / D]."}
+          {act === "ACT_3_ABYSSAL_SUB" && "Abyssal Sub Navigation: Pilot sub towards hydrothermal vent. Press [W] to thrust ahead, [SPACE] for active sonar."}
+          {act === "ACT_4_SAMPLE_DISCOVERY" && "Astrobiology Discovery: Deploy robotic claw [SPACE / EXTRACT] into hydrothermal plume to analyze RNA life."}
+        </span>
+      </div>
+
       {/* CENTER HUD: Act-Specific Mission Cockpit Controls */}
       <div style={{ display: "flex", justifyContent: "center", alignItems: "center", pointerEvents: "auto" }}>
         {/* ACT I: JOVIAN RADIATION DESCENT */}
@@ -324,7 +350,7 @@ export default function EuropaHUD({
               Water Temp: {waterTempCelsius > 0 ? `+${waterTempCelsius.toFixed(1)}` : waterTempCelsius.toFixed(1)}°C · Sonar Target Distance: {sonarDistanceMeters.toFixed(1)} m
             </div>
 
-            <div style={{ marginTop: "10px", display: "flex", gap: "8px", justifyContent: "center" }}>
+            <div style={{ marginTop: "12px", display: "flex", gap: "6px", justifyContent: "center", flexWrap: "wrap" }}>
               <button
                 onClick={onFireSonar}
                 style={{
@@ -332,9 +358,10 @@ export default function EuropaHUD({
                   backgroundColor: "rgba(14, 165, 233, 0.25)",
                   border: "1px solid #38bdf8",
                   color: "#38bdf8",
-                  fontSize: "10px",
+                  fontSize: "11px",
                   fontWeight: 700,
                   cursor: "pointer",
+                  borderRadius: "3px",
                 }}
               >
                 PING ACTIVE 1200 HZ SONAR [SPACE]
@@ -342,32 +369,84 @@ export default function EuropaHUD({
               <button
                 onClick={() => onMoveSub(0, 0, -2.5)}
                 style={{
-                  padding: "8px 12px",
-                  backgroundColor: "#0f172a",
-                  border: "1px solid #475569",
-                  color: "#f8fafc",
-                  fontSize: "10px",
-                  fontWeight: 600,
+                  padding: "8px 14px",
+                  backgroundColor: "#0284c7",
+                  border: "1px solid #38bdf8",
+                  color: "#ffffff",
+                  fontSize: "11px",
+                  fontWeight: 700,
                   cursor: "pointer",
+                  borderRadius: "3px",
                 }}
               >
                 [W] THRUST AHEAD
               </button>
+              <button
+                onClick={() => onMoveSub(0, 0, 2.5)}
+                style={{
+                  padding: "8px 12px",
+                  backgroundColor: "#1e293b",
+                  border: "1px solid #64748b",
+                  color: "#cbd5e1",
+                  fontSize: "11px",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  borderRadius: "3px",
+                }}
+              >
+                [S] REVERSE
+              </button>
+              <button
+                onClick={() => onMoveSub(-1.5, 0, 0)}
+                style={{
+                  padding: "8px 12px",
+                  backgroundColor: "#1e293b",
+                  border: "1px solid #64748b",
+                  color: "#cbd5e1",
+                  fontSize: "11px",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  borderRadius: "3px",
+                }}
+              >
+                [A] STEER PORT
+              </button>
+              <button
+                onClick={() => onMoveSub(1.5, 0, 0)}
+                style={{
+                  padding: "8px 12px",
+                  backgroundColor: "#1e293b",
+                  border: "1px solid #64748b",
+                  color: "#cbd5e1",
+                  fontSize: "11px",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  borderRadius: "3px",
+                }}
+              >
+                [D] STEER STBD
+              </button>
             </div>
 
-            {sonarDistanceMeters <= 18.0 && (
+            {/* Target Distance & Readiness Indicator */}
+            {sonarDistanceMeters > 18.0 ? (
+              <div style={{ marginTop: "12px", padding: "8px 14px", backgroundColor: "rgba(245, 158, 11, 0.15)", border: "1px solid #f59e0b", borderRadius: "4px", fontSize: "11px", color: "#fbbf24", fontWeight: 700 }}>
+                TARGET VENT CHIMNEY: {sonarDistanceMeters.toFixed(1)} m (Approach within 18.0 m · Press [W] to Thrust Ahead)
+              </div>
+            ) : (
               <div style={{ marginTop: "12px" }}>
                 <button
                   onClick={onProceedToAct4}
                   style={{
-                    padding: "10px 20px",
+                    padding: "10px 22px",
                     backgroundColor: "#16a34a",
-                    border: "1px solid #22c55e",
+                    border: "1.5px solid #22c55e",
                     color: "#ffffff",
-                    fontWeight: 700,
-                    fontSize: "11px",
+                    fontWeight: 800,
+                    fontSize: "12px",
                     cursor: "pointer",
                     borderRadius: "4px",
+                    boxShadow: "0 0 16px rgba(34, 197, 94, 0.5)",
                   }}
                 >
                   HYDROTHERMAL CHIMNEY IN RANGE! DEPLOY SAMPLING CLAW →

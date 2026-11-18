@@ -473,29 +473,30 @@ interface CareerSaveData {
   medalsEarned: string[];
 }
 
-function NasaJudgesGithubBanner() {
+function NasaJudgesGithubBanner({ inline = false }: { inline?: boolean }) {
   return (
     <a
       href="https://github.com/divyansBaserra/Space-Mission-Design-Game"
       target="_blank"
       rel="noopener noreferrer"
       style={{
-        position: "fixed",
-        top: "14px",
-        right: "24px",
-        zIndex: 999999,
+        position: inline ? "relative" : "fixed",
+        top: inline ? undefined : "14px",
+        right: inline ? undefined : "24px",
+        zIndex: inline ? 10 : 999999,
         display: "flex",
         alignItems: "center",
         gap: "12px",
-        padding: "8px 18px",
+        padding: "8px 16px",
         background: "linear-gradient(135deg, rgba(9, 13, 22, 0.98) 0%, rgba(17, 24, 39, 0.95) 100%)",
-        border: "2px solid #38bdf8",
-        borderRadius: "8px",
-        boxShadow: "0 0 25px rgba(56, 189, 248, 0.55), 0 8px 32px rgba(0, 0, 0, 0.9), inset 0 1px 0 rgba(255, 255, 255, 0.2)",
+        border: "1.5px solid #38bdf8",
+        borderRadius: "6px",
+        boxShadow: "0 0 20px rgba(56, 189, 248, 0.45), 0 8px 32px rgba(0, 0, 0, 0.9), inset 0 1px 0 rgba(255, 255, 255, 0.2)",
         textDecoration: "none",
         pointerEvents: "auto",
         backdropFilter: "blur(12px)",
         cursor: "pointer",
+        flexShrink: 0,
         transition: "all 0.25s cubic-bezier(0.16, 1, 0.3, 1)",
       }}
       onMouseEnter={(e) => {
@@ -1464,9 +1465,6 @@ export default function SpaceMissionGame() {
   if (stage === "MAIN_MENU") {
     return (
       <main style={{ position: "relative", width: "100vw", height: "100vh", overflow: "hidden", backgroundColor: "#06080c" }}>
-        {/* Prominent Glowing NASA Evaluation Top Banner */}
-        <NasaJudgesGithubBanner />
-
         {/* Fullscreen 3D Celestial Background Viewport (Interstellar Black Hole or Blue Marble Earth) */}
         <div style={{ position: "absolute", inset: 0, zIndex: 1 }}>
           <SpacecraftViewport
@@ -1486,19 +1484,20 @@ export default function SpaceMissionGame() {
 
         {/* Foreground Minimalist Game UI Overlay */}
         <div style={{ position: "relative", zIndex: 10, display: "flex", flexDirection: "column", height: "100%", padding: "var(--space-8)", justifyContent: "space-between", pointerEvents: "none" }}>
-          {/* Top Bar */}
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", pointerEvents: "auto" }}>
-            <div>
-              <div className="font-mono" style={{ fontSize: "11px", color: "var(--color-status-telemetry)", letterSpacing: "0.15em", textTransform: "uppercase", fontWeight: 700 }}>
-                NASA Space Apps 2026 // Orbital Engineering
+          {/* Top Bar with Integrated Non-Overlapping Layout */}
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", pointerEvents: "auto", flexWrap: "wrap", gap: "16px" }}>
+            {/* Left Header: Title + Celestial Vista Switcher */}
+            <div style={{ display: "flex", alignItems: "center", gap: "24px", flexWrap: "wrap" }}>
+              <div>
+                <div className="font-mono" style={{ fontSize: "11px", color: "var(--color-status-telemetry)", letterSpacing: "0.15em", textTransform: "uppercase", fontWeight: 700 }}>
+                  NASA Space Apps 2026 // Orbital Engineering
+                </div>
+                <h1 style={{ fontSize: "var(--text-2xl)", fontWeight: 700, letterSpacing: "-0.02em", color: "#f8fafc", marginTop: "2px" }}>
+                  SPACE MISSION DESIGN GAME
+                </h1>
               </div>
-              <h1 style={{ fontSize: "var(--text-2xl)", fontWeight: 700, letterSpacing: "-0.02em", color: "#f8fafc", marginTop: "2px" }}>
-                SPACE MISSION DESIGN GAME
-              </h1>
-            </div>
 
-            <div style={{ display: "flex", alignItems: "center", gap: "var(--space-3)" }}>
-              {/* Celestial Vista Switcher */}
+              {/* Celestial Vista Switcher (Directly beside title - zero collision) */}
               <div style={{ display: "flex", gap: "4px", backgroundColor: "rgba(15, 23, 42, 0.85)", padding: "4px", border: "1px solid rgba(56, 189, 248, 0.3)", borderRadius: "4px", backdropFilter: "blur(8px)" }}>
                 <button
                   onClick={() => {
@@ -1541,8 +1540,11 @@ export default function SpaceMissionGame() {
                   EARTH BLUE MARBLE
                 </button>
               </div>
+            </div>
 
-              <div style={{ display: "flex", gap: "var(--space-4)", backgroundColor: "rgba(12, 14, 18, 0.8)", padding: "8px 16px", border: "1px solid var(--color-border-subtle)" }}>
+            {/* Right Header: Career Telemetry + Embedded Inline NASA GitHub Banner */}
+            <div style={{ display: "flex", alignItems: "center", gap: "16px", flexWrap: "wrap" }}>
+              <div style={{ display: "flex", gap: "var(--space-4)", backgroundColor: "rgba(12, 14, 18, 0.85)", padding: "8px 16px", border: "1px solid var(--color-border-subtle)", borderRadius: "4px", backdropFilter: "blur(8px)" }}>
                 <div style={{ fontSize: "12px" }}>
                   <span style={{ color: "var(--color-text-muted)" }}>Flight Director Level: </span>
                   <strong className="font-mono" style={{ color: "var(--color-text-primary)" }}>{Math.floor(careerScore / 1000) + 1}</strong>
@@ -1559,27 +1561,8 @@ export default function SpaceMissionGame() {
                 </div>
               </div>
 
-              <a
-                href="https://github.com/divyansBaserra/Space-Mission-Design-Game"
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "6px",
-                  padding: "8px 14px",
-                  backgroundColor: "rgba(56, 189, 248, 0.12)",
-                  border: "1px solid #38bdf8",
-                  color: "#38bdf8",
-                  fontSize: "11px",
-                  fontWeight: 700,
-                  textDecoration: "none",
-                  borderRadius: "2px",
-                  letterSpacing: "0.05em",
-                }}
-              >
-                GITHUB REPO &rarr;
-              </a>
+              {/* Seamless Inline NASA Evaluation GitHub Banner */}
+              <NasaJudgesGithubBanner inline={true} />
             </div>
           </div>
 

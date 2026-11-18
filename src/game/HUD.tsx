@@ -478,8 +478,12 @@ export function HUD({
         {/* Dynamic Interaction Pill (Keyboard [E] or Direct Mouse Click) */}
         {!isCockpit && gameState.interactionPrompt && (
           <div
-            onClick={() => {
+            onClick={(e) => {
+              e.stopPropagation();
               if (gameState.interactionTarget) {
+                if (gameState.interactionTarget === "briefing_table" && typeof document !== "undefined" && document.pointerLockElement) {
+                  document.exitPointerLock?.();
+                }
                 onInteractHangar?.(gameState.interactionTarget);
               }
             }}

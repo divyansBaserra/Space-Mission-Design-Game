@@ -384,7 +384,7 @@ export function AegisScene({
 
       {/* Realistic Deep Space Directional Sunlight */}
       <ambientLight intensity={0.18} />
-      <directionalLight position={[10, 6, 8]} intensity={2.4} color="#ffffff" castShadow />
+      <directionalLight position={[10, 6, 8]} intensity={1.8} color="#ffffff" castShadow />
       <directionalLight position={[-10, -4, -6]} intensity={0.12} color="#1e293b" />
 
       {/* ACT I: Mars Encounter & Oberth Slingshot */}
