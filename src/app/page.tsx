@@ -5,6 +5,7 @@ import { SpacecraftViewport } from "@/components/viewport";
 import { GameManager } from "@/game/GameManager";
 import AegisGameManager from "@/game/aegis/AegisGameManager";
 import EuropaGameManager from "@/game/europa/EuropaGameManager";
+import { FlightAcademyPage } from "@/components/academy/FlightAcademyPage";
 import { soundManager } from "@/game/audio";
 import { preloadAllGameAssets } from "@/game/useNASAModel";
 import {
@@ -4073,128 +4074,12 @@ export default function SpaceMissionGame() {
   // ============================================================================
   if (stage === "MANUAL") {
     return (
-      <main style={{ display: "flex", flexDirection: "column", height: "100vh", width: "100vw", overflowY: "auto", backgroundColor: "var(--color-canvas)" }}>
-        <header style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 var(--space-6)", height: "48px", borderBottom: "1px solid var(--color-border-subtle)", backgroundColor: "var(--color-surface-1)" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "var(--space-3)" }}>
-            <button onClick={() => setStage("MAIN_MENU")} style={{ fontSize: "var(--text-xs)", color: "var(--color-text-secondary)" }}>
-              ← Mission Hub
-            </button>
-            <div style={{ width: "1px", height: "12px", backgroundColor: "var(--color-border-default)" }} />
-            <h1 style={{ fontSize: "var(--text-sm)", fontWeight: 600 }}>Flight Academy &amp; Technical Manual // NASA &amp; CDS Standards</h1>
-          </div>
-          <div style={{ display: "flex", gap: "var(--space-3)" }}>
-            <button
-              onClick={() => setStage("FIRST_PERSON_GAME")}
-              style={{
-                padding: "6px 14px",
-                backgroundColor: "#0284c7",
-                color: "#f8fafc",
-                border: "1px solid #38bdf8",
-                fontSize: "var(--text-xs)",
-                fontWeight: 600,
-                cursor: "pointer",
-              }}
-            >
-              ▶ Play First-Person Mission
-            </button>
-            <button
-              onClick={() => setStage("MAIN_MENU")}
-              style={{
-                padding: "6px 14px",
-                backgroundColor: "var(--color-surface-2)",
-                color: "var(--color-text-primary)",
-                border: "1px solid var(--color-border-default)",
-                fontSize: "var(--text-xs)",
-                cursor: "pointer",
-              }}
-            >
-              Return to Hub
-            </button>
-          </div>
-        </header>
-
-        <div style={{ flex: 1, padding: "var(--space-6)", maxWidth: "1100px", margin: "0 auto", width: "100%" }}>
-          <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-6)" }}>
-            <div>
-              <span className="font-mono" style={{ fontSize: "11px", color: "#38bdf8", textTransform: "uppercase", letterSpacing: "0.08em" }}>
-                Section 1 · Astronautics &amp; Flight Procedures
-              </span>
-              <h2 style={{ fontSize: "20px", fontWeight: 700, marginTop: "4px" }}>
-                Mission 01: Orbital Station EVA &amp; Utility Shuttle Piloting
-              </h2>
-              <p style={{ fontSize: "13px", color: "var(--color-text-secondary)", marginTop: "6px", lineHeight: 1.6 }}>
-                The first-person mission simulator trains astronauts in dual-mode space operations: pressurized station logistics, extravehicular spacewalk (EVA) zero-g repair on the AERO-3X Earth Observation CubeSat, and 6-DOF orbital shuttle flight and station docking.
-              </p>
-            </div>
-
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-4)" }}>
-              <div className="panel" style={{ padding: "var(--space-4)" }}>
-                <h3 style={{ fontSize: "13px", fontWeight: 600, color: "var(--color-text-primary)", marginBottom: "8px" }}>
-                  Phase A: Station Exploration &amp; Zero-G EVA
-                </h3>
-                <ul style={{ fontSize: "12px", color: "var(--color-text-secondary)", lineHeight: 1.6, paddingLeft: "16px" }}>
-                  <li><strong>Command Deck:</strong> Review mission objectives at the central holographic terminal [E].</li>
-                  <li><strong>Engineering Workshop:</strong> Collect the 3 repair parts (Aerospace Toolkit, 28W GaAs Solar Wing, S-Band Transceiver) from the workbenches.</li>
-                  <li><strong>Life Support:</strong> Replenish oxygen and suit battery at the wall station [E] before EVA.</li>
-                  <li><strong>Airlock Protocol:</strong> Cycle the airlock console [E] to depressurize to vacuum. Spacewalk along the exterior gantry.</li>
-                  <li><strong>Satellite Repair:</strong> Perform the 4-step sequence on AERO-3X (detach debris, mount array, mount antenna, run diagnostics).</li>
-                </ul>
-              </div>
-
-              <div className="panel" style={{ padding: "var(--space-4)" }}>
-                <h3 style={{ fontSize: "13px", fontWeight: 600, color: "var(--color-text-primary)", marginBottom: "8px" }}>
-                  Phase B: 6-DOF Spacecraft Piloting &amp; Soft Capture
-                </h3>
-                <ul style={{ fontSize: "12px", color: "var(--color-text-secondary)", lineHeight: 1.6, paddingLeft: "16px" }}>
-                  <li><strong>Boarding:</strong> Board the Orbital Utility Transport ORV-1 at the exterior gantry berth [E].</li>
-                  <li><strong>6-DOF Controls:</strong> W/S for main thrust, A/D for yaw, Q/E for roll, Space/C for vertical RCS, X for retrograde brake / SAS stabilization.</li>
-                  <li><strong>Approach Corridor:</strong> Align the shuttle nose with Station Docking Port DOCK-01 (at Z = -11.2).</li>
-                  <li><strong>Capture Criteria:</strong> Relative velocity &le; 2.5 m/s, angular alignment &le; 25&deg;, distance &le; 2.2 m for magnetic soft capture latch.</li>
-                  <li><strong>Mission Scoring:</strong> Performance scorecard evaluates mission elapsed time, propellant efficiency, and docking velocity.</li>
-                </ul>
-              </div>
-            </div>
-
-            <div style={{ borderTop: "1px solid var(--color-border-subtle)", paddingTop: "var(--space-4)" }}>
-              <span className="font-mono" style={{ fontSize: "11px", color: "var(--color-text-muted)", textTransform: "uppercase", letterSpacing: "0.08em" }}>
-                Section 2 · Cal Poly CDS &amp; NASA Technical Specifications
-              </span>
-              <h2 style={{ fontSize: "18px", fontWeight: 700, marginTop: "4px" }}>
-                Engineering Calculators &amp; Physics Standards
-              </h2>
-            </div>
-
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "var(--space-4)" }}>
-              <div className="panel" style={{ padding: "var(--space-4)" }}>
-                <h4 style={{ fontSize: "12px", fontWeight: 600, color: "#38bdf8", marginBottom: "6px" }}>
-                  1. Mass Budget (CDS Rev 14.1 &amp; JPL CML 4)
-                </h4>
-                <p style={{ fontSize: "11px", color: "var(--color-text-secondary)", lineHeight: 1.5 }}>
-                  Maximum standard allowable mass: 1U = 2.00 kg, 3U = 6.00 kg, 6U = 12.00 kg. Preliminary designs (CML 4) require &ge; 35% dry mass margin to ensure launcher compatibility.
-                </p>
-              </div>
-
-              <div className="panel" style={{ padding: "var(--space-4)" }}>
-                <h4 style={{ fontSize: "12px", fontWeight: 600, color: "#eab308", marginBottom: "6px" }}>
-                  2. Power &amp; Orbit Thermal Balance
-                </h4>
-                <p style={{ fontSize: "11px", color: "var(--color-text-secondary)", lineHeight: 1.5 }}>
-                  Solar constant S = 1361 W/m&sup2;. Batteries must preserve DoD &le; 25% nominal and &le; 70% safe floor during umbra eclipse. Stefan-Boltzmann radiation maintains temperatures between -20&deg;C and +50&deg;C.
-                </p>
-              </div>
-
-              <div className="panel" style={{ padding: "var(--space-4)" }}>
-                <h4 style={{ fontSize: "12px", fontWeight: 600, color: "#22c55e", marginBottom: "6px" }}>
-                  3. Telecom Link Budget &amp; Inhibit Safety
-                </h4>
-                <p style={{ fontSize: "11px", color: "var(--color-text-secondary)", lineHeight: 1.5 }}>
-                  Free space path loss calculated using Friis transmission equation. Link margin must exceed +3.0 dB. Cal Poly CDS Rev 14.1 &sect;2.4.4 (30-min deploy) and &sect;2.4.5 (45-min RF inhibit) strictly enforced.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </main>
+      <FlightAcademyPage
+        onBackToHub={() => setStage("MAIN_MENU")}
+        onLaunchGame1={() => setStage("FIRST_PERSON_GAME")}
+        onLaunchGame2={() => setStage("PROJECT_AEGIS_GAME")}
+        onLaunchGame3={() => setStage("PROJECT_EUROPA_GAME")}
+      />
     );
   }
 
