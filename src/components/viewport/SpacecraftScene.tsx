@@ -23,6 +23,9 @@ export interface SpacecraftSceneProps {
   activeStationName?: string | null;
   selectedPlanetId?: string | null;
   onSelectPlanet?: (id: string | null) => void;
+  blackHoleDoppler?: boolean;
+  blackHoleJets?: boolean;
+  blackHoleParticles?: boolean;
 }
 
 export function SpacecraftScene({
@@ -40,6 +43,9 @@ export function SpacecraftScene({
   activeStationName = null,
   selectedPlanetId = null,
   onSelectPlanet,
+  blackHoleDoppler = true,
+  blackHoleJets = true,
+  blackHoleParticles = true,
 }: SpacecraftSceneProps) {
   const meshRef = useRef<THREE.Group>(null);
   const earthRef = useRef<THREE.Group>(null);
@@ -113,7 +119,13 @@ export function SpacecraftScene({
   // VIEW MODE: INTERSTELLAR GRAVITATIONAL LENSING BLACK HOLE (Gargantua)
   // ==========================================================================
   if (viewMode === "BLACK_HOLE") {
-    return <BlackHoleScene />;
+    return (
+      <BlackHoleScene
+        dopplerEnabled={blackHoleDoppler}
+        jetsEnabled={blackHoleJets}
+        particlesEnabled={blackHoleParticles}
+      />
+    );
   }
 
   // ==========================================================================
