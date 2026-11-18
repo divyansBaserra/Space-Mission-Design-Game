@@ -429,6 +429,23 @@ function Act3And4AbyssalScene({
         </group>
       </group>
 
+      {/* 3D In-World Sonar Objective Beacon Marking Hydrothermal Vent */}
+      <group position={[0, 3.2, -14.0]}>
+        <mesh rotation={[Math.PI / 2, 0, 0]}>
+          <ringGeometry args={[1.5, 1.7, 32]} />
+          <meshBasicMaterial color="#38bdf8" transparent opacity={0.8} side={THREE.DoubleSide} />
+        </mesh>
+        <mesh rotation={[0, 0, Math.PI / 4]}>
+          <ringGeometry args={[0.9, 1.1, 4]} />
+          <meshBasicMaterial color="#f97316" transparent opacity={0.9} side={THREE.DoubleSide} />
+        </mesh>
+        <mesh position={[0, -0.6, 0]} rotation={[Math.PI, 0, 0]}>
+          <coneGeometry args={[0.3, 0.6, 8]} />
+          <meshBasicMaterial color="#38bdf8" />
+        </mesh>
+        <pointLight position={[0, 0, 0]} intensity={2.5} distance={15} color="#38bdf8" />
+      </group>
+
       {/* Active Sonar Ring Pulse */}
       <mesh ref={sonarRingRef} position={subPosition}>
         <sphereGeometry args={[1.5, 24, 24]} />

@@ -89,11 +89,12 @@ export function PostProcessingEffects({ gameState }: PostProcessingProps) {
     comp.addPass(renderPass);
 
     // 2. Photonic Unreal Bloom Pass (Isolated to extreme emissive thrusters and lasers; zero diffuse blowout)
+    const isBloomActive = gameState.settings?.graphicsQuality === "HIGH";
     const bloomPass = new UnrealBloomPass(
       new THREE.Vector2(size.width, size.height),
-      0.18, // subtle aerospace glare
+      isBloomActive ? 0.08 : 0.0, // subtle aerospace glare, zero when disabled
       0.35, // radius
-      2.2   // high threshold: strictly isolates high-energy emissive thrusters & lasers; prevents terrain/body whiteout
+      2.5   // high threshold: strictly isolates high-energy emissive thrusters & lasers; prevents terrain/body whiteout
     );
     comp.addPass(bloomPass);
 

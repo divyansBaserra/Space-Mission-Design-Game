@@ -93,6 +93,10 @@ export function SpacecraftFlight({
   const lastDockingAbortTimeRef = useRef<number>(0);
   const lastHullStrainTimeRef = useRef<number>(0);
   const hasSpokenIntroRef = useRef<boolean>(false);
+  const lastTelemetrySyncRef = useRef<number>(0);
+  const prevLandedSyncRef = useRef<boolean>(false);
+  const prevGearSyncRef = useRef<boolean>(false);
+  const prevCameraSyncRef = useRef<string>("COCKPIT");
   const hasSpokenDockingApproachRef = useRef<boolean>(false);
 
   // Cockpit camera spring-damper lag, recoil vectors & rotational mass sway
@@ -752,26 +756,39 @@ export function SpacecraftFlight({
       }
     }
 
-    // Notify state manager of complete flight telemetry
-    onUpdateSpacecraft(
-      posRef.current,
-      velRef.current,
-      pitchRef.current,
-      yawRef.current,
-      rollRef.current,
-      propRef.current,
-      pwrRef.current,
-      speed,
-      distToDock,
-      relVel,
-      alignmentAngleDeg,
-      cameraViewModeRef.current,
-      landingGearRef.current,
-      isLandedRef.current,
-      surfaceAlt,
-      verticalSpeed,
-      distToPad
-    );
+    // Notify state manager of complete flight telemetry (throttled to 10Hz to eliminate 60Hz React cascade lag)
+    const now = Date.now();
+    const stateTransition =
+      isLandedRef.current !== prevLandedSyncRef.current ||
+      landingGearRef.current !== prevGearSyncRef.current ||
+      cameraViewModeRef.current !== prevCameraSyncRef.current;
+
+    if (now - lastTelemetrySyncRef.current >= 100 || stateTransition) {
+      lastTelemetrySyncRef.current = now;
+      prevLandedSyncRef.current = isLandedRef.current;
+      prevGearSyncRef.current = landingGearRef.current;
+      prevCameraSyncRef.current = cameraViewModeRef.current;
+
+      onUpdateSpacecraft(
+        posRef.current,
+        velRef.current,
+        pitchRef.current,
+        yawRef.current,
+        rollRef.current,
+        propRef.current,
+        pwrRef.current,
+        speed,
+        distToDock,
+        relVel,
+        alignmentAngleDeg,
+        cameraViewModeRef.current,
+        landingGearRef.current,
+        isLandedRef.current,
+        surfaceAlt,
+        verticalSpeed,
+        distToPad
+      );
+    }
     // Render dynamic cockpit MFD screens when inside cockpit
     if (cameraViewModeRef.current === "COCKPIT") {
       // 1. Center Primary Flight Display (PFD)

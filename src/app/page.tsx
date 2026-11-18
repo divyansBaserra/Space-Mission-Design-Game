@@ -1483,11 +1483,11 @@ export default function SpaceMissionGame() {
         </div>
 
         {/* Foreground Minimalist Game UI Overlay */}
-        <div style={{ position: "relative", zIndex: 10, display: "flex", flexDirection: "column", height: "100%", padding: "var(--space-8)", justifyContent: "space-between", pointerEvents: "none" }}>
+        <div style={{ position: "relative", zIndex: 10, display: "flex", flexDirection: "column", height: "100%", padding: "var(--space-6) var(--space-8)", justifyContent: "space-between", pointerEvents: "none", overflowY: "auto" }}>
           {/* Top Bar with Integrated Non-Overlapping Layout */}
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", pointerEvents: "auto", flexWrap: "wrap", gap: "16px" }}>
+          <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", pointerEvents: "auto", flexWrap: "wrap", gap: "16px", width: "100%", marginBottom: "16px" }}>
             {/* Left Header: Title + Celestial Vista Switcher */}
-            <div style={{ display: "flex", alignItems: "center", gap: "24px", flexWrap: "wrap" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "20px", flexWrap: "wrap" }}>
               <div>
                 <div className="font-mono" style={{ fontSize: "11px", color: "var(--color-status-telemetry)", letterSpacing: "0.15em", textTransform: "uppercase", fontWeight: 700 }}>
                   NASA Space Apps 2026 // Orbital Engineering
@@ -1497,7 +1497,7 @@ export default function SpaceMissionGame() {
                 </h1>
               </div>
 
-              {/* Celestial Vista Switcher (Directly beside title - zero collision) */}
+              {/* Celestial Vista Switcher */}
               <div style={{ display: "flex", gap: "4px", backgroundColor: "rgba(15, 23, 42, 0.85)", padding: "4px", border: "1px solid rgba(56, 189, 248, 0.3)", borderRadius: "4px", backdropFilter: "blur(8px)" }}>
                 <button
                   onClick={() => {
@@ -1543,10 +1543,10 @@ export default function SpaceMissionGame() {
             </div>
 
             {/* Right Header: Career Telemetry + Embedded Inline NASA GitHub Banner */}
-            <div style={{ display: "flex", alignItems: "center", gap: "16px", flexWrap: "wrap" }}>
-              <div style={{ display: "flex", gap: "var(--space-4)", backgroundColor: "rgba(12, 14, 18, 0.85)", padding: "8px 16px", border: "1px solid var(--color-border-subtle)", borderRadius: "4px", backdropFilter: "blur(8px)" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "14px", flexWrap: "wrap" }}>
+              <div style={{ display: "flex", gap: "var(--space-3)", backgroundColor: "rgba(12, 14, 18, 0.85)", padding: "8px 14px", border: "1px solid var(--color-border-subtle)", borderRadius: "4px", backdropFilter: "blur(8px)" }}>
                 <div style={{ fontSize: "12px" }}>
-                  <span style={{ color: "var(--color-text-muted)" }}>Flight Director Level: </span>
+                  <span style={{ color: "var(--color-text-muted)" }}>Level: </span>
                   <strong className="font-mono" style={{ color: "var(--color-text-primary)" }}>{Math.floor(careerScore / 1000) + 1}</strong>
                 </div>
                 <div style={{ width: "1px", height: "14px", backgroundColor: "var(--color-border-default)" }} />
@@ -1564,7 +1564,7 @@ export default function SpaceMissionGame() {
               {/* Seamless Inline NASA Evaluation GitHub Banner */}
               <NasaJudgesGithubBanner inline={true} />
             </div>
-          </div>
+          </header>
 
           {/* Center / Left Main Menu Actions */}
           <div style={{ maxWidth: "440px", display: "flex", flexDirection: "column", gap: "var(--space-3)", pointerEvents: "auto" }}>

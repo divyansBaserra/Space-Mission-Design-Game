@@ -54,6 +54,8 @@ export function PlayerController({
   const lastFootstepDistRef = useRef<number>(0);
   const lastThrusterTimeRef = useRef<number>(0);
   const currentTargetIdRef = useRef<string | null>(null);
+  const lastReportedTargetRef = useRef<string | null>(null);
+  const lastReportedPromptRef = useRef<string | null>(null);
   const bobbingTimerRef = useRef<number>(0);
 
   // Helmet flashlight
@@ -281,15 +283,30 @@ export function PlayerController({
       callbacksRef.current.onPointerLockChange(locked);
     };
 
+    const handleMouseDown = (e: MouseEvent) => {
+      // Left click triggers interaction if looking at an interactable object
+      if (e.button === 0) {
+        const target = currentTargetIdRef.current || gameStateRef.current.interactionTarget;
+        if (target) {
+          if (target === "briefing_table" && document.pointerLockElement) {
+            document.exitPointerLock?.();
+          }
+          callbacksRef.current.onInteract(target);
+        }
+      }
+    };
+
     window.addEventListener("keydown", handleKeyDown);
     window.addEventListener("keyup", handleKeyUp);
     window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mousedown", handleMouseDown);
     document.addEventListener("pointerlockchange", handlePointerLockChange);
 
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
       window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mousedown", handleMouseDown);
       document.removeEventListener("pointerlockchange", handlePointerLockChange);
     };
   }, [gl]);
@@ -811,7 +828,14 @@ export function PlayerController({
     }
 
     currentTargetIdRef.current = targetId;
-    onSetInteractionPrompt(targetId, targetPrompt);
+    if (
+      targetId !== lastReportedTargetRef.current ||
+      targetPrompt !== lastReportedPromptRef.current
+    ) {
+      lastReportedTargetRef.current = targetId;
+      lastReportedPromptRef.current = targetPrompt;
+      onSetInteractionPrompt(targetId, targetPrompt);
+    }
   });
 
   return (

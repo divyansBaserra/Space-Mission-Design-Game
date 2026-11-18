@@ -51,14 +51,12 @@ const AtmosphericHaloShader = {
 
     void main() {
       vec3 viewDir = normalize(cameraPosition - vWorldPosition);
-      // For BackSide rendering, normal points inward towards center of Earth
       vec3 norm = normalize(vNormal);
       vec3 sunDir = normalize(sunDirection);
 
-      // BackSide limb calculation: intensity peaks near glancing limb and decays outward
-      float dotVN = dot(viewDir, norm);
-      // Delicate exponential fade out towards vacuum
-      float halo = pow(clamp(dotVN, 0.0, 1.0), 3.4);
+      // Grazing limb calculation: intensity peaks gently at glancing silhouette edge, zero at center
+      float rim = 1.0 - abs(dot(viewDir, norm));
+      float halo = pow(clamp(rim, 0.0, 1.0), 3.5);
 
       // Modulate by sunlit hemisphere
       float sunDot = dot(norm, sunDir);
@@ -68,7 +66,7 @@ const AtmosphericHaloShader = {
       float sunsetFactor = smoothstep(-0.2, 0.15, sunDot) * (1.0 - smoothstep(0.15, 0.5, sunDot));
       vec3 scatterColor = mix(dayGlowColor, sunsetGlowColor, sunsetFactor * 0.4);
 
-      float alpha = halo * intensity * dayFactor * 0.75;
+      float alpha = halo * intensity * dayFactor * 0.35;
       if (alpha <= 0.001) discard;
 
       gl_FragColor = vec4(scatterColor, alpha);
@@ -235,7 +233,7 @@ export function RealisticEarth({
               metalness={0.08}
               emissiveMap={textures.lights}
               emissive={new THREE.Color("#fbbf24")}
-              emissiveIntensity={0.8}
+              emissiveIntensity={0.2}
             />
           ) : (
             <meshStandardMaterial color="#0b264a" roughness={0.5} metalness={0.1} />
@@ -249,7 +247,7 @@ export function RealisticEarth({
             <meshStandardMaterial
               map={textures.clouds}
               transparent
-              opacity={0.58}
+              opacity={0.32}
               roughness={0.9}
               metalness={0.0}
               depthWrite={false}
@@ -263,8 +261,8 @@ export function RealisticEarth({
           <primitive ref={surfaceLimbRef} object={surfaceLimbMaterial} attach="material" />
         </mesh>
 
-        {/* 4. Outer Gossamer Atmospheric Halo (BackSide scale 1.11, zero hard edges) */}
-        <mesh scale={[1.11, 1.11, 1.11]}>
+        {/* 4. Outer Gossamer Atmospheric Halo (BackSide scale 1.04, zero hard edges) */}
+        <mesh scale={[1.04, 1.04, 1.04]}>
           <sphereGeometry args={[radius, 96, 96]} />
           <primitive ref={haloRef} object={haloMaterial} attach="material" />
         </mesh>

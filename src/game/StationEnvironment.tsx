@@ -625,12 +625,12 @@ export function StationEnvironment({
       if (!gameState.alsepDeployed) {
         return { pos: [5.0, -17.2, -104.0] as [number, number, number], color: "#eab308" };
       }
-      return { pos: [0, -16.5, -108.0] as [number, number, number], color: "#22c55e" };
+      return { pos: [0, -16.5, -95.0] as [number, number, number], color: "#22c55e" };
     }
 
     if (gameState.controlMode === "SPACECRAFT_COCKPIT") {
       if (gameState.spacecraft.position.z < -45) {
-        return { pos: [0, -17.5, -110.0] as [number, number, number], color: "#22c55e" };
+        return { pos: [0, -17.5, -95.0] as [number, number, number], color: "#22c55e" };
       }
       return { pos: [0, 0, -28.0] as [number, number, number], color: "#38bdf8" };
     }
@@ -671,6 +671,7 @@ export function StationEnvironment({
     if (typeof window === "undefined") return null;
     const loader = new THREE.TextureLoader();
     const tex = loader.load("/assets/textures/earth/moon.jpg");
+    tex.colorSpace = THREE.SRGBColorSpace;
     tex.wrapS = THREE.RepeatWrapping;
     tex.wrapT = THREE.RepeatWrapping;
     tex.repeat.set(4, 4);
@@ -1824,17 +1825,17 @@ export function StationEnvironment({
         </Suspense>
 
         {/* ================================================================ */}
-        {/* LUNAR PERIMETER BOULDERS & CRATER EJECTA SCATTER                 */}
+        {/* LUNAR PERIMETER BOULDERS & CRATER EJECTA SCATTER (Clear of base) */}
         {/* ================================================================ */}
         {[
-          { pos: [-12.5, 0.7, -8.0], scale: [1.8, 1.4, 1.6], rot: [0.3, 0.7, -0.2], col: "#475569" },
-          { pos: [-16.0, 1.0, -15.0], scale: [2.4, 2.0, 2.2], rot: [-0.4, 1.2, 0.5], col: "#334155" },
-          { pos: [-2.0, 1.1, -18.0], scale: [2.8, 2.2, 2.5], rot: [0.6, -0.8, 0.1], col: "#475569" },
-          { pos: [14.0, 0.85, -16.0], scale: [2.1, 1.7, 1.9], rot: [-0.2, 2.1, -0.4], col: "#334155" },
-          { pos: [19.0, 0.95, -6.0], scale: [2.5, 1.9, 2.2], rot: [0.8, 0.3, -0.6], col: "#475569" },
-          { pos: [18.0, 0.75, 14.0], scale: [1.9, 1.5, 1.7], rot: [-0.5, 1.6, 0.3], col: "#334155" },
-          { pos: [-18.0, 0.9, 4.0], scale: [2.2, 1.8, 2.0], rot: [0.4, -1.4, 0.2], col: "#475569" },
-          { pos: [-16.0, 0.65, 18.0], scale: [1.7, 1.3, 1.5], rot: [0.2, 0.9, -0.5], col: "#334155" },
+          { pos: [-24.0, 0.7, -12.0], scale: [1.8, 1.4, 1.6], rot: [0.3, 0.7, -0.2], col: "#475569" },
+          { pos: [-28.0, 1.0, -22.0], scale: [2.4, 2.0, 2.2], rot: [-0.4, 1.2, 0.5], col: "#334155" },
+          { pos: [-16.0, 1.1, -28.0], scale: [2.8, 2.2, 2.5], rot: [0.6, -0.8, 0.1], col: "#475569" },
+          { pos: [26.0, 0.85, -22.0], scale: [2.1, 1.7, 1.9], rot: [-0.2, 2.1, -0.4], col: "#334155" },
+          { pos: [28.0, 0.95, -6.0], scale: [2.5, 1.9, 2.2], rot: [0.8, 0.3, -0.6], col: "#475569" },
+          { pos: [26.0, 0.75, 20.0], scale: [1.9, 1.5, 1.7], rot: [-0.5, 1.6, 0.3], col: "#334155" },
+          { pos: [-24.0, 0.9, 10.0], scale: [2.2, 1.8, 2.0], rot: [0.4, -1.4, 0.2], col: "#475569" },
+          { pos: [-22.0, 0.65, 24.0], scale: [1.7, 1.3, 1.5], rot: [0.2, 0.9, -0.5], col: "#334155" },
         ].map((b, i) => (
           <group key={`lunar-boulder-${i}`} position={b.pos as [number, number, number]} rotation={b.rot as [number, number, number]}>
             <mesh castShadow receiveShadow scale={b.scale as [number, number, number]}>
