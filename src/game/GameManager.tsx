@@ -520,6 +520,20 @@ export function GameManager({ onReturnToHub, gameMode = "ORBITAL_REPAIR", onLaun
           return prev;
         }
 
+        // 1b. Streamlined Workshop Auto-Equip Action (All EVA Gear)
+        if (targetId === "ws_equip_all") {
+          const nextInv: InventoryItemId[] = ["TOOLKIT", "SOLAR_WING", "SBAND_ANTENNA"];
+          soundManager.playPickup();
+          soundManager.speakRadioComm("All EVA equipment secured. Proceed to the airlock chamber to depressurize.", "HOUSTON");
+          return {
+            ...prev,
+            inventory: nextInv,
+            equippedItem: "TOOLKIT",
+            step: "ENTER_AIRLOCK",
+            substepText: "All repair equipment collected! Proceed to the Airlock chamber [Z = -8m].",
+          };
+        }
+
         // 2. Workshop Left Table: Toolkit
         if (targetId === "ws_toolkit" && !prev.inventory.includes("TOOLKIT")) {
           const nextInv: InventoryItemId[] = [...prev.inventory, "TOOLKIT"];

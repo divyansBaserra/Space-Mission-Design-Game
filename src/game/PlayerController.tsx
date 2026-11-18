@@ -661,70 +661,80 @@ export function PlayerController({
     if (isSurface) {
       // 1. Landed Spacecraft on PAD-01 ([0, -16.2, -110.0])
       const distToShuttle = p.distanceTo(new THREE.Vector3(0, -18.0, -110.0));
-      if (distToShuttle < 5.4) {
+      if (distToShuttle < 6.5) {
         targetId = "board_spacecraft_surface";
         targetPrompt = "[E] Enter Spacecraft Cockpit (Prepare for Ascent)";
       }
 
       // 2. Lunar Base Alpha Habitat Module ([16.0, -18.0, -102.0])
       const distToBase = p.distanceTo(new THREE.Vector3(16.0, -18.0, -102.0));
-      if (distToBase < 5.0) {
+      if (distToBase < 6.0) {
         targetId = "lunar_base_terminal";
         targetPrompt = "[E] Access Lunar Base Alpha Science Terminal";
       }
 
       // 3. Communications Mast ([-14.0, -18.0, -100.0])
       const distToMast = p.distanceTo(new THREE.Vector3(-14.0, -18.0, -100.0));
-      if (distToMast < 4.2) {
+      if (distToMast < 5.5) {
         targetId = "lunar_comms_mast";
         targetPrompt = "[E] Inspect Deep Space Relay Antenna";
       }
 
       // 4. Collectible Lunar Core Geological Sample (CORE-GEO-01)
       const distToSample = p.distanceTo(new THREE.Vector3(8.5, -18.0, -98.0));
-      if (distToSample < 3.2 && !gameState.lunarSampleCollected) {
+      if (distToSample < 5.0 && !gameState.lunarSampleCollected) {
         targetId = "lunar_sample";
         targetPrompt = "[E] Collect Lunar Regolith Core Sample (CORE-GEO-01)";
       }
 
       // 5. Deploy Apollo ALSEP Lunar Science Station (at designated deployment site [5.0, -18.0, -104.0])
       const distToAlsepSite = p.distanceTo(new THREE.Vector3(5.0, -18.0, -104.0));
-      if (distToAlsepSite < 4.5 && gameState.inventory.includes("ALSEP_KIT") && !gameState.alsepDeployed) {
+      if (distToAlsepSite < 7.5 && gameState.inventory.includes("ALSEP_KIT") && !gameState.alsepDeployed) {
         targetId = "deploy_alsep";
         targetPrompt = "[E / 4] Deploy Apollo ALSEP Lunar Science Station";
       }
     } else {
       // 1. Briefing Table (Command Deck: [0, 0, 11])
       const distToBriefing = p.distanceTo(new THREE.Vector3(0, 0, 11));
-      if (distToBriefing < 3.2) {
+      if (distToBriefing < 4.0) {
         targetId = "briefing_table";
         targetPrompt = "[E] Review Mission Briefing";
       }
 
       // 2. Left Workbench - Toolkit
       const distToToolkit = p.distanceTo(new THREE.Vector3(-3.4, 0, 0.5));
-      if (distToToolkit < 3.0 && !gameState.inventory.includes("TOOLKIT")) {
+      if (distToToolkit < 4.2 && !gameState.inventory.includes("TOOLKIT")) {
         targetId = "ws_toolkit";
-        targetPrompt = "[E] Pick up Aerospace Toolkit";
+        targetPrompt = "[E] Pick up Aerospace Toolkit [1]";
       }
 
       // 3. Right Workbench - Solar Wing
       const distToSolar = p.distanceTo(new THREE.Vector3(3.4, 0, -0.2));
-      if (distToSolar < 3.0 && !gameState.inventory.includes("SOLAR_WING")) {
+      if (distToSolar < 4.2 && !gameState.inventory.includes("SOLAR_WING")) {
         targetId = "ws_solar_wing";
-        targetPrompt = "[E] Pick up GaAs Solar Array (28W)";
+        targetPrompt = "[E] Pick up GaAs Solar Array (28W) [2]";
       }
 
       // 4. Right Workbench - S-Band Antenna
       const distToAntenna = p.distanceTo(new THREE.Vector3(3.4, 0, 1.2));
-      if (distToAntenna < 3.0 && !gameState.inventory.includes("SBAND_ANTENNA")) {
+      if (distToAntenna < 4.2 && !gameState.inventory.includes("SBAND_ANTENNA")) {
         targetId = "ws_sband_antenna";
-        targetPrompt = "[E] Pick up S-Band Transceiver";
+        targetPrompt = "[E] Pick up S-Band Transceiver [3]";
+      }
+
+      // 4b. Streamlined Workshop Auto-Equip Action (when inside workshop corridor)
+      const hasAllWorkshopGear =
+        gameState.inventory.includes("TOOLKIT") &&
+        gameState.inventory.includes("SOLAR_WING") &&
+        gameState.inventory.includes("SBAND_ANTENNA");
+      if (!targetId && !hasAllWorkshopGear && p.z >= -3.5 && p.z <= 4.5 && Math.abs(p.x) < 4.5) {
+        targetId = "ws_equip_all";
+        targetPrompt = "[E] Equip All EVA Repair Gear (Toolkit, Wing, Antenna)";
       }
 
       // 5. Airlock Console
       const distToAirlockConsole = p.distanceTo(new THREE.Vector3(-1.85, 0, -8.0));
-      if (distToAirlockConsole < 3.0) {
+      if (distToAirlockConsole < 4.5) {
         targetId = "airlock_console";
         if (gameState.airlockStatus === "PRESSURIZED") {
           targetPrompt = "[E] Cycle Airlock (Depressurize to Vacuum)";
@@ -737,22 +747,16 @@ export function PlayerController({
 
       // 6. Damaged Satellite `AERO-3X`
       const distToSatellite = p.distanceTo(new THREE.Vector3(0, 0, -22.0));
-      if (distToSatellite < 4.2) {
+      if (distToSatellite < 5.8) {
         targetId = "satellite_repair";
         if (!gameState.satellite.wingRemoved) {
-          targetPrompt = gameState.inventory.includes("TOOLKIT")
-            ? "[E] Detach Damaged Solar Wing"
-            : "Damaged Solar Wing (Requires Toolkit)";
+          targetPrompt = "[E] Repair Step 1/4: Detach Damaged Solar Wing";
         } else if (!gameState.satellite.wingMounted) {
-          targetPrompt = gameState.inventory.includes("SOLAR_WING")
-            ? "[E] Mount Replacement GaAs Solar Wing"
-            : "Solar Mount Empty (Requires Solar Wing)";
+          targetPrompt = "[E] Repair Step 2/4: Mount GaAs Solar Array";
         } else if (!gameState.satellite.antennaMounted) {
-          targetPrompt = gameState.inventory.includes("SBAND_ANTENNA")
-            ? "[E] Install S-Band Transceiver Antenna"
-            : "Antenna Port Empty (Requires S-Band Antenna)";
+          targetPrompt = "[E] Repair Step 3/4: Install S-Band Transceiver";
         } else if (!gameState.satellite.diagnosticRun) {
-          targetPrompt = "[E] Run Avionics Diagnostics";
+          targetPrompt = "[E] Repair Step 4/4: Run Avionics Diagnostics & Lock Telemetry";
         } else {
           targetPrompt = "AERO-3X Restored · Telemetry Active";
         }
@@ -760,22 +764,22 @@ export function PlayerController({
 
       // 7. Life Support Recharging Station (Command Deck West Wall)
       const distToLifeSupport = p.distanceTo(new THREE.Vector3(-4.3, 1.3, 8.5));
-      if (distToLifeSupport < 3.0) {
+      if (distToLifeSupport < 3.5) {
         targetId = "life_support";
         targetPrompt = "[E] Refill Suit Oxygen & Recharge Battery";
       }
 
       // 8. Board Spacecraft Shuttle ORV-1 (Exterior Gantry Berth)
       const distToSpacecraft = p.distanceTo(new THREE.Vector3(0, 0.8, -28.0));
-      if (distToSpacecraft < 4.5) {
+      if (distToSpacecraft < 5.5) {
         targetId = "board_spacecraft";
         targetPrompt = gameState.satellite.diagnosticRun
           ? "[E] Enter Spacecraft Cockpit (Prepare for Flight)"
           : "Orbital Shuttle Standby (Satellite Repair Required First)";
       }
 
-      // 9. HANGAR SANDBOX STATIONS (Workstations around Assembly Bay)
-      if (gameState.step === "HANGAR_ASSEMBLY" || p.z < 6.0) {
+      // 9. HANGAR SANDBOX STATIONS (Workstations strictly for HANGAR_SANDBOX game mode)
+      if (gameState.step === "HANGAR_ASSEMBLY") {
         // Station 1: Chassis Selection Workstation ([-3.7, 0, -1.8])
         const distChassisWs = p.distanceTo(new THREE.Vector3(-3.5, 0, -1.8));
         if (distChassisWs < 2.8) {

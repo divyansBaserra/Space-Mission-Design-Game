@@ -283,6 +283,146 @@ export function HUD({
             {directive.action}
           </div>
 
+          {/* Smart 1-Click Mission Assist Action Pill (Guarantees effortless progression for all players) */}
+          <div style={{ display: "flex", gap: "8px", marginTop: "4px", flexWrap: "wrap" }}>
+            {gameState.step === "BRIEFING" && (
+              <button
+                onClick={() => onInteractHangar?.("briefing_table")}
+                style={{
+                  padding: "4px 10px",
+                  fontSize: "11px",
+                  fontWeight: 700,
+                  backgroundColor: "rgba(14, 165, 233, 0.25)",
+                  border: "1px solid #38bdf8",
+                  color: "#38bdf8",
+                  borderRadius: "3px",
+                  cursor: "pointer",
+                }}
+              >
+                [▶ PROCEED: REVIEW BRIEFING]
+              </button>
+            )}
+            {gameState.step === "COLLECT_EQUIPMENT" && (
+              <button
+                onClick={() => onInteractHangar?.("ws_equip_all")}
+                style={{
+                  padding: "4px 10px",
+                  fontSize: "11px",
+                  fontWeight: 700,
+                  backgroundColor: "rgba(234, 179, 8, 0.25)",
+                  border: "1px solid #facc15",
+                  color: "#fde047",
+                  borderRadius: "3px",
+                  cursor: "pointer",
+                }}
+              >
+                [⚡ 1-CLICK: EQUIP ALL WORKSHOP GEAR]
+              </button>
+            )}
+            {gameState.step === "ENTER_AIRLOCK" && (
+              <button
+                onClick={() => onInteractHangar?.("airlock_console")}
+                style={{
+                  padding: "4px 10px",
+                  fontSize: "11px",
+                  fontWeight: 700,
+                  backgroundColor: "rgba(239, 68, 68, 0.25)",
+                  border: "1px solid #ef4444",
+                  color: "#fca5a5",
+                  borderRadius: "3px",
+                  cursor: "pointer",
+                }}
+              >
+                [⚡ CYCLE AIRLOCK TO VACUUM]
+              </button>
+            )}
+            {(gameState.step === "EVA_APPROACH_SATELLITE" || gameState.step === "REPAIR_SATELLITE") && (
+              <button
+                onClick={() => onInteractHangar?.("satellite_repair")}
+                style={{
+                  padding: "4px 10px",
+                  fontSize: "11px",
+                  fontWeight: 700,
+                  backgroundColor: "rgba(34, 197, 94, 0.25)",
+                  border: "1px solid #22c55e",
+                  color: "#86efac",
+                  borderRadius: "3px",
+                  cursor: "pointer",
+                }}
+              >
+                [🔧 EXECUTE SATELLITE REPAIR STEP]
+              </button>
+            )}
+            {gameState.step === "BOARD_SPACECRAFT" && (
+              <button
+                onClick={() => onInteractHangar?.("board_spacecraft")}
+                style={{
+                  padding: "4px 10px",
+                  fontSize: "11px",
+                  fontWeight: 700,
+                  backgroundColor: "rgba(56, 189, 248, 0.25)",
+                  border: "1px solid #38bdf8",
+                  color: "#38bdf8",
+                  borderRadius: "3px",
+                  cursor: "pointer",
+                }}
+              >
+                [🚀 BOARD SHUTTLE ORV-1 COCKPIT]
+              </button>
+            )}
+            {isSurface && !gameState.alsepDeployed && (
+              <button
+                onClick={() => onInteractHangar?.("deploy_alsep")}
+                style={{
+                  padding: "4px 10px",
+                  fontSize: "11px",
+                  fontWeight: 700,
+                  backgroundColor: "rgba(234, 179, 8, 0.25)",
+                  border: "1px solid #facc15",
+                  color: "#fde047",
+                  borderRadius: "3px",
+                  cursor: "pointer",
+                }}
+              >
+                [📡 DEPLOY APOLLO ALSEP STATION]
+              </button>
+            )}
+            {isSurface && !gameState.lunarSampleCollected && (
+              <button
+                onClick={() => onInteractHangar?.("lunar_sample")}
+                style={{
+                  padding: "4px 10px",
+                  fontSize: "11px",
+                  fontWeight: 700,
+                  backgroundColor: "rgba(56, 189, 248, 0.25)",
+                  border: "1px solid #38bdf8",
+                  color: "#7dd3fc",
+                  borderRadius: "3px",
+                  cursor: "pointer",
+                }}
+              >
+                [💎 COLLECT CORE-GEO-01 SAMPLE]
+              </button>
+            )}
+            {isSurface && gameState.alsepDeployed && gameState.lunarSampleCollected && (
+              <button
+                onClick={() => onInteractHangar?.("board_spacecraft_surface")}
+                style={{
+                  padding: "4px 10px",
+                  fontSize: "11px",
+                  fontWeight: 700,
+                  backgroundColor: "rgba(34, 197, 94, 0.25)",
+                  border: "1px solid #22c55e",
+                  color: "#86efac",
+                  borderRadius: "3px",
+                  cursor: "pointer",
+                }}
+              >
+                [🚀 BOARD SHUTTLE FOR ASCENT]
+              </button>
+            )}
+          </div>
+
           {gameState.substepText && gameState.substepText !== directive.action && (
             <div style={{ fontSize: "11px", color: "#94a3b8", fontWeight: 500, borderTop: "1px solid rgba(255, 255, 255, 0.08)", paddingTop: "4px" }}>
               TELEMETRY: {gameState.substepText}
