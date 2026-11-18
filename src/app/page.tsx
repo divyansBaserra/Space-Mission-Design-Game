@@ -2,6 +2,10 @@
 
 import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { SpacecraftViewport } from "@/components/viewport";
+import {
+  SolarSystemInspectorHUD,
+  PLANETS_CATALOG,
+} from "@/components/viewport/SolarSystemScene";
 import { GameManager } from "@/game/GameManager";
 import AegisGameManager from "@/game/aegis/AegisGameManager";
 import EuropaGameManager from "@/game/europa/EuropaGameManager";
@@ -597,7 +601,13 @@ export default function SpaceMissionGame() {
   // Navigation Stage: Boot into Main Menu (Cinematic Interstellar Vista)
   const [stage, setStage] = useState<GameStage>("MAIN_MENU");
   const [viewMode, setViewMode] = useState<"SPACECRAFT" | "ORBIT">("SPACECRAFT");
-  const [mainMenuCosmicMode, setMainMenuCosmicMode] = useState<"BLACK_HOLE" | "ORBIT">("BLACK_HOLE");
+  const [mainMenuCosmicMode, setMainMenuCosmicMode] = useState<"SOLAR_SYSTEM" | "ORBIT" | "BLACK_HOLE">("SOLAR_SYSTEM");
+  const [selectedPlanetId, setSelectedPlanetId] = useState<string | null>(null);
+
+  const selectedPlanetData = useMemo(() => {
+    if (!selectedPlanetId) return null;
+    return PLANETS_CATALOG.find((p) => p.id === selectedPlanetId) ?? null;
+  }, [selectedPlanetId]);
   const [workshopActiveTab, setWorkshopActiveTab] = useState<"CHASSIS" | "SOLAR" | "BATTERY" | "PAYLOAD" | "PROPULSION" | "TELECOM">("CHASSIS");
   const [solarArrayDeployedInHangar, setSolarArrayDeployedInHangar] = useState<boolean>(true);
   const [hangarThrusterActive, setHangarThrusterActive] = useState<boolean>(false);
@@ -1508,7 +1518,7 @@ export default function SpaceMissionGame() {
   if (stage === "MAIN_MENU") {
     return (
       <main style={{ position: "relative", width: "100vw", height: "100vh", overflow: "hidden", backgroundColor: "#06080c" }}>
-        {/* Fullscreen 3D Celestial Background Viewport (Interstellar Black Hole or Blue Marble Earth) */}
+        {/* Fullscreen 3D Celestial Background Viewport (Solar System Orrery, Earth Blue Marble, or Interstellar Black Hole) */}
         <div style={{ position: "absolute", inset: 0, zIndex: 1 }}>
           <SpacecraftViewport
             busSize="3U"
@@ -1522,6 +1532,8 @@ export default function SpaceMissionGame() {
             isEclipse={false}
             orbitAltitudeKm={600}
             orbitProgress={mainMenuOrbitProgress}
+            selectedPlanetId={selectedPlanetId}
+            onSelectPlanet={setSelectedPlanetId}
           />
         </div>
 
@@ -1544,24 +1556,24 @@ export default function SpaceMissionGame() {
               <div style={{ display: "flex", gap: "4px", backgroundColor: "rgba(15, 23, 42, 0.85)", padding: "4px", border: "1px solid rgba(56, 189, 248, 0.3)", borderRadius: "4px", backdropFilter: "blur(8px)", flexShrink: 0 }}>
                 <button
                   onClick={() => {
-                    setMainMenuCosmicMode("BLACK_HOLE");
+                    setMainMenuCosmicMode("SOLAR_SYSTEM");
                     soundManager.playEquip();
                   }}
                   style={{
                     padding: "6px 12px",
                     fontSize: "11px",
                     fontWeight: 700,
-                    backgroundColor: mainMenuCosmicMode === "BLACK_HOLE" ? "rgba(245, 158, 11, 0.25)" : "transparent",
-                    border: mainMenuCosmicMode === "BLACK_HOLE" ? "1px solid #f59e0b" : "1px solid transparent",
-                    color: mainMenuCosmicMode === "BLACK_HOLE" ? "#fbbf24" : "#94a3b8",
+                    backgroundColor: mainMenuCosmicMode === "SOLAR_SYSTEM" ? "rgba(56, 189, 248, 0.28)" : "transparent",
+                    border: mainMenuCosmicMode === "SOLAR_SYSTEM" ? "1px solid #38bdf8" : "1px solid transparent",
+                    color: mainMenuCosmicMode === "SOLAR_SYSTEM" ? "#38bdf8" : "#94a3b8",
                     borderRadius: "2px",
                     cursor: "pointer",
                     letterSpacing: "0.04em",
                     whiteSpace: "nowrap",
                   }}
-                  title="Interstellar-style Gravitational Lensing Black Hole with Relativistic Accretion Disk"
+                  title="Photorealistic 3D Solar System Orrery with 8 Planets, Asteroid Belt & NASA Telemetry"
                 >
-                  GARGANTUA BLACK HOLE
+                  SOLAR SYSTEM
                 </button>
                 <button
                   onClick={() => {
@@ -1583,6 +1595,27 @@ export default function SpaceMissionGame() {
                   title="Photorealistic Blue Marble Earth with Rayleigh Scattering"
                 >
                   EARTH BLUE MARBLE
+                </button>
+                <button
+                  onClick={() => {
+                    setMainMenuCosmicMode("BLACK_HOLE");
+                    soundManager.playEquip();
+                  }}
+                  style={{
+                    padding: "6px 12px",
+                    fontSize: "11px",
+                    fontWeight: 700,
+                    backgroundColor: mainMenuCosmicMode === "BLACK_HOLE" ? "rgba(245, 158, 11, 0.25)" : "transparent",
+                    border: mainMenuCosmicMode === "BLACK_HOLE" ? "1px solid #f59e0b" : "1px solid transparent",
+                    color: mainMenuCosmicMode === "BLACK_HOLE" ? "#fbbf24" : "#94a3b8",
+                    borderRadius: "2px",
+                    cursor: "pointer",
+                    letterSpacing: "0.04em",
+                    whiteSpace: "nowrap",
+                  }}
+                  title="Interstellar-style Gravitational Lensing Black Hole with Relativistic Accretion Disk"
+                >
+                  GARGANTUA BLACK HOLE
                 </button>
               </div>
             </div>
@@ -1611,183 +1644,203 @@ export default function SpaceMissionGame() {
             </div>
           </header>
 
-          {/* Center / Left Main Menu Actions */}
-          <div style={{ maxWidth: "440px", display: "flex", flexDirection: "column", gap: "var(--space-3)", pointerEvents: "auto" }}>
-            {/* Mission Intel & How to Play Button */}
-            <button
-              onClick={() => {
-                soundManager.playEquip();
-                setShowWelcomeGuide(true);
-              }}
-              style={{
-                padding: "12px 18px",
-                backgroundColor: "rgba(14, 165, 233, 0.2)",
-                border: "1px solid #38bdf8",
-                color: "#38bdf8",
-                fontWeight: 700,
-                fontSize: "12px",
-                textAlign: "left",
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                borderRadius: "3px",
-                cursor: "pointer",
-                backdropFilter: "blur(8px)",
-                letterSpacing: "0.04em",
-                boxShadow: "0 0 15px rgba(56, 189, 248, 0.2)",
-              }}
-            >
-              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                <span style={{ fontSize: "14px" }}>ℹ</span>
-                <span>HOW TO PLAY &amp; MISSION MODES GUIDE</span>
-              </div>
-              <span style={{ fontSize: "12px", fontWeight: 700, backgroundColor: "#0284c7", color: "#ffffff", padding: "2px 8px", borderRadius: "2px" }}>[OPEN GUIDE]</span>
-            </button>
+          {/* Main Menu Body: Left Actions + Right Solar System Inspector HUD */}
+          <div style={{ display: "flex", flex: 1, minHeight: 0, justifyContent: "space-between", alignItems: "flex-end", gap: "24px", pointerEvents: "none", marginBottom: "8px" }}>
+            {/* Center / Left Main Menu Actions */}
+            <div style={{ maxWidth: "440px", width: "100%", display: "flex", flexDirection: "column", gap: "var(--space-3)", pointerEvents: "auto", flexShrink: 0 }}>
+              {/* Mission Intel & How to Play Button */}
+              <button
+                onClick={() => {
+                  soundManager.playEquip();
+                  setShowWelcomeGuide(true);
+                }}
+                style={{
+                  padding: "12px 18px",
+                  backgroundColor: "rgba(14, 165, 233, 0.2)",
+                  border: "1px solid #38bdf8",
+                  color: "#38bdf8",
+                  fontWeight: 700,
+                  fontSize: "12px",
+                  textAlign: "left",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  borderRadius: "3px",
+                  cursor: "pointer",
+                  backdropFilter: "blur(8px)",
+                  letterSpacing: "0.04em",
+                  boxShadow: "0 0 15px rgba(56, 189, 248, 0.2)",
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <span style={{ fontSize: "14px" }}>ℹ</span>
+                  <span>HOW TO PLAY &amp; MISSION MODES GUIDE</span>
+                </div>
+                <span style={{ fontSize: "12px", fontWeight: 700, backgroundColor: "#0284c7", color: "#ffffff", padding: "2px 8px", borderRadius: "2px" }}>[OPEN GUIDE]</span>
+              </button>
 
-            <button
-              onClick={() => {
-                soundManager.playEquip();
-                setStage("FIRST_PERSON_GAME");
-              }}
-              style={{
-                padding: "16px 20px",
-                backgroundColor: "rgba(2, 132, 199, 0.25)",
-                border: "1px solid #38bdf8",
-                color: "#38bdf8",
-                fontWeight: 700,
-                fontSize: "var(--text-sm)",
-                textAlign: "left",
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                transition: "all var(--duration-fast)",
-                backdropFilter: "blur(8px)",
-                boxShadow: "0 4px 20px rgba(56, 189, 248, 0.15)",
-                cursor: "pointer",
-              }}
-            >
-              <div>
-                <div style={{ fontSize: "13px", fontWeight: 700, color: "#ffffff" }}>1. PLAY GAME 01: OPERATION ARTEMIS-VII</div>
-                <div style={{ fontSize: "11px", color: "#38bdf8", fontWeight: 500, marginTop: "2px" }}>Gateway-1 Orbital Facility &amp; Shackleton Lunar Touchdown</div>
-              </div>
-              <span style={{ fontSize: "18px" }}>→</span>
-            </button>
+              <button
+                onClick={() => {
+                  soundManager.playEquip();
+                  setStage("FIRST_PERSON_GAME");
+                }}
+                style={{
+                  padding: "16px 20px",
+                  backgroundColor: "rgba(2, 132, 199, 0.25)",
+                  border: "1px solid #38bdf8",
+                  color: "#38bdf8",
+                  fontWeight: 700,
+                  fontSize: "var(--text-sm)",
+                  textAlign: "left",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  transition: "all var(--duration-fast)",
+                  backdropFilter: "blur(8px)",
+                  boxShadow: "0 4px 20px rgba(56, 189, 248, 0.15)",
+                  cursor: "pointer",
+                }}
+              >
+                <div>
+                  <div style={{ fontSize: "13px", fontWeight: 700, color: "#ffffff" }}>1. PLAY GAME 01: OPERATION ARTEMIS-VII</div>
+                  <div style={{ fontSize: "11px", color: "#38bdf8", fontWeight: 500, marginTop: "2px" }}>Gateway-1 Orbital Facility &amp; Shackleton Lunar Touchdown</div>
+                </div>
+                <span style={{ fontSize: "18px" }}>→</span>
+              </button>
 
-            <button
-              onClick={() => {
-                soundManager.playEquip();
-                setStage("PROJECT_AEGIS_GAME");
-              }}
-              style={{
-                padding: "16px 20px",
-                backgroundColor: "rgba(180, 83, 9, 0.25)",
-                border: "1px solid #f59e0b",
-                color: "#f59e0b",
-                fontWeight: 700,
-                fontSize: "var(--text-sm)",
-                textAlign: "left",
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                transition: "all var(--duration-fast)",
-                backdropFilter: "blur(8px)",
-                boxShadow: "0 4px 20px rgba(245, 158, 11, 0.2)",
-                cursor: "pointer",
-              }}
-            >
-              <div>
-                <div style={{ fontSize: "13px", fontWeight: 700, color: "#ffffff" }}>2. PLAY GAME 02: PROJECT AEGIS (DART DEFLECTION)</div>
-                <div style={{ fontSize: "11px", color: "#fbbf24", fontWeight: 500, marginTop: "2px" }}>Mars Oberth Slingshot · SMART Nav · 6.2 km/s Kinetic Impact</div>
-              </div>
-              <span style={{ fontSize: "18px" }}>→</span>
-            </button>
+              <button
+                onClick={() => {
+                  soundManager.playEquip();
+                  setStage("PROJECT_AEGIS_GAME");
+                }}
+                style={{
+                  padding: "16px 20px",
+                  backgroundColor: "rgba(180, 83, 9, 0.25)",
+                  border: "1px solid #f59e0b",
+                  color: "#f59e0b",
+                  fontWeight: 700,
+                  fontSize: "var(--text-sm)",
+                  textAlign: "left",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  transition: "all var(--duration-fast)",
+                  backdropFilter: "blur(8px)",
+                  boxShadow: "0 4px 20px rgba(245, 158, 11, 0.2)",
+                  cursor: "pointer",
+                }}
+              >
+                <div>
+                  <div style={{ fontSize: "13px", fontWeight: 700, color: "#ffffff" }}>2. PLAY GAME 02: PROJECT AEGIS (DART DEFLECTION)</div>
+                  <div style={{ fontSize: "11px", color: "#fbbf24", fontWeight: 500, marginTop: "2px" }}>Mars Oberth Slingshot · SMART Nav · 6.2 km/s Kinetic Impact</div>
+                </div>
+                <span style={{ fontSize: "18px" }}>→</span>
+              </button>
 
-            <button
-              onClick={() => {
-                soundManager.playEquip();
-                setStage("PROJECT_EUROPA_GAME");
-              }}
-              style={{
-                padding: "16px 20px",
-                backgroundColor: "rgba(14, 165, 233, 0.25)",
-                border: "1px solid #38bdf8",
-                color: "#38bdf8",
-                fontWeight: 700,
-                fontSize: "var(--text-sm)",
-                textAlign: "left",
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                transition: "all var(--duration-fast)",
-                backdropFilter: "blur(8px)",
-                boxShadow: "0 4px 20px rgba(56, 189, 248, 0.2)",
-                cursor: "pointer",
-              }}
-            >
-              <div>
-                <div style={{ fontSize: "13px", fontWeight: 700, color: "#ffffff" }}>3. PLAY GAME 03: PROJECT EUROPA (ABYSS OF JUPITER)</div>
-                <div style={{ fontSize: "11px", color: "#7dd3fc", fontWeight: 500, marginTop: "2px" }}>900°C Cryo-Melt Probe · 130 MPa Abyssal Submarine · Alien RNA Discovery</div>
-              </div>
-              <span style={{ fontSize: "18px" }}>→</span>
-            </button>
+              <button
+                onClick={() => {
+                  soundManager.playEquip();
+                  setStage("PROJECT_EUROPA_GAME");
+                }}
+                style={{
+                  padding: "16px 20px",
+                  backgroundColor: "rgba(14, 165, 233, 0.25)",
+                  border: "1px solid #38bdf8",
+                  color: "#38bdf8",
+                  fontWeight: 700,
+                  fontSize: "var(--text-sm)",
+                  textAlign: "left",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  transition: "all var(--duration-fast)",
+                  backdropFilter: "blur(8px)",
+                  boxShadow: "0 4px 20px rgba(56, 189, 248, 0.2)",
+                  cursor: "pointer",
+                }}
+              >
+                <div>
+                  <div style={{ fontSize: "13px", fontWeight: 700, color: "#ffffff" }}>3. PLAY GAME 03: PROJECT EUROPA (ABYSS OF JUPITER)</div>
+                  <div style={{ fontSize: "11px", color: "#7dd3fc", fontWeight: 500, marginTop: "2px" }}>900°C Cryo-Melt Probe · 130 MPa Abyssal Submarine · Alien RNA Discovery</div>
+                </div>
+                <span style={{ fontSize: "18px" }}>→</span>
+              </button>
 
-            <button
-              onClick={() => {
-                soundManager.playEquip();
-                setStage("MANUAL");
-              }}
-              style={{
-                padding: "14px 20px",
-                backgroundColor: "rgba(15, 23, 42, 0.85)",
-                border: "1px solid rgba(255, 255, 255, 0.15)",
-                color: "var(--color-text-secondary)",
-                fontSize: "var(--text-xs)",
-                fontWeight: 500,
-                textAlign: "left",
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                backdropFilter: "blur(8px)",
-                cursor: "pointer",
-              }}
-            >
-              <div>
-                <div style={{ fontSize: "12px", fontWeight: 600, color: "#f8fafc" }}>4. FLIGHT ACADEMY &amp; REFERENCE MANUAL</div>
-                <div style={{ fontSize: "10px", color: "var(--color-text-muted)", marginTop: "2px" }}>CDS Standards, Telecom Link Budgets, JPL Margins</div>
-              </div>
-              <span>→</span>
-            </button>
+              <button
+                onClick={() => {
+                  soundManager.playEquip();
+                  setStage("MANUAL");
+                }}
+                style={{
+                  padding: "14px 20px",
+                  backgroundColor: "rgba(15, 23, 42, 0.85)",
+                  border: "1px solid rgba(255, 255, 255, 0.15)",
+                  color: "var(--color-text-secondary)",
+                  fontSize: "var(--text-xs)",
+                  fontWeight: 500,
+                  textAlign: "left",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  backdropFilter: "blur(8px)",
+                  cursor: "pointer",
+                }}
+              >
+                <div>
+                  <div style={{ fontSize: "12px", fontWeight: 600, color: "#f8fafc" }}>4. FLIGHT ACADEMY &amp; REFERENCE MANUAL</div>
+                  <div style={{ fontSize: "10px", color: "var(--color-text-muted)", marginTop: "2px" }}>CDS Standards, Telecom Link Budgets, JPL Margins</div>
+                </div>
+                <span>→</span>
+              </button>
 
-            {/* NASA Evaluators Direct Code Link Button */}
-            <a
-              href="https://github.com/divyansBaserra/Space-Mission-Design-Game"
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                marginTop: "var(--space-2)",
-                padding: "14px 20px",
-                backgroundColor: "rgba(12, 74, 110, 0.35)",
-                border: "2px solid #38bdf8",
-                color: "#f8fafc",
-                fontSize: "var(--text-xs)",
-                fontWeight: 700,
-                textAlign: "left",
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                textDecoration: "none",
-                boxShadow: "0 0 16px rgba(56, 189, 248, 0.35)",
-                transition: "all 0.15s ease",
-              }}
-            >
-              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="#38bdf8">
-                  <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z" />
-                </svg>
-                <span>5. NASA JUDGES: GITHUB CODEBASE</span>
+              {/* NASA Evaluators Direct Code Link Button */}
+              <a
+                href="https://github.com/divyansBaserra/Space-Mission-Design-Game"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  marginTop: "var(--space-2)",
+                  padding: "14px 20px",
+                  backgroundColor: "rgba(12, 74, 110, 0.35)",
+                  border: "2px solid #38bdf8",
+                  color: "#f8fafc",
+                  fontSize: "var(--text-xs)",
+                  fontWeight: 700,
+                  textAlign: "left",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  textDecoration: "none",
+                  boxShadow: "0 0 16px rgba(56, 189, 248, 0.35)",
+                  transition: "all 0.15s ease",
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="#38bdf8">
+                    <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z" />
+                  </svg>
+                  <span>5. NASA JUDGES: GITHUB CODEBASE</span>
+                </div>
+                <span style={{ color: "#38bdf8", fontWeight: 700 }}>↗</span>
+              </a>
+            </div>
+
+            {/* Right Side: Solar System Inspector HUD if in SOLAR_SYSTEM mode */}
+            {mainMenuCosmicMode === "SOLAR_SYSTEM" && (
+              <div style={{ flex: 1, display: "flex", justifyContent: "center", pointerEvents: "auto", minWidth: 0 }}>
+                <SolarSystemInspectorHUD
+                  selectedPlanet={selectedPlanetData}
+                  onSelectPlanet={(id) => {
+                    soundManager.playEquip();
+                    setSelectedPlanetId(id);
+                  }}
+                  onResetView={() => {
+                    soundManager.playEquip();
+                    setSelectedPlanetId(null);
+                  }}
+                />
               </div>
-              <span style={{ color: "#38bdf8", fontWeight: 700 }}>↗</span>
-            </a>
+            )}
           </div>
 
           {/* Bottom Bar Info */}

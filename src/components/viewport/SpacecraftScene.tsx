@@ -6,6 +6,7 @@ import { Stars } from "@react-three/drei";
 import * as THREE from "three";
 import { RealisticEarth } from "./RealisticEarth";
 import { BlackHoleScene } from "./BlackHoleScene";
+import { SolarSystemScene } from "./SolarSystemScene";
 
 export interface SpacecraftSceneProps {
   busSize?: "1U" | "3U" | "6U";
@@ -16,10 +17,12 @@ export interface SpacecraftSceneProps {
   hasPropulsion?: boolean;
   thrusterActive?: boolean;
   isEclipse?: boolean;
-  viewMode?: "SPACECRAFT" | "ORBIT" | "BLACK_HOLE";
+  viewMode?: "SPACECRAFT" | "ORBIT" | "BLACK_HOLE" | "SOLAR_SYSTEM";
   orbitAltitudeKm?: number;
   orbitProgress?: number; // 0 to 1
   activeStationName?: string | null;
+  selectedPlanetId?: string | null;
+  onSelectPlanet?: (id: string | null) => void;
 }
 
 export function SpacecraftScene({
@@ -35,6 +38,8 @@ export function SpacecraftScene({
   orbitAltitudeKm = 600,
   orbitProgress = 0,
   activeStationName = null,
+  selectedPlanetId = null,
+  onSelectPlanet,
 }: SpacecraftSceneProps) {
   const meshRef = useRef<THREE.Group>(null);
   const earthRef = useRef<THREE.Group>(null);
@@ -91,6 +96,18 @@ export function SpacecraftScene({
   const wingSpan = 1.15;
   const wingHeight = heightMultiplier * 0.82;
   const wingXOffset = halfW;
+
+  // ==========================================================================
+  // VIEW MODE: PHOTOREALISTIC 3D SOLAR SYSTEM ORRERY
+  // ==========================================================================
+  if (viewMode === "SOLAR_SYSTEM") {
+    return (
+      <SolarSystemScene
+        selectedPlanetId={selectedPlanetId}
+        onSelectPlanet={onSelectPlanet}
+      />
+    );
+  }
 
   // ==========================================================================
   // VIEW MODE: INTERSTELLAR GRAVITATIONAL LENSING BLACK HOLE (Gargantua)
