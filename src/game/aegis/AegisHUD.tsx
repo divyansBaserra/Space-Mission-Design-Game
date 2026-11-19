@@ -24,6 +24,7 @@ export interface AegisHUDProps {
   onFireRcs: (dirX: number, dirY: number) => void;
   onNextAct: () => void;
   onReturnToHub: () => void;
+  onLaunchEuropa?: () => void;
 }
 
 export function AegisHUD({
@@ -46,6 +47,7 @@ export function AegisHUD({
   onFireRcs,
   onNextAct,
   onReturnToHub,
+  onLaunchEuropa,
 }: AegisHUDProps) {
   return (
     <div style={{ position: "absolute", inset: 0, pointerEvents: "none", zIndex: 10, display: "flex", flexDirection: "column", justifyContent: "space-between", padding: "16px 20px" }}>
@@ -424,24 +426,63 @@ export function AegisHUD({
             </div>
           </div>
 
-          <button
-            onClick={onReturnToHub}
+          {/* Narrative Story Bridge to Act III: Project Europa */}
+          <div
             style={{
-              width: "100%",
-              padding: "12px",
-              backgroundColor: "#15803d",
-              border: "1.5px solid #22c55e",
-              color: "#ffffff",
-              fontSize: "12px",
-              fontWeight: 800,
+              backgroundColor: "rgba(14, 165, 233, 0.12)",
+              border: "1.5px solid #38bdf8",
+              padding: "12px 16px",
               borderRadius: "4px",
-              cursor: "pointer",
-              letterSpacing: "0.06em",
-              boxShadow: "0 0 16px rgba(34, 197, 94, 0.4)",
+              width: "100%",
+              textAlign: "left",
             }}
           >
-            RECORD PLANETARY DEFENSE VICTORY &amp; RETURN TO HUB →
-          </button>
+            <div style={{ fontSize: "11px", color: "#38bdf8", fontWeight: 800, letterSpacing: "0.08em" }}>
+              SPECTROMETRIC DISCOVERY // CAMPAIGN ACT III UNLOCKED
+            </div>
+            <div style={{ fontSize: "12px", color: "#f8fafc", lineHeight: 1.45, marginTop: "2px" }}>
+              LICIACube LUKE spectrometer confirms complex biogenic polymers and prebiotic amino acids in the asteroid ejecta plume! Orbital dynamics trace the parent body to Jupiter&apos;s ice moon Europa. NASA has authorized <strong>PROJECT EUROPA (ABYSS OF JUPITER)</strong>.
+            </div>
+          </div>
+
+          <div style={{ display: "flex", gap: "10px", width: "100%" }}>
+            <button
+              onClick={onReturnToHub}
+              style={{
+                flex: 1,
+                padding: "12px",
+                backgroundColor: "rgba(30, 41, 59, 0.8)",
+                border: "1.5px solid rgba(255,255,255,0.2)",
+                color: "#cbd5e1",
+                fontSize: "12px",
+                fontWeight: 700,
+                borderRadius: "4px",
+                cursor: "pointer",
+              }}
+            >
+              Return to Hub
+            </button>
+            {onLaunchEuropa && (
+              <button
+                onClick={onLaunchEuropa}
+                style={{
+                  flex: 2,
+                  padding: "12px 18px",
+                  backgroundColor: "#0284c7",
+                  border: "1.5px solid #38bdf8",
+                  color: "#ffffff",
+                  fontSize: "12px",
+                  fontWeight: 800,
+                  borderRadius: "4px",
+                  cursor: "pointer",
+                  letterSpacing: "0.04em",
+                  boxShadow: "0 0 16px rgba(56, 189, 248, 0.4)",
+                }}
+              >
+                PROCEED TO GAME 03: PROJECT EUROPA →
+              </button>
+            )}
+          </div>
         </div>
       )}
 

@@ -1499,7 +1499,10 @@ export default function SpaceMissionGame() {
   if (stage === "PROJECT_AEGIS_GAME") {
     return (
       <main style={{ position: "relative", width: "100vw", height: "100vh", overflow: "hidden", backgroundColor: "#040608" }}>
-        <AegisGameManager onReturnToHub={() => setStage("MAIN_MENU")} />
+        <AegisGameManager
+          onReturnToHub={() => setStage("MAIN_MENU")}
+          onLaunchEuropa={() => setStage("PROJECT_EUROPA_GAME")}
+        />
       </main>
     );
   }

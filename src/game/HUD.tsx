@@ -2483,34 +2483,75 @@ export function HUD({
               </div>
             </div>
 
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px" }}>
+            {/* Narrative Story Bridge to Act II: Project Aegis */}
+            <div
+              style={{
+                backgroundColor: "rgba(245, 158, 11, 0.12)",
+                border: "1.5px solid #f59e0b",
+                padding: "14px 18px",
+                borderRadius: "4px",
+                display: "flex",
+                flexDirection: "column",
+                gap: "6px",
+              }}
+            >
+              <div style={{ fontSize: "11px", color: "#fbbf24", fontWeight: 800, letterSpacing: "0.08em" }}>
+                INCOMING ALERT: LUNAR RADAR WARNING // CAMPAIGN ACT II UNLOCKED
+              </div>
+              <div style={{ fontSize: "12px", color: "#f8fafc", lineHeight: 1.45 }}>
+                Long-range radar on Lunar Base Alpha has tracked an uncatalogued hazardous asteroid (2032-XK Didymos) on an imminent Earth collision trajectory! Planetary Defense has authorized <strong>PROJECT AEGIS (DART-II)</strong> to intercept.
+              </div>
+            </div>
+
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", flexWrap: "wrap" }}>
               <button
                 onClick={onRestartMission}
                 style={{
-                  padding: "10px 20px",
+                  padding: "10px 18px",
                   backgroundColor: "rgba(30, 41, 59, 0.8)",
-                  color: "#f8fafc",
+                  color: "#cbd5e1",
                   border: "1px solid rgba(255, 255, 255, 0.15)",
                   fontSize: "12px",
                   fontWeight: 600,
                   cursor: "pointer",
+                  borderRadius: "3px",
                 }}
               >
-                Restart Mission
+                Replay Mission 01
               </button>
               <button
                 onClick={() => onReturnToHub?.()}
                 style={{
-                  padding: "10px 20px",
-                  backgroundColor: "#22c55e",
-                  color: "#052e16",
-                  border: "1px solid #86efac",
+                  padding: "10px 18px",
+                  backgroundColor: "rgba(30, 41, 59, 0.8)",
+                  color: "#cbd5e1",
+                  border: "1px solid rgba(255, 255, 255, 0.15)",
                   fontSize: "12px",
-                  fontWeight: 700,
+                  fontWeight: 600,
                   cursor: "pointer",
+                  borderRadius: "3px",
                 }}
               >
-                Return to Flight Operations Hub →
+                Return to Hub
+              </button>
+              <button
+                onClick={() => {
+                  onSelectFlightContract?.("AEGIS_DART");
+                }}
+                style={{
+                  padding: "10px 22px",
+                  backgroundColor: "#b45309",
+                  color: "#ffffff",
+                  border: "1.5px solid #f59e0b",
+                  fontSize: "12px",
+                  fontWeight: 800,
+                  cursor: "pointer",
+                  borderRadius: "3px",
+                  boxShadow: "0 0 16px rgba(245, 158, 11, 0.4)",
+                  letterSpacing: "0.04em",
+                }}
+              >
+                PROCEED TO GAME 02: PROJECT AEGIS →
               </button>
             </div>
           </div>

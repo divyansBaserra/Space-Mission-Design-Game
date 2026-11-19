@@ -470,22 +470,23 @@ export default function EuropaHUD({
             }}
           >
             <div style={{ fontSize: "11px", color: sampleCollected ? "#22c55e" : "#f59e0b", fontWeight: 800 }}>
-              {sampleCollected ? "EXTRATERRESTRIAL LIFE CONFIRMED // ALIEN RNA ANALOGS" : "ROBOTIC MANIPULATOR CLAW ONLINE"}
+              {sampleCollected ? "TRILOGY CAMPAIGN COMPLETE // EXTRATERRESTRIAL LIFE CONFIRMED" : "ROBOTIC MANIPULATOR CLAW ONLINE"}
             </div>
             <div style={{ fontSize: "13px", color: "#f8fafc", fontWeight: 700, marginTop: "4px" }}>
-              Hydrothermal Black Smoker Mineral Crust &amp; Bioluminescent Microbial Mat
+              {sampleCollected
+                ? "NASA Space Mission Design Trilogy Successfully Completed!"
+                : "Hydrothermal Black Smoker Mineral Crust & Bioluminescent Microbial Mat"}
             </div>
 
             {sampleCollected && (
-              <div style={{ margin: "12px 0", backgroundColor: "rgba(22, 101, 52, 0.2)", border: "1px solid #22c55e", padding: "10px 14px", borderRadius: "4px" }}>
-                <div style={{ fontSize: "11px", color: "#86efac", fontWeight: 700 }}>
+              <div style={{ margin: "12px 0", backgroundColor: "rgba(22, 101, 52, 0.2)", border: "1px solid #22c55e", padding: "12px 16px", borderRadius: "4px", textAlign: "left" }}>
+                <div style={{ fontSize: "11px", color: "#86efac", fontWeight: 800, letterSpacing: "0.06em" }}>
                   MASS SPECTROMETER BIOGENIC CONFIRMATION:
                 </div>
-                <div style={{ fontSize: "10px", color: "#f8fafc", marginTop: "3px" }}>
-                  δ¹³C Isotope Ratio: {carbonRatio.toFixed(1)}‰ (Organic Carbon Fractionation)
-                </div>
-                <div style={{ fontSize: "10px", color: "#38bdf8", marginTop: "2px" }}>
-                  Ribosomal RNA Shannon Entropy: {shannonEntropyBits.toFixed(2)} bits/monomer (&gt;1.8 Threshold Met)
+                <div style={{ fontSize: "11px", color: "#f8fafc", marginTop: "4px", lineHeight: 1.4 }}>
+                  • <strong>δ¹³C Isotope Ratio:</strong> {carbonRatio.toFixed(1)}‰ (Organic Carbon Fractionation)<br />
+                  • <strong>Ribosomal RNA Shannon Entropy:</strong> {shannonEntropyBits.toFixed(2)} bits/monomer (&gt;1.8 biogenic threshold)<br />
+                  • <strong>Campaign Arc:</strong> Artemis-VII (Lunar Base) → Project Aegis (Planetary Defense) → Project Europa (Alien Biosignatures)
                 </div>
               </div>
             )}
@@ -511,18 +512,19 @@ export default function EuropaHUD({
                 <button
                   onClick={onReturnToHub}
                   style={{
-                    padding: "12px 24px",
+                    padding: "12px 28px",
                     backgroundColor: "#16a34a",
-                    border: "1px solid #22c55e",
+                    border: "1.5px solid #22c55e",
                     color: "#ffffff",
                     fontWeight: 800,
                     fontSize: "12px",
                     cursor: "pointer",
                     borderRadius: "4px",
-                    boxShadow: "0 0 20px rgba(34, 197, 94, 0.4)",
+                    boxShadow: "0 0 25px rgba(34, 197, 94, 0.45)",
+                    letterSpacing: "0.04em",
                   }}
                 >
-                  RECORD HISTORIC ASTROBIOLOGY DISCOVERY &amp; RETURN TO HUB →
+                  RECORD TRILOGY CAMPAIGN VICTORY &amp; RETURN TO HUB →
                 </button>
               )}
             </div>

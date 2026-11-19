@@ -172,6 +172,7 @@ export default function EuropaGameManager({ onReturnToHub }: EuropaGameManagerPr
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const isSpace = e.code === "Space" || e.key === " ";
+      const isEnter = e.code === "Enter" || e.key === "Enter";
       const isKeyW = e.code === "KeyW" || e.key?.toLowerCase() === "w" || e.code === "ArrowUp";
       const isKeyS = e.code === "KeyS" || e.key?.toLowerCase() === "s" || e.code === "ArrowDown";
       const isKeyA = e.code === "KeyA" || e.key?.toLowerCase() === "a" || e.code === "ArrowLeft";
@@ -179,14 +180,46 @@ export default function EuropaGameManager({ onReturnToHub }: EuropaGameManagerPr
       const isKeyQ = e.code === "KeyQ" || e.key?.toLowerCase() === "q";
       const isKeyE = e.code === "KeyE" || e.key?.toLowerCase() === "e";
 
+      if (isEnter) {
+        e.preventDefault();
+        if (act === "ACT_1_SURFACE_DESCENT" && isLanded) {
+          handleProceedToAct2();
+        } else if (act === "ACT_2_CRYO_MELT" && meltDepthMeters >= 20000) {
+          handleProceedToAct3();
+        } else if (act === "ACT_3_ABYSSAL_SUB" && sonarDistanceMeters < 18.0) {
+          handleProceedToAct4();
+        } else if (act === "ACT_4_SAMPLE_DISCOVERY" && sampleCollected) {
+          onReturnToHub();
+        }
+        return;
+      }
+
       if (isSpace) {
         e.preventDefault();
-        if (act === "ACT_1_SURFACE_DESCENT" && !isLanded) {
-          handleIgniteLanding();
+        if (act === "ACT_1_SURFACE_DESCENT") {
+          if (!isLanded) {
+            handleIgniteLanding();
+          } else {
+            handleProceedToAct2();
+          }
+        } else if (act === "ACT_2_CRYO_MELT") {
+          if (meltDepthMeters >= 20000) {
+            handleProceedToAct3();
+          } else {
+            handleThrottleReactor(15);
+          }
         } else if (act === "ACT_3_ABYSSAL_SUB") {
-          handleFireSonar();
-        } else if (act === "ACT_4_SAMPLE_DISCOVERY" && !sampleCollected) {
-          handleExtractSample();
+          if (sonarDistanceMeters < 18.0) {
+            handleProceedToAct4();
+          } else {
+            handleFireSonar();
+          }
+        } else if (act === "ACT_4_SAMPLE_DISCOVERY") {
+          if (!sampleCollected) {
+            handleExtractSample();
+          } else {
+            onReturnToHub();
+          }
         }
       } else if (isKeyW) {
         if (act === "ACT_2_CRYO_MELT") {
@@ -215,8 +248,18 @@ export default function EuropaGameManager({ onReturnToHub }: EuropaGameManagerPr
           handleMoveSub(0, -1.0, 0);
         }
       } else if (isKeyE) {
-        if (act === "ACT_3_ABYSSAL_SUB") {
-          handleMoveSub(0, 1.0, 0);
+        if (act === "ACT_1_SURFACE_DESCENT" && isLanded) {
+          handleProceedToAct2();
+        } else if (act === "ACT_2_CRYO_MELT" && meltDepthMeters >= 20000) {
+          handleProceedToAct3();
+        } else if (act === "ACT_3_ABYSSAL_SUB") {
+          if (sonarDistanceMeters < 18.0) {
+            handleProceedToAct4();
+          } else {
+            handleMoveSub(0, 1.0, 0);
+          }
+        } else if (act === "ACT_4_SAMPLE_DISCOVERY" && !sampleCollected) {
+          handleExtractSample();
         }
       }
     };
@@ -227,12 +270,18 @@ export default function EuropaGameManager({ onReturnToHub }: EuropaGameManagerPr
     act,
     isLanded,
     sampleCollected,
+    meltDepthMeters,
+    sonarDistanceMeters,
     handleIgniteLanding,
+    handleProceedToAct2,
+    handleProceedToAct3,
+    handleProceedToAct4,
     handleFireSonar,
     handleExtractSample,
     handleThrottleReactor,
     handleEvadeMethane,
     handleMoveSub,
+    onReturnToHub,
   ]);
 
   return (

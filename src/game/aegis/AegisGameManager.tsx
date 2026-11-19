@@ -17,9 +17,10 @@ import { soundManager } from "../audio";
 
 export interface AegisGameManagerProps {
   onReturnToHub: () => void;
+  onLaunchEuropa?: () => void;
 }
 
-export function AegisGameManager({ onReturnToHub }: AegisGameManagerProps) {
+export function AegisGameManager({ onReturnToHub, onLaunchEuropa }: AegisGameManagerProps) {
   const [currentAct, setCurrentAct] = useState<AegisAct>("ACT_I_MARS_OBERTH");
   const [velocityKms, setVelocityKms] = useState<number>(MARS_CONSTANTS.baselineBurnVelocityKms);
   const [distanceKm, setDistanceKm] = useState<number>(180.0);
@@ -237,12 +238,21 @@ export function AegisGameManager({ onReturnToHub }: AegisGameManagerProps) {
           e.preventDefault();
           handleFireRcs(0, 1);
         }
+      } else if (currentAct === "ACT_IV_LICIACUBE") {
+        if (isEnter || isSpace) {
+          e.preventDefault();
+          if (onLaunchEuropa) {
+            onLaunchEuropa();
+          } else {
+            onReturnToHub();
+          }
+        }
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [currentAct, impactTriggered, velocityKms, isSmartNavLocked, handleIgniteOberthBurn, handleEngageSmartNav, handleFireRcs, handleNextAct]);
+  }, [currentAct, impactTriggered, velocityKms, isSmartNavLocked, handleIgniteOberthBurn, handleEngageSmartNav, handleFireRcs, handleNextAct, onLaunchEuropa, onReturnToHub]);
 
   return (
     <div style={{ position: "relative", width: "100vw", height: "100vh", overflow: "hidden", backgroundColor: "#040608" }}>
@@ -280,6 +290,7 @@ export function AegisGameManager({ onReturnToHub }: AegisGameManagerProps) {
         onFireRcs={handleFireRcs}
         onNextAct={handleNextAct}
         onReturnToHub={onReturnToHub}
+        onLaunchEuropa={onLaunchEuropa}
       />
     </div>
   );
