@@ -38,7 +38,9 @@ Thumbs.db
 !.vscode/settings.json
 !.vscode/extensions.json
 
-# Local Agent Skills Cache
+# Local Agent Skills & Planning Cache
 .agents/
+.planning/
+AGENTS.md
 skills-lock.json
 
