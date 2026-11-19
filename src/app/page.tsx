@@ -6,7 +6,6 @@ import {
   SolarSystemInspectorHUD,
   PLANETS_CATALOG,
 } from "@/components/viewport/SolarSystemScene";
-import { GargantuaTelemetryHUD } from "@/components/viewport/GargantuaTelemetryHUD";
 import { GameManager } from "@/game/GameManager";
 import AegisGameManager from "@/game/aegis/AegisGameManager";
 import EuropaGameManager from "@/game/europa/EuropaGameManager";
@@ -1862,13 +1861,6 @@ export default function SpaceMissionGame() {
                     setSelectedPlanetId(null);
                   }}
                 />
-              </div>
-            )}
-
-            {/* Right Side: Gargantua Relativistic Telemetry HUD if in BLACK_HOLE mode */}
-            {mainMenuCosmicMode === "BLACK_HOLE" && (
-              <div style={{ flex: 1, display: "flex", justifyContent: "flex-end", pointerEvents: "auto", minWidth: 0 }}>
-                <GargantuaTelemetryHUD />
               </div>
             )}
           </div>
