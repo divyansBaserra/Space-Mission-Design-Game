@@ -1708,7 +1708,12 @@ export default function SpaceMissionGame() {
               >
                 <div>
                   <div style={{ fontSize: "13px", fontWeight: 700, color: "#ffffff" }}>1. PLAY GAME 01: OPERATION ARTEMIS-VII</div>
-                  <div style={{ fontSize: "11px", color: "#38bdf8", fontWeight: 500, marginTop: "2px" }}>Gateway-1 Orbital Facility &amp; Shackleton Lunar Touchdown</div>
+                  <div style={{ fontSize: "11px", color: "#38bdf8", fontWeight: 600, marginTop: "2px" }}>
+                    STORY: Spacewalk outside station to fix damaged comms satellite, then pilot shuttle down to land on Lunar Base Alpha.
+                  </div>
+                  <div style={{ fontSize: "10px", color: "#94a3b8", marginTop: "3px" }}>
+                    Microgravity Spacewalk [WASD/E] · Satellite Repair · 6-DOF Shuttle Piloting [T] · Moon Touchdown [H]
+                  </div>
                 </div>
                 <span style={{ fontSize: "18px" }}>→</span>
               </button>
@@ -1737,7 +1742,12 @@ export default function SpaceMissionGame() {
               >
                 <div>
                   <div style={{ fontSize: "13px", fontWeight: 700, color: "#ffffff" }}>2. PLAY GAME 02: PROJECT AEGIS (DART DEFLECTION)</div>
-                  <div style={{ fontSize: "11px", color: "#fbbf24", fontWeight: 500, marginTop: "2px" }}>Mars Oberth Slingshot · SMART Nav · 6.2 km/s Kinetic Impact</div>
+                  <div style={{ fontSize: "11px", color: "#fbbf24", fontWeight: 600, marginTop: "2px" }}>
+                    STORY: Planetary defense: Slingshot past Mars for speed boost, lock SMART Nav, and ram hazardous asteroid at 6.2 km/s.
+                  </div>
+                  <div style={{ fontSize: "10px", color: "#94a3b8", marginTop: "3px" }}>
+                    Mars Oberth Burn [SPACE] · SMART Nav Lock [E] · RCS Bullseye Steering [WASD] · LICIACube Witness
+                  </div>
                 </div>
                 <span style={{ fontSize: "18px" }}>→</span>
               </button>
@@ -1766,7 +1776,12 @@ export default function SpaceMissionGame() {
               >
                 <div>
                   <div style={{ fontSize: "13px", fontWeight: 700, color: "#ffffff" }}>3. PLAY GAME 03: PROJECT EUROPA (ABYSS OF JUPITER)</div>
-                  <div style={{ fontSize: "11px", color: "#7dd3fc", fontWeight: 500, marginTop: "2px" }}>900°C Cryo-Melt Probe · 130 MPa Abyssal Submarine · Alien RNA Discovery</div>
+                  <div style={{ fontSize: "11px", color: "#7dd3fc", fontWeight: 600, marginTop: "2px" }}>
+                    STORY: Ocean exploration: Melt through 20km ice crust with thermal probe and pilot submarine to find alien RNA.
+                  </div>
+                  <div style={{ fontSize: "10px", color: "#94a3b8", marginTop: "3px" }}>
+                    Cryo-Thermal Drill [SPACE] · 130 MPa Submarine Navigation [WASD] · Alien Biomarker Recovery [E]
+                  </div>
                 </div>
                 <span style={{ fontSize: "18px" }}>→</span>
               </button>
@@ -1924,64 +1939,72 @@ export default function SpaceMissionGame() {
               {/* 3 Game Modes Overview Cards */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "12px" }}>
                 <div style={{ padding: "14px", backgroundColor: "rgba(2, 132, 199, 0.12)", border: "1px solid rgba(56, 189, 248, 0.3)", borderRadius: "3px" }}>
-                  <div className="font-mono" style={{ fontSize: "10px", color: "#38bdf8", fontWeight: 700 }}>GAME MODE 1</div>
-                  <div style={{ fontSize: "14px", fontWeight: 700, color: "#ffffff", marginTop: "2px" }}>Orbital EVA Repair</div>
+                  <div className="font-mono" style={{ fontSize: "10px", color: "#38bdf8", fontWeight: 700 }}>GAME 01</div>
+                  <div style={{ fontSize: "14px", fontWeight: 700, color: "#ffffff", marginTop: "2px" }}>Operation Artemis-VII</div>
                   <p style={{ fontSize: "11px", color: "#94a3b8", lineHeight: 1.45, marginTop: "6px" }}>
-                    First-person astronaut exploration on Gateway-1. Walk the gantry in microgravity, replace shattered GaAs solar wings, equip S-band antennas, and reboot telemetry on satellite AERO-3X.
+                    <strong>Story:</strong> A solar storm knocked out station communications. Suit up, spacewalk along the exterior gantry to repair the AERO-3X satellite, board shuttle ORV-1, and pilot a powered descent onto Lunar Base Alpha.
                   </p>
-                </div>
-
-                <div style={{ padding: "14px", backgroundColor: "rgba(16, 185, 129, 0.12)", border: "1px solid rgba(52, 211, 153, 0.3)", borderRadius: "3px" }}>
-                  <div className="font-mono" style={{ fontSize: "10px", color: "#34d399", fontWeight: 700 }}>GAME MODE 2</div>
-                  <div style={{ fontSize: "14px", fontWeight: 700, color: "#ffffff", marginTop: "2px" }}>3D Piloted Flight Sim</div>
-                  <p style={{ fontSize: "11px", color: "#94a3b8", lineHeight: 1.45, marginTop: "6px" }}>
-                    Pilot Orbital Utility Shuttle ORV-1 with 6-DOF RCS thrusters. Perform soft-capture docking at Port DOCK-01, execute lunar descent burns, and touch down on Base Alpha PAD-01.
-                  </p>
+                  <div style={{ fontSize: "10px", color: "#38bdf8", marginTop: "8px", fontWeight: 600 }}>
+                    Controls: [WASD] Walk/Fly · [E / Click] Interact · [T] Descend · [H] Disembark
+                  </div>
                 </div>
 
                 <div style={{ padding: "14px", backgroundColor: "rgba(245, 158, 11, 0.12)", border: "1px solid rgba(251, 191, 36, 0.3)", borderRadius: "3px" }}>
-                  <div className="font-mono" style={{ fontSize: "10px", color: "#fbbf24", fontWeight: 700 }}>GAME MODE 3</div>
-                  <div style={{ fontSize: "14px", fontWeight: 700, color: "#ffffff", marginTop: "2px" }}>Hangar Assembly</div>
+                  <div className="font-mono" style={{ fontSize: "10px", color: "#fbbf24", fontWeight: 700 }}>GAME 02</div>
+                  <div style={{ fontSize: "14px", fontWeight: 700, color: "#ffffff", marginTop: "2px" }}>Project Aegis (DART)</div>
                   <p style={{ fontSize: "11px", color: "#94a3b8", lineHeight: 1.45, marginTop: "6px" }}>
-                    Construct modular CubeSats (1U, 3U, 6U) adhering to Cal Poly CDS Rev 14.1 standards. Run thruster static-fire tests, balance power/mass budgets, and launch into Earth orbit.
+                    <strong>Story:</strong> Hazardous asteroid Didymos threatens Earth! Slingshot around Mars at 180km altitude, lock optical SMART Nav to overcome 14-min light lag, and steer kinetic impactor at 6.2 km/s into the 3m bullseye.
                   </p>
+                  <div style={{ fontSize: "10px", color: "#fbbf24", marginTop: "8px", fontWeight: 600 }}>
+                    Controls: [SPACE] Oberth Burn · [E] Lock SMART Nav · [WASD] RCS Steer
+                  </div>
+                </div>
+
+                <div style={{ padding: "14px", backgroundColor: "rgba(14, 165, 233, 0.12)", border: "1px solid rgba(56, 189, 248, 0.3)", borderRadius: "3px" }}>
+                  <div className="font-mono" style={{ fontSize: "10px", color: "#7dd3fc", fontWeight: 700 }}>GAME 03</div>
+                  <div style={{ fontSize: "14px", fontWeight: 700, color: "#ffffff", marginTop: "2px" }}>Project Europa (Abyss)</div>
+                  <p style={{ fontSize: "11px", color: "#94a3b8", lineHeight: 1.45, marginTop: "6px" }}>
+                    <strong>Story:</strong> Astrobiology expedition to Jupiter&apos;s ice moon. Melt through 20 km of cryogenic ice with a 900°C nuclear probe, pilot an abyssal submarine in 130 MPa crushing pressure, and collect alien RNA.
+                  </p>
+                  <div style={{ fontSize: "10px", color: "#7dd3fc", marginTop: "8px", fontWeight: 600 }}>
+                    Controls: [SPACE] Thermal Drill · [WASD] Submarine Pilot · [E] Sample RNA
+                  </div>
                 </div>
               </div>
 
               {/* Step-by-Step Instructions */}
               <div style={{ padding: "14px 18px", backgroundColor: "rgba(30, 41, 59, 0.5)", border: "1px solid rgba(255, 255, 255, 0.08)", borderRadius: "3px" }}>
                 <div style={{ fontSize: "12px", fontWeight: 700, color: "#f8fafc", marginBottom: "8px" }}>
-                  HOW TO BUILD &amp; LAUNCH IN THE SPACECRAFT WORKSHOP:
+                  MISSION PROGRESSION GUIDANCE (HOW TO PLAY):
                 </div>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", fontSize: "11px", color: "#cbd5e1", lineHeight: 1.5 }}>
-                  <div><strong>1. Choose Form Factor:</strong> 1U (Scout), 3U (Standard Science), or 6U (Deep Space Relay).</div>
-                  <div><strong>2. Balance Solar Power:</strong> Ensure solar panel wattage exceeds continuous subsystem electrical draw.</div>
-                  <div><strong>3. Battery Storage:</strong> Ensure battery survives the 35-minute Earth eclipse shadow without depleting.</div>
-                  <div><strong>4. Launch Authorization:</strong> When all engineering matrix rows turn green &apos;Nominal&apos;, click [Proceed to Launch]!</div>
+                  <div><strong>Follow In-World Waypoints:</strong> Floating 3D holographic beacons always show you the exact physical location of your next objective.</div>
+                  <div><strong>Top Directive Banner:</strong> The HUD banner displays your current objective and contextual action buttons for 1-click execution.</div>
+                  <div><strong>1-Click Action Pill:</strong> If you are unsure where to click, press [E] or click the high-contrast action pill on the HUD to immediately execute the step.</div>
+                  <div><strong>No Pixel Hunting:</strong> Keyboard keys [E], [SPACE], [T], and [H] work seamlessly anywhere in range without precision targeting required.</div>
                 </div>
               </div>
 
               {/* Keybinds Reference Table */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
                 <div style={{ padding: "12px", backgroundColor: "rgba(15, 23, 42, 0.7)", border: "1px solid rgba(56, 189, 248, 0.2)", borderRadius: "2px" }}>
-                  <div style={{ fontSize: "11px", fontWeight: 700, color: "#38bdf8", marginBottom: "6px" }}>FLIGHT COCKPIT CONTROLS</div>
+                  <div style={{ fontSize: "11px", fontWeight: 700, color: "#38bdf8", marginBottom: "6px" }}>GAME 01: ARTEMIS-VII KEYS</div>
                   <div style={{ fontSize: "10px", color: "#94a3b8", display: "grid", gridTemplateColumns: "80px 1fr", rowGap: "4px" }}>
-                    <span className="font-mono" style={{ color: "#f8fafc" }}>W / S</span><span>Forward / Reverse Thrusters</span>
-                    <span className="font-mono" style={{ color: "#f8fafc" }}>A / D</span><span>Yaw Port / Starboard</span>
-                    <span className="font-mono" style={{ color: "#f8fafc" }}>Q / E</span><span>Roll Counter / Clockwise</span>
-                    <span className="font-mono" style={{ color: "#f8fafc" }}>Space / Ctrl</span><span>Translate Up / Down</span>
-                    <span className="font-mono" style={{ color: "#f8fafc" }}>V / G</span><span>Toggle Camera View / Landing Gear</span>
+                    <span className="font-mono" style={{ color: "#f8fafc" }}>W A S D</span><span>Astronaut Walk / Shuttle Thrust &amp; Yaw</span>
+                    <span className="font-mono" style={{ color: "#f8fafc" }}>E / Click</span><span>Interact / 1-Click Equip / Repair / Board</span>
+                    <span className="font-mono" style={{ color: "#f8fafc" }}>T</span><span>Initiate Lunar Descent Trajectory</span>
+                    <span className="font-mono" style={{ color: "#f8fafc" }}>H</span><span>Disembark Shuttle onto Lunar Base</span>
+                    <span className="font-mono" style={{ color: "#f8fafc" }}>1 / 2 / 3 / 4</span><span>Equip Toolkit / Solar / Antenna / ALSEP</span>
                   </div>
                 </div>
 
-                <div style={{ padding: "12px", backgroundColor: "rgba(15, 23, 42, 0.7)", border: "1px solid rgba(52, 211, 153, 0.2)", borderRadius: "2px" }}>
-                  <div style={{ fontSize: "11px", fontWeight: 700, color: "#34d399", marginBottom: "6px" }}>ASTRONAUT EVA CONTROLS</div>
+                <div style={{ padding: "12px", backgroundColor: "rgba(15, 23, 42, 0.7)", border: "1px solid rgba(251, 191, 36, 0.2)", borderRadius: "2px" }}>
+                  <div style={{ fontSize: "11px", fontWeight: 700, color: "#fbbf24", marginBottom: "6px" }}>GAME 02 &amp; 03 KEYS</div>
                   <div style={{ fontSize: "10px", color: "#94a3b8", display: "grid", gridTemplateColumns: "80px 1fr", rowGap: "4px" }}>
-                    <span className="font-mono" style={{ color: "#f8fafc" }}>W A S D</span><span>Move Astronaut</span>
-                    <span className="font-mono" style={{ color: "#f8fafc" }}>Space</span><span>Low-G Lunar Jump / Thruster</span>
-                    <span className="font-mono" style={{ color: "#f8fafc" }}>E</span><span>Interact / Board Shuttle / Repair</span>
-                    <span className="font-mono" style={{ color: "#f8fafc" }}>1 / 2 / 3 / 4</span><span>Equip Toolkit / Solar / Antenna / ALSEP</span>
-                    <span className="font-mono" style={{ color: "#f8fafc" }}>C / T</span><span>Controls Sheet / Sector Jump</span>
+                    <span className="font-mono" style={{ color: "#f8fafc" }}>SPACE</span><span>Ignite Oberth Burn / Cryo-Thermal Drill</span>
+                    <span className="font-mono" style={{ color: "#f8fafc" }}>E</span><span>SMART Nav Optical Lock / Sample Alien RNA</span>
+                    <span className="font-mono" style={{ color: "#f8fafc" }}>W A S D</span><span>RCS Lateral Bullseye Steering / Submarine Pilot</span>
+                    <span className="font-mono" style={{ color: "#f8fafc" }}>ESC / P</span><span>Pause Simulation / Return to Hub</span>
                   </div>
                 </div>
               </div>

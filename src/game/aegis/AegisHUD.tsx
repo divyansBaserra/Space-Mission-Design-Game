@@ -201,7 +201,7 @@ export function AegisHUD({
                 letterSpacing: "0.05em",
               }}
             >
-              {burnThrottle > 0 ? "🔥 THRUSTER FIRING (OBERTH ENGAGED)" : "IGNITE RETROGRADE OBERTH BURN [SPACE]"}
+              {burnThrottle > 0 ? "[ THRUSTER FIRING - OBERTH ACCELERATION ACTIVE ]" : "IGNITE RETROGRADE OBERTH BURN [SPACE]"}
             </button>
             {velocityKms >= 11.3 && (
               <button
@@ -363,7 +363,7 @@ export function AegisHUD({
             }}
           >
             {isWithinCep
-              ? "🎯 TARGET LOCKED INSIDE 3M CEP BULLSEYE"
+              ? "[ TARGET LOCKED INSIDE 3M CEP BULLSEYE ]"
               : lateralOffsetX > 1.0
               ? "← STEER LEFT [A] TO RECENTER"
               : lateralOffsetX < -1.0

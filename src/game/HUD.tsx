@@ -93,47 +93,47 @@ export function HUD({
       return {
         phase: "STEP 7/7: SHACKLETON LUNAR BASE ALPHA",
         action: gameState.alsepDeployed
-          ? "ALSEP Station active! Walk to cyan marker to collect CORE-GEO-01 sample, then return to ORV-1 cockpit [H]."
-          : "Landed on PAD-01. Press [H] to disembark. 1. Deploy Apollo ALSEP Station [4/E]. 2. Collect CORE-GEO-01 sample.",
+          ? "ALSEP Science Station deployed! Walk to the glowing blue beacon to collect the CORE-GEO-01 rock sample, then return to shuttle [H]."
+          : "Touchdown on Shackleton Pad-01! 1. Deploy Apollo ALSEP Station [Press 4 / E]. 2. Collect core rock sample.",
       };
     }
     if (isCockpit) {
       return {
         phase: "STEP 6/7: ORV-1 SPACECRAFT PILOTING",
         action: gameState.spacecraft.isLanded
-          ? "TOUCHDOWN CONFIRMED ON PAD-01! Press [H] to disembark onto Lunar Base Alpha."
+          ? "TOUCHDOWN CONFIRMED ON PAD-01! Press [H] or click below to disembark onto Lunar Base Alpha."
           : gameState.spacecraft.position.z < -45
-          ? "LUNAR DESCENT: Deploy landing gear [G]. Control vertical speed (< 2.0 m/s) with [W/S] thrusters for soft touchdown on PAD-01."
-          : "ORBITAL FLIGHT: Fly ORV-1 using [W/S] thrust, [A/D] yaw, [Q/E] roll. Dock at DOCK-01 or press [T] to descend to Moon.",
+          ? "LUNAR POWERED DESCENT: Control vertical descent (< 2.0 m/s) with [W/S] thrusters for soft touchdown on PAD-01."
+          : "ORBITAL FLIGHT: Pilot ORV-1 using [W/S] thrust, [A/D] yaw, [Q/E] roll. Press [T] or click the button below for emergency lunar descent.",
       };
     }
     switch (gameState.step) {
       case "BRIEFING":
         return {
           phase: "STEP 1/7: COMMAND BRIEFING",
-          action: "Walk forward to the center Holo-Table and press [E] to review the Artemis-VII Flight Directive.",
+          action: "Look at the glowing blue Holo-Table directly in front of you. Press [E] or click the button below to review your mission directive.",
         };
       case "COLLECT_EQUIPMENT":
         return {
           phase: "STEP 2/7: GEAR PREPARATION",
-          action: "Pick up 3 repair parts: [1] Toolkit (Left), [2] Solar Wing (Right), [3] S-Band Antenna (Right) — or click [⚡ 1-CLICK EQUIP ALL GEAR].",
+          action: "Turn around into the workshop behind you to collect your 3 EVA repair tools — or click [⚡ 1-CLICK: AUTO-EQUIP ALL GEAR].",
         };
       case "ENTER_AIRLOCK":
       case "CYCLE_AIRLOCK_DEPRESS":
         return {
           phase: "STEP 3/7: AIRLOCK DEPRESSURIZATION",
-          action: "Walk into the airlock chamber [Z = -8m] and press [E] on the wall console to cycle to vacuum.",
+          action: "Walk straight through the workshop into the Airlock chamber ahead. Press [E] on the wall console to cycle to vacuum.",
         };
       case "EVA_APPROACH_SATELLITE":
       case "REPAIR_SATELLITE":
         return {
           phase: "STEP 4/7: SATELLITE EVA REPAIR",
-          action: "Walk along the gantry to AERO-3X [Z = -22m]. Press [E] to execute 4-step repair (Detach Wing -> Mount Solar Array -> Install Antenna -> Run Telemetry).",
+          action: "Step outside onto the exterior gantry to the damaged AERO-3X satellite. Press [E] to execute the 4-step repair sequence.",
         };
       case "BOARD_SPACECRAFT":
         return {
           phase: "STEP 5/7: BOARD UTILITY SHUTTLE",
-          action: "Satellite restored! Proceed along the gantry to ORV-1 shuttle berth [Z = -28m] and press [E] to enter cockpit.",
+          action: "Satellite restored! Proceed forward along the gantry to the docked ORV-1 shuttle craft and press [E] to board.",
         };
       case "HANGAR_ASSEMBLY":
         return {
@@ -284,141 +284,214 @@ export function HUD({
           </div>
 
           {/* Smart 1-Click Mission Assist Action Pill (Guarantees effortless progression for all players) */}
-          <div style={{ display: "flex", gap: "8px", marginTop: "4px", flexWrap: "wrap" }}>
+          <div style={{ display: "flex", gap: "8px", marginTop: "6px", flexWrap: "wrap", alignItems: "center" }}>
             {gameState.step === "BRIEFING" && (
               <button
                 onClick={() => onInteractHangar?.("briefing_table")}
                 style={{
-                  padding: "4px 10px",
-                  fontSize: "11px",
-                  fontWeight: 700,
-                  backgroundColor: "rgba(14, 165, 233, 0.25)",
-                  border: "1px solid #38bdf8",
-                  color: "#38bdf8",
-                  borderRadius: "3px",
+                  padding: "6px 14px",
+                  fontSize: "12px",
+                  fontWeight: 800,
+                  backgroundColor: "rgba(14, 165, 233, 0.35)",
+                  border: "1.5px solid #38bdf8",
+                  color: "#ffffff",
+                  borderRadius: "4px",
                   cursor: "pointer",
+                  boxShadow: "0 0 12px rgba(56, 189, 248, 0.4)",
+                  letterSpacing: "0.04em",
                 }}
               >
-                [▶ PROCEED: REVIEW BRIEFING]
+                [ ACTION: REVIEW BRIEFING (PRESS E OR CLICK) ]
               </button>
             )}
             {gameState.step === "COLLECT_EQUIPMENT" && (
               <button
                 onClick={() => onInteractHangar?.("ws_equip_all")}
                 style={{
-                  padding: "4px 10px",
-                  fontSize: "11px",
-                  fontWeight: 700,
-                  backgroundColor: "rgba(234, 179, 8, 0.25)",
-                  border: "1px solid #facc15",
-                  color: "#fde047",
-                  borderRadius: "3px",
+                  padding: "6px 14px",
+                  fontSize: "12px",
+                  fontWeight: 800,
+                  backgroundColor: "rgba(234, 179, 8, 0.35)",
+                  border: "1.5px solid #facc15",
+                  color: "#ffffff",
+                  borderRadius: "4px",
                   cursor: "pointer",
+                  boxShadow: "0 0 12px rgba(250, 204, 21, 0.4)",
+                  letterSpacing: "0.04em",
                 }}
               >
-                [⚡ 1-CLICK: EQUIP ALL WORKSHOP GEAR]
+                [ 1-CLICK: AUTO-EQUIP ALL 3 REPAIR TOOLS (PRESS E OR CLICK) ]
               </button>
             )}
-            {gameState.step === "ENTER_AIRLOCK" && (
+            {(gameState.step === "ENTER_AIRLOCK" || gameState.step === "CYCLE_AIRLOCK_DEPRESS") && (
               <button
                 onClick={() => onInteractHangar?.("airlock_console")}
                 style={{
-                  padding: "4px 10px",
-                  fontSize: "11px",
-                  fontWeight: 700,
-                  backgroundColor: "rgba(239, 68, 68, 0.25)",
-                  border: "1px solid #ef4444",
-                  color: "#fca5a5",
-                  borderRadius: "3px",
+                  padding: "6px 14px",
+                  fontSize: "12px",
+                  fontWeight: 800,
+                  backgroundColor: "rgba(239, 68, 68, 0.35)",
+                  border: "1.5px solid #ef4444",
+                  color: "#ffffff",
+                  borderRadius: "4px",
                   cursor: "pointer",
+                  boxShadow: "0 0 12px rgba(239, 68, 68, 0.4)",
+                  letterSpacing: "0.04em",
                 }}
               >
-                [⚡ CYCLE AIRLOCK TO VACUUM]
+                [ ACTION: CYCLE AIRLOCK TO VACUUM (PRESS E OR CLICK) ]
               </button>
             )}
             {(gameState.step === "EVA_APPROACH_SATELLITE" || gameState.step === "REPAIR_SATELLITE") && (
               <button
                 onClick={() => onInteractHangar?.("satellite_repair")}
                 style={{
-                  padding: "4px 10px",
-                  fontSize: "11px",
-                  fontWeight: 700,
-                  backgroundColor: "rgba(34, 197, 94, 0.25)",
-                  border: "1px solid #22c55e",
-                  color: "#86efac",
-                  borderRadius: "3px",
+                  padding: "6px 14px",
+                  fontSize: "12px",
+                  fontWeight: 800,
+                  backgroundColor: "rgba(34, 197, 94, 0.35)",
+                  border: "1.5px solid #22c55e",
+                  color: "#ffffff",
+                  borderRadius: "4px",
                   cursor: "pointer",
+                  boxShadow: "0 0 12px rgba(34, 197, 94, 0.4)",
+                  letterSpacing: "0.04em",
                 }}
               >
-                [🔧 EXECUTE SATELLITE REPAIR STEP]
+                [ ACTION: EXECUTE SATELLITE REPAIR STEP (PRESS E OR CLICK) ]
               </button>
             )}
             {gameState.step === "BOARD_SPACECRAFT" && (
               <button
                 onClick={() => onInteractHangar?.("board_spacecraft")}
                 style={{
-                  padding: "4px 10px",
-                  fontSize: "11px",
-                  fontWeight: 700,
-                  backgroundColor: "rgba(56, 189, 248, 0.25)",
-                  border: "1px solid #38bdf8",
-                  color: "#38bdf8",
-                  borderRadius: "3px",
+                  padding: "6px 14px",
+                  fontSize: "12px",
+                  fontWeight: 800,
+                  backgroundColor: "rgba(56, 189, 248, 0.35)",
+                  border: "1.5px solid #38bdf8",
+                  color: "#ffffff",
+                  borderRadius: "4px",
                   cursor: "pointer",
+                  boxShadow: "0 0 12px rgba(56, 189, 248, 0.4)",
+                  letterSpacing: "0.04em",
                 }}
               >
-                [🚀 BOARD SHUTTLE ORV-1 COCKPIT]
+                [ ACTION: BOARD SHUTTLE ORV-1 COCKPIT (PRESS E OR CLICK) ]
+              </button>
+            )}
+            {isCockpit && !gameState.spacecraft.isLanded && (
+              <button
+                onClick={() => onToggleSector?.()}
+                style={{
+                  padding: "6px 14px",
+                  fontSize: "12px",
+                  fontWeight: 800,
+                  backgroundColor: "rgba(245, 158, 11, 0.35)",
+                  border: "1.5px solid #f59e0b",
+                  color: "#ffffff",
+                  borderRadius: "4px",
+                  cursor: "pointer",
+                  boxShadow: "0 0 12px rgba(245, 158, 11, 0.4)",
+                  letterSpacing: "0.04em",
+                }}
+              >
+                [ ACTION: INITIATE LUNAR DESCENT TRAJECTORY (PRESS T OR CLICK) ]
+              </button>
+            )}
+            {isCockpit && gameState.spacecraft.position.z < -45 && !gameState.spacecraft.isLanded && (
+              <button
+                onClick={() => onToggleLandingGear?.()}
+                style={{
+                  padding: "6px 14px",
+                  fontSize: "12px",
+                  fontWeight: 800,
+                  backgroundColor: gameState.spacecraft.landingGearDeployed ? "rgba(34, 197, 94, 0.3)" : "rgba(239, 68, 68, 0.3)",
+                  border: `1.5px solid ${gameState.spacecraft.landingGearDeployed ? "#22c55e" : "#ef4444"}`,
+                  color: "#ffffff",
+                  borderRadius: "4px",
+                  cursor: "pointer",
+                  boxShadow: "0 0 12px rgba(0,0,0,0.4)",
+                  letterSpacing: "0.04em",
+                }}
+              >
+                [ GEAR: {gameState.spacecraft.landingGearDeployed ? "DEPLOYED (G)" : "STOWED - PRESS G TO DEPLOY"} ]
+              </button>
+            )}
+            {isCockpit && gameState.spacecraft.isLanded && (
+              <button
+                onClick={() => onExitCockpit?.()}
+                style={{
+                  padding: "6px 14px",
+                  fontSize: "12px",
+                  fontWeight: 800,
+                  backgroundColor: "rgba(34, 197, 94, 0.35)",
+                  border: "1.5px solid #22c55e",
+                  color: "#ffffff",
+                  borderRadius: "4px",
+                  cursor: "pointer",
+                  boxShadow: "0 0 12px rgba(34, 197, 94, 0.4)",
+                  letterSpacing: "0.04em",
+                }}
+              >
+                [ ACTION: DISEMBARK ONTO LUNAR BASE ALPHA (PRESS H OR CLICK) ]
               </button>
             )}
             {isSurface && !gameState.alsepDeployed && (
               <button
                 onClick={() => onInteractHangar?.("deploy_alsep")}
                 style={{
-                  padding: "4px 10px",
-                  fontSize: "11px",
-                  fontWeight: 700,
-                  backgroundColor: "rgba(234, 179, 8, 0.25)",
-                  border: "1px solid #facc15",
-                  color: "#fde047",
-                  borderRadius: "3px",
+                  padding: "6px 14px",
+                  fontSize: "12px",
+                  fontWeight: 800,
+                  backgroundColor: "rgba(234, 179, 8, 0.35)",
+                  border: "1.5px solid #facc15",
+                  color: "#ffffff",
+                  borderRadius: "4px",
                   cursor: "pointer",
+                  boxShadow: "0 0 12px rgba(250, 204, 21, 0.4)",
+                  letterSpacing: "0.04em",
                 }}
               >
-                [📡 DEPLOY APOLLO ALSEP STATION]
+                [ ACTION: DEPLOY APOLLO ALSEP SCIENCE STATION (PRESS 4 OR CLICK) ]
               </button>
             )}
             {isSurface && !gameState.lunarSampleCollected && (
               <button
                 onClick={() => onInteractHangar?.("lunar_sample")}
                 style={{
-                  padding: "4px 10px",
-                  fontSize: "11px",
-                  fontWeight: 700,
-                  backgroundColor: "rgba(56, 189, 248, 0.25)",
-                  border: "1px solid #38bdf8",
-                  color: "#7dd3fc",
-                  borderRadius: "3px",
+                  padding: "6px 14px",
+                  fontSize: "12px",
+                  fontWeight: 800,
+                  backgroundColor: "rgba(56, 189, 248, 0.35)",
+                  border: "1.5px solid #38bdf8",
+                  color: "#ffffff",
+                  borderRadius: "4px",
                   cursor: "pointer",
+                  boxShadow: "0 0 12px rgba(56, 189, 248, 0.4)",
+                  letterSpacing: "0.04em",
                 }}
               >
-                [💎 COLLECT CORE-GEO-01 SAMPLE]
+                [ ACTION: COLLECT CORE-GEO-01 ROCK SAMPLE (PRESS E OR CLICK) ]
               </button>
             )}
             {isSurface && gameState.alsepDeployed && gameState.lunarSampleCollected && (
               <button
                 onClick={() => onInteractHangar?.("board_spacecraft_surface")}
                 style={{
-                  padding: "4px 10px",
-                  fontSize: "11px",
-                  fontWeight: 700,
-                  backgroundColor: "rgba(34, 197, 94, 0.25)",
-                  border: "1px solid #22c55e",
-                  color: "#86efac",
-                  borderRadius: "3px",
+                  padding: "6px 14px",
+                  fontSize: "12px",
+                  fontWeight: 800,
+                  backgroundColor: "rgba(34, 197, 94, 0.35)",
+                  border: "1.5px solid #22c55e",
+                  color: "#ffffff",
+                  borderRadius: "4px",
                   cursor: "pointer",
+                  boxShadow: "0 0 12px rgba(34, 197, 94, 0.4)",
+                  letterSpacing: "0.04em",
                 }}
               >
-                [🚀 BOARD SHUTTLE FOR ASCENT]
+                [ MISSION COMPLETE: BOARD SHUTTLE FOR ASCENT (PRESS E/H OR CLICK) ]
               </button>
             )}
           </div>

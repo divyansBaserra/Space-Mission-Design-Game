@@ -530,7 +530,7 @@ export function GameManager({ onReturnToHub, gameMode = "ORBITAL_REPAIR", onLaun
             inventory: nextInv,
             equippedItem: "TOOLKIT",
             step: "ENTER_AIRLOCK",
-            substepText: "All repair equipment collected! Proceed to the Airlock chamber [Z = -8m].",
+            substepText: "All repair equipment collected! Proceed straight into the Airlock chamber ahead.",
           };
         }
 

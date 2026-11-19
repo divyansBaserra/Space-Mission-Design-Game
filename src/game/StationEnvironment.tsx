@@ -637,7 +637,7 @@ export function StationEnvironment({
 
     // Astronaut Gateway-1 mode
     if (gameState.step === "BRIEFING") {
-      return { pos: [0, 1.1, 11.0] as [number, number, number], color: "#38bdf8" };
+      return { pos: [0, 1.6, 11.0] as [number, number, number], color: "#38bdf8" };
     }
     if (!gameState.inventory.includes("TOOLKIT")) {
       return { pos: [-3.4, 1.2, 0.5] as [number, number, number], color: "#facc15" };

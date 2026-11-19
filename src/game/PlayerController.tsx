@@ -105,14 +105,14 @@ export function PlayerController({
       camera.position.set(0, 1.65, 3.2);
       camera.rotation.set(0, Math.PI, 0);
     } else if (gameState.step === "BRIEFING" && gameState.missionMetSeconds === 0) {
-      playerPosRef.current.set(0, 0, 9);
+      playerPosRef.current.set(0, 0, 8.5);
       velocityRef.current.set(0, 0, 0);
-      yawRef.current = 0;
-      pitchRef.current = 0;
+      yawRef.current = Math.PI;
+      pitchRef.current = -0.05;
       rollRef.current = 0;
       isGroundedRef.current = true;
-      camera.position.set(0, 1.65, 9);
-      camera.rotation.set(0, 0, 0);
+      camera.position.set(0, 1.65, 8.5);
+      camera.rotation.set(-0.05, Math.PI, 0);
     }
   }, [gameState.step, gameState.missionMetSeconds, camera]);
 
@@ -258,12 +258,32 @@ export function PlayerController({
             document.exitPointerLock?.();
           }
           cb.onInteract(target);
+        } else if (state.step === "BRIEFING") {
+          // Intuitive fallback: pressing E anywhere in Command Deck opens the briefing!
+          if (document.pointerLockElement) {
+            document.exitPointerLock?.();
+          }
+          cb.onInteract("briefing_table");
         } else if (state.step === "COLLECT_EQUIPMENT") {
-          // Deadshot.io-style intuitive fallback: if in workshop, 1-press equips gear!
+          // Intuitive fallback: 1-press auto-equips all 3 repair tools
           cb.onInteract("ws_equip_all");
+        } else if (state.step === "ENTER_AIRLOCK" || state.step === "CYCLE_AIRLOCK_DEPRESS") {
+          // Intuitive fallback: cycles airlock to vacuum
+          cb.onInteract("airlock_console");
         } else if (state.step === "REPAIR_SATELLITE" || state.step === "EVA_APPROACH_SATELLITE") {
-          // If in repair phase and close to satellite, trigger next repair step
+          // Intuitive fallback: triggers next satellite repair step
           cb.onInteract("satellite_repair");
+        } else if (state.step === "BOARD_SPACECRAFT") {
+          // Intuitive fallback: boards shuttle
+          cb.onInteract("board_spacecraft");
+        } else if (state.controlMode === "SURFACE_EXPLORATION") {
+          if (!state.alsepDeployed) {
+            cb.onInteract("deploy_alsep");
+          } else if (!state.lunarSampleCollected) {
+            cb.onInteract("lunar_sample");
+          } else {
+            cb.onInteract("board_spacecraft_surface");
+          }
         }
       }
     };
@@ -299,14 +319,36 @@ export function PlayerController({
     };
 
     const handleMouseDown = (e: MouseEvent) => {
-      // Left click triggers interaction if looking at an interactable object
+      // Left click triggers interaction if looking at an interactable object, or intuitive fallback
       if (e.button === 0) {
-        const target = currentTargetIdRef.current || gameStateRef.current.interactionTarget;
+        const state = gameStateRef.current;
+        const target = currentTargetIdRef.current || state.interactionTarget;
         if (target) {
           if (target === "briefing_table" && document.pointerLockElement) {
             document.exitPointerLock?.();
           }
           callbacksRef.current.onInteract(target);
+        } else if (state.step === "BRIEFING") {
+          if (document.pointerLockElement) {
+            document.exitPointerLock?.();
+          }
+          callbacksRef.current.onInteract("briefing_table");
+        } else if (state.step === "COLLECT_EQUIPMENT") {
+          callbacksRef.current.onInteract("ws_equip_all");
+        } else if (state.step === "ENTER_AIRLOCK" || state.step === "CYCLE_AIRLOCK_DEPRESS") {
+          callbacksRef.current.onInteract("airlock_console");
+        } else if (state.step === "REPAIR_SATELLITE" || state.step === "EVA_APPROACH_SATELLITE") {
+          callbacksRef.current.onInteract("satellite_repair");
+        } else if (state.step === "BOARD_SPACECRAFT") {
+          callbacksRef.current.onInteract("board_spacecraft");
+        } else if (state.controlMode === "SURFACE_EXPLORATION") {
+          if (!state.alsepDeployed) {
+            callbacksRef.current.onInteract("deploy_alsep");
+          } else if (!state.lunarSampleCollected) {
+            callbacksRef.current.onInteract("lunar_sample");
+          } else {
+            callbacksRef.current.onInteract("board_spacecraft_surface");
+          }
         }
       }
     };
