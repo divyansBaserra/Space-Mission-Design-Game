@@ -24,7 +24,6 @@ export interface SpacecraftSceneProps {
   selectedPlanetId?: string | null;
   onSelectPlanet?: (id: string | null) => void;
   blackHoleDoppler?: boolean;
-  blackHoleJets?: boolean;
   blackHoleParticles?: boolean;
 }
 
@@ -44,7 +43,6 @@ export function SpacecraftScene({
   selectedPlanetId = null,
   onSelectPlanet,
   blackHoleDoppler = true,
-  blackHoleJets = true,
   blackHoleParticles = true,
 }: SpacecraftSceneProps) {
   const meshRef = useRef<THREE.Group>(null);
@@ -122,7 +120,6 @@ export function SpacecraftScene({
     return (
       <BlackHoleScene
         dopplerEnabled={blackHoleDoppler}
-        jetsEnabled={blackHoleJets}
         particlesEnabled={blackHoleParticles}
       />
     );

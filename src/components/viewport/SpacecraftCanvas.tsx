@@ -15,8 +15,8 @@ export default function SpacecraftCanvas(props: SpacecraftSceneProps) {
     <div style={{ width: "100%", height: "100%", position: "relative" }}>
       <Canvas
         camera={{
-          position: isSolarSystem ? [0, 26, 44] : isBlackHole ? [0, 2.2, 8.8] : isOrbit ? [0, 4.5, 7.5] : [3, 2.5, 4],
-          fov: isSolarSystem ? 48 : 45,
+          position: isSolarSystem ? [0, 26, 44] : isBlackHole ? [0, 1.8, 8.5] : isOrbit ? [0, 4.5, 7.5] : [3, 2.5, 4],
+          fov: isSolarSystem ? 48 : isBlackHole ? 42 : 45,
           near: 0.1,
           far: 600,
         }}
@@ -42,7 +42,7 @@ export default function SpacecraftCanvas(props: SpacecraftSceneProps) {
           enableDamping={true}
           dampingFactor={0.05}
           autoRotate={isBlackHole || (isSolarSystem && !props.selectedPlanetId)}
-          autoRotateSpeed={isSolarSystem ? 0.08 : 0.4}
+          autoRotateSpeed={isBlackHole ? 0.12 : isSolarSystem ? 0.08 : 0.4}
           makeDefault
         />
       </Canvas>

@@ -605,7 +605,6 @@ export default function SpaceMissionGame() {
   const [mainMenuCosmicMode, setMainMenuCosmicMode] = useState<"SOLAR_SYSTEM" | "ORBIT" | "BLACK_HOLE">("SOLAR_SYSTEM");
   const [selectedPlanetId, setSelectedPlanetId] = useState<string | null>(null);
   const [blackHoleDoppler, setBlackHoleDoppler] = useState<boolean>(true);
-  const [blackHoleJets, setBlackHoleJets] = useState<boolean>(true);
   const [blackHoleParticles, setBlackHoleParticles] = useState<boolean>(true);
 
   const selectedPlanetData = useMemo(() => {
@@ -1539,7 +1538,6 @@ export default function SpaceMissionGame() {
             selectedPlanetId={selectedPlanetId}
             onSelectPlanet={setSelectedPlanetId}
             blackHoleDoppler={blackHoleDoppler}
-            blackHoleJets={blackHoleJets}
             blackHoleParticles={blackHoleParticles}
           />
         </div>
@@ -1852,23 +1850,7 @@ export default function SpaceMissionGame() {
             {/* Right Side: Gargantua Relativistic Telemetry HUD if in BLACK_HOLE mode */}
             {mainMenuCosmicMode === "BLACK_HOLE" && (
               <div style={{ flex: 1, display: "flex", justifyContent: "flex-end", pointerEvents: "auto", minWidth: 0 }}>
-                <GargantuaTelemetryHUD
-                  dopplerEnabled={blackHoleDoppler}
-                  onToggleDoppler={() => {
-                    soundManager.playEquip();
-                    setBlackHoleDoppler((v) => !v);
-                  }}
-                  jetsEnabled={blackHoleJets}
-                  onToggleJets={() => {
-                    soundManager.playEquip();
-                    setBlackHoleJets((v) => !v);
-                  }}
-                  particlesEnabled={blackHoleParticles}
-                  onToggleParticles={() => {
-                    soundManager.playEquip();
-                    setBlackHoleParticles((v) => !v);
-                  }}
-                />
+                <GargantuaTelemetryHUD />
               </div>
             )}
           </div>

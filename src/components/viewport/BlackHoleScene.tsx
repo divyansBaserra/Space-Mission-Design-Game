@@ -7,23 +7,22 @@ import * as THREE from "three";
 
 export interface BlackHoleSceneProps {
   dopplerEnabled?: boolean;
-  jetsEnabled?: boolean;
   particlesEnabled?: boolean;
   spinSpeed?: number;
 }
 
 // ============================================================================
-// ASHIMA ARTS GLSL 2D SIMPLEX NOISE & FBM SHADER CHUNKS
+// COMPACT HIGH-PERFORMANCE GLSL SIMPLEX NOISE & PROCEDURAL TURBULENCE
 // ============================================================================
 const GLSL_SIMPLEX_NOISE = `
 vec3 permute(vec3 x) { return mod(((x * 34.0) + 1.0) * x, 289.0); }
 
 float snoise(vec2 v) {
   const vec4 C = vec4(
-    0.211324865405187,  // (3.0 - sqrt(3.0)) / 6.0
-    0.366025403784439,  // 0.5 * (sqrt(3.0) - 1.0)
-    -0.577350269189626, // -1.0 + 2.0 * C.x
-    0.024390243902439   // 1.0 / 41.0
+    0.211324865405187,
+    0.366025403784439,
+    -0.577350269189626,
+    0.024390243902439
   );
   vec2 i  = floor(v + dot(v, C.yy));
   vec2 x0 = v -   i + dot(i, C.xx);
@@ -48,8 +47,8 @@ float snoise(vec2 v) {
 
 float fbm(vec2 p) {
   float v = 0.0;
-  v += 0.5000 * snoise(p); p *= 2.03;
-  v += 0.2500 * snoise(p); p *= 2.02;
+  v += 0.5000 * snoise(p); p *= 2.02;
+  v += 0.2500 * snoise(p); p *= 2.03;
   v += 0.1250 * snoise(p); p *= 2.01;
   v += 0.0625 * snoise(p);
   return v * 0.5 + 0.5;
@@ -57,7 +56,7 @@ float fbm(vec2 p) {
 `;
 
 // ============================================================================
-// 1. ACCRETION DISK SHADER (Relativistic Keplerian Plasma with Doppler Beaming)
+// 1. EQUATORIAL ACCRETION DISK SHADER
 // ============================================================================
 const diskVertexShader = `
 varying vec2 vUv;
@@ -76,75 +75,91 @@ varying vec3 vPosition;
 
 uniform float uTime;
 uniform float uDoppler;
-uniform vec3 uColorHot;
-uniform vec3 uColorMid;
-uniform vec3 uColorOuter;
-uniform vec3 uColorEdge;
 
 ${GLSL_SIMPLEX_NOISE}
 
 void main() {
   float r = length(vPosition.xy);
-  // Boundary check: Inner ISCO at 2.08, Outer edge at 9.8
-  if (r < 2.08 || r > 9.9) {
+  // Accretion disk bounds: Inner ISCO at 2.06, Outer edge at 9.2
+  if (r < 2.06 || r > 9.2) {
     discard;
   }
 
-  float normR = clamp((r - 2.12) / (9.6 - 2.12), 0.0, 1.0);
+  float normR = clamp((r - 2.06) / (8.8 - 2.06), 0.0, 1.0);
   float phi = atan(vPosition.y, vPosition.x);
 
-  // Keplerian differential angular velocity: omega ~ 1 / r^1.4
-  float omega = 3.2 / pow(r, 1.35);
+  // Differential Keplerian angular velocity (omega ~ 1 / r^1.45)
+  float omega = 2.4 / pow(r, 1.4);
   float rotPhi = phi + uTime * omega;
 
-  // Turbulent plasma filaments
-  vec2 coord = vec2(r * 3.2 - rotPhi * 2.2, phi * 3.8 + uTime * 0.5);
-  float turbulence = fbm(coord);
+  // Multi-frequency turbulent spiral plasma
+  vec2 coord1 = vec2(r * 2.8 - rotPhi * 2.0, phi * 3.2 + uTime * 0.35);
+  float turb1 = fbm(coord1);
 
-  // Striated spiral density waves
-  float striation = sin(r * 28.0 - rotPhi * 9.0) * 0.5 + 0.5;
-  float density = mix(turbulence, striation * turbulence, 0.38);
+  vec2 coord2 = vec2(r * 5.5 - rotPhi * 4.2, phi * 6.0 - uTime * 0.2);
+  float turb2 = fbm(coord2);
 
-  // Relativistic Temperature Gradient (Kelvin blackbody approximation)
-  vec3 col = uColorHot;
-  if (normR < 0.20) {
-    col = mix(uColorHot, uColorMid, normR / 0.20);
-  } else if (normR < 0.60) {
-    col = mix(uColorMid, uColorOuter, (normR - 0.20) / 0.40);
+  // Fine striations
+  float striation = sin(r * 24.0 - rotPhi * 8.0) * 0.5 + 0.5;
+  float density = mix(turb1, turb2 * striation, 0.42);
+
+  // Dark interstellar absorption dust lanes (creates realistic smoky depth)
+  float dust = fbm(vec2(r * 3.5 - rotPhi * 1.5, phi * 2.5));
+  float dustMask = smoothstep(0.35, 0.75, dust);
+
+  // Rich Interstellar Cinematic Palette:
+  // - Inner ISCO: Incandescent White-Gold
+  // - Inner Mid: Glowing Warm Amber
+  // - Outer Mid: Fiery Burnt Orange
+  // - Outer Fringe: Deep Interstellar Crimson & Dark Smoky Dust
+  vec3 cCore   = vec3(1.0, 0.98, 0.92);  // #fffaf0 Blazing White-Gold
+  vec3 cInner  = vec3(0.98, 0.75, 0.18); // #fbbf24 Molten Amber
+  vec3 cMid    = vec3(0.92, 0.36, 0.05); // #ea580c Fiery Orange
+  vec3 cOuter  = vec3(0.60, 0.12, 0.04); // #9a3412 Deep Terracotta
+  vec3 cEdge   = vec3(0.24, 0.05, 0.02); // #3d0e05 Dark Smoky Fringe
+
+  vec3 col = cCore;
+  if (normR < 0.12) {
+    col = mix(cCore, cInner, normR / 0.12);
+  } else if (normR < 0.45) {
+    col = mix(cInner, cMid, (normR - 0.12) / 0.33);
+  } else if (normR < 0.78) {
+    col = mix(cMid, cOuter, (normR - 0.45) / 0.33);
   } else {
-    col = mix(uColorOuter, uColorEdge, (normR - 0.60) / 0.40);
+    col = mix(cOuter, cEdge, (normR - 0.78) / 0.22);
   }
 
-  // Relativistic Doppler Beaming (approaching side amplified & blueshifted)
-  float dopplerFactor = 1.0;
+  // Interleave dark dust absorption veins
+  col *= mix(0.45, 1.15, dustMask);
+
+  // Subtle Relativistic Doppler Effect:
+  // Left side approaching (+sin), right side receding (-sin)
+  // Balanced so it NEVER bleaches to solid white
+  float doppler = 1.0;
   if (uDoppler > 0.5) {
-    // Left side approaching observer in default orientation
     float beaming = -sin(phi);
-    dopplerFactor = pow(clamp(1.0 + beaming * 0.65, 0.22, 2.45), 3.2);
+    doppler = clamp(1.0 + beaming * 0.42, 0.65, 1.48);
 
     if (beaming > 0.0) {
-      // Blueshift approaching plasma towards white/cyan
-      col = mix(col, vec3(0.96, 0.98, 1.15), beaming * 0.48);
+      col = mix(col, vec3(1.0, 0.98, 0.94), beaming * 0.35);
     } else {
-      // Redshift receding plasma towards deep crimson/amber
-      col = mix(col, vec3(0.75, 0.15, 0.05), -beaming * 0.42);
+      col = mix(col, vec3(0.85, 0.22, 0.05), -beaming * 0.30);
     }
   }
 
-  // Edge falloffs (ultra-sharp ISCO inner cliff, diffuse outer boundary)
-  float innerFade = smoothstep(2.08, 2.22, r);
-  float outerFade = smoothstep(9.9, 7.2, r);
-  float alpha = innerFade * outerFade * (0.35 + 0.65 * density) * clamp(dopplerFactor, 0.2, 2.0);
+  // Soft edge dissipation
+  float innerFade = smoothstep(2.06, 2.18, r);
+  float outerFade = smoothstep(9.2, 6.8, r);
+  float alpha = innerFade * outerFade * (0.4 + 0.6 * density) * doppler;
 
-  // High dynamic range emission
-  col *= (1.4 + 2.0 * (1.0 - normR) + density * 0.9) * dopplerFactor;
+  col *= (1.1 + (1.0 - normR) * 1.5 + density * 0.5) * doppler;
 
-  gl_FragColor = vec4(col, clamp(alpha, 0.0, 1.0));
+  gl_FragColor = vec4(col, clamp(alpha * 0.95, 0.0, 1.0));
 }
 `;
 
 // ============================================================================
-// 2. GRAVITATIONAL LENSING HALO SHADER (Einstein Ring Warped Arches)
+// 2. GRAVITATIONAL LENSING HALO SHADER (Vertical Einstein Ring)
 // ============================================================================
 const lensVertexShader = `
 varying vec2 vUv;
@@ -163,113 +178,71 @@ varying vec3 vPosition;
 
 uniform float uTime;
 uniform float uDoppler;
-uniform vec3 uColorHot;
-uniform vec3 uColorMid;
-uniform vec3 uColorOuter;
 
 ${GLSL_SIMPLEX_NOISE}
 
 void main() {
-  // Normalized UV coordinates along torus cross-section
-  float u = vUv.x; // Angle along the arch
-  float v = vUv.y; // Cross-sectional radius
+  float r = length(vPosition.xy);
+  // Lens ring boundaries: tight against event horizon (2.02 to 4.2)
+  if (r < 2.02 || r > 4.25) {
+    discard;
+  }
 
-  // Radial falloff across the thickness of the warped halo
-  float ringDist = abs(v - 0.5) * 2.0;
-  float intensity = pow(1.0 - ringDist, 1.8);
+  float normR = clamp((r - 2.02) / (4.2 - 2.02), 0.0, 1.0);
+  float phi = atan(vPosition.y, vPosition.x);
 
-  // Keplerian swirling filaments along the curved lensing trajectory
-  float flow = fbm(vec2(u * 12.0 + uTime * 1.8, v * 6.0));
+  // Slower swirl along the lensed warped trajectory
+  float omega = 1.8 / pow(r, 1.3);
+  float rotPhi = phi + uTime * omega;
 
-  // Doppler effect along the arch
-  float dopplerFactor = 1.0;
-  vec3 col = mix(uColorHot, uColorMid, ringDist);
+  // Lensing filaments
+  vec2 coord = vec2(r * 4.0 - rotPhi * 2.5, phi * 4.0);
+  float turb = fbm(coord);
 
+  // Einstein ring colors (intense hot rim at event horizon, fading outwards)
+  vec3 cHot   = vec3(1.0, 0.96, 0.88);  // White-Gold
+  vec3 cMid   = vec3(0.96, 0.68, 0.15); // Glowing Amber
+  vec3 cOuter = vec3(0.78, 0.28, 0.05); // Fiery Orange
+
+  vec3 col = mix(cHot, cMid, smoothstep(0.0, 0.35, normR));
+  col = mix(col, cOuter, smoothstep(0.35, 1.0, normR));
+
+  // Doppler modulation along Einstein ring
+  float doppler = 1.0;
   if (uDoppler > 0.5) {
-    // u goes from 0 to 1 along the arch; left side is approaching
-    float beam = sin(u * 3.14159265);
-    float side = cos(u * 3.14159265); // -1 on left, +1 on right
-    dopplerFactor = pow(clamp(1.0 - side * 0.55, 0.3, 2.2), 2.5);
-
-    if (side < 0.0) {
-      col = mix(col, vec3(1.0, 1.0, 1.1), -side * 0.4);
+    float beaming = -sin(phi);
+    doppler = clamp(1.0 + beaming * 0.38, 0.70, 1.40);
+    if (beaming > 0.0) {
+      col = mix(col, vec3(1.0, 0.98, 0.92), beaming * 0.3);
     } else {
-      col = mix(col, vec3(0.85, 0.2, 0.05), side * 0.35);
+      col = mix(col, vec3(0.85, 0.25, 0.06), -beaming * 0.25);
     }
   }
 
-  col *= (1.2 + flow * 0.8) * dopplerFactor;
-  float alpha = intensity * (0.4 + 0.6 * flow) * clamp(dopplerFactor, 0.25, 1.8);
+  // Sharp inner cutoff at event horizon, smooth outer falloff
+  float innerFade = smoothstep(2.02, 2.12, r);
+  float outerFade = smoothstep(4.25, 2.8, r);
+  float alpha = innerFade * outerFade * (0.55 + 0.45 * turb) * doppler;
 
-  gl_FragColor = vec4(col, clamp(alpha * 0.88, 0.0, 1.0));
+  col *= (1.4 + (1.0 - normR) * 1.8 + turb * 0.6) * doppler;
+
+  gl_FragColor = vec4(col, clamp(alpha * 0.90, 0.0, 1.0));
 }
 `;
 
 // ============================================================================
-// 3. BIPOLAR RELATIVISTIC JETS SHADER (Synchrotron Shock Ionization)
-// ============================================================================
-const jetVertexShader = `
-varying vec2 vUv;
-varying vec3 vPosition;
-
-void main() {
-  vUv = uv;
-  vPosition = position;
-  gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-}
-`;
-
-const jetFragmentShader = `
-varying vec2 vUv;
-varying vec3 vPosition;
-
-uniform float uTime;
-
-void main() {
-  float y = abs(vPosition.y);
-  float radius = length(vPosition.xz);
-
-  // Shock diamonds along the relativistic jet column
-  float shock = sin(y * 4.2 - uTime * 7.5) * 0.5 + 0.5;
-
-  // Intense cyan/white core at base, fading to ultra-violet in deep space
-  vec3 coreColor = vec3(0.92, 0.98, 1.0);
-  vec3 midColor = vec3(0.22, 0.74, 0.98); // High-energy synchrotron cyan
-  vec3 outerColor = vec3(0.48, 0.24, 0.95); // Ionized violet
-
-  float yNorm = clamp(y / 11.0, 0.0, 1.0);
-  vec3 col = mix(coreColor, midColor, yNorm * 0.8);
-  col = mix(col, outerColor, pow(yNorm, 1.8));
-
-  // High brightness at center of cylinder, fading outwards
-  float radialFalloff = exp(-radius * 7.5);
-  // Distance falloff along the length
-  float lengthFalloff = smoothstep(11.0, 0.8, y) * smoothstep(0.1, 0.8, y);
-
-  float alpha = radialFalloff * lengthFalloff * (0.65 + 0.35 * shock);
-  col *= (2.0 + shock * 1.5);
-
-  gl_FragColor = vec4(col, clamp(alpha * 0.92, 0.0, 1.0));
-}
-`;
-
-// ============================================================================
-// MAIN BLACK HOLE COMPONENT (Interstellar / Nestaeric Photorealistic Edition)
+// MAIN COMPONENT: INTERSTELLAR GARGANTUA (Clean, Cinematic & Photorealistic)
 // ============================================================================
 export function BlackHoleScene({
   dopplerEnabled = true,
-  jetsEnabled = true,
   particlesEnabled = true,
   spinSpeed = 1.0,
 }: BlackHoleSceneProps) {
   const diskRef = useRef<THREE.Mesh>(null);
-  const lensUpperRef = useRef<THREE.Mesh>(null);
-  const lensLowerRef = useRef<THREE.Mesh>(null);
+  const lensRef = useRef<THREE.Mesh>(null);
   const particlesRef = useRef<THREE.Points>(null);
-  const jetUpperRef = useRef<THREE.Mesh>(null);
-  const jetLowerRef = useRef<THREE.Mesh>(null);
 
-  // Custom Shader Materials with Uniforms
+  // Accretion Disk Shader Material
   const diskMaterial = useMemo(() => {
     return new THREE.ShaderMaterial({
       vertexShader: diskVertexShader,
@@ -277,10 +250,6 @@ export function BlackHoleScene({
       uniforms: {
         uTime: { value: 0.0 },
         uDoppler: { value: dopplerEnabled ? 1.0 : 0.0 },
-        uColorHot: { value: new THREE.Color("#fffbeb") },
-        uColorMid: { value: new THREE.Color("#f59e0b") },
-        uColorOuter: { value: new THREE.Color("#b45309") },
-        uColorEdge: { value: new THREE.Color("#78350f") },
       },
       side: THREE.DoubleSide,
       transparent: true,
@@ -289,16 +258,14 @@ export function BlackHoleScene({
     });
   }, [dopplerEnabled]);
 
-  const lensUpperMaterial = useMemo(() => {
+  // Gravitational Lensing Halo Shader Material
+  const lensMaterial = useMemo(() => {
     return new THREE.ShaderMaterial({
       vertexShader: lensVertexShader,
       fragmentShader: lensFragmentShader,
       uniforms: {
         uTime: { value: 0.0 },
         uDoppler: { value: dopplerEnabled ? 1.0 : 0.0 },
-        uColorHot: { value: new THREE.Color("#fffbeb") },
-        uColorMid: { value: new THREE.Color("#f59e0b") },
-        uColorOuter: { value: new THREE.Color("#b45309") },
       },
       side: THREE.DoubleSide,
       transparent: true,
@@ -307,65 +274,32 @@ export function BlackHoleScene({
     });
   }, [dopplerEnabled]);
 
-  const lensLowerMaterial = useMemo(() => {
-    return new THREE.ShaderMaterial({
-      vertexShader: lensVertexShader,
-      fragmentShader: lensFragmentShader,
-      uniforms: {
-        uTime: { value: 0.0 },
-        uDoppler: { value: dopplerEnabled ? 1.0 : 0.0 },
-        uColorHot: { value: new THREE.Color("#fffbeb") },
-        uColorMid: { value: new THREE.Color("#f59e0b") },
-        uColorOuter: { value: new THREE.Color("#b45309") },
-      },
-      side: THREE.DoubleSide,
-      transparent: true,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false,
-    });
-  }, [dopplerEnabled]);
-
-  const jetMaterial = useMemo(() => {
-    return new THREE.ShaderMaterial({
-      vertexShader: jetVertexShader,
-      fragmentShader: jetFragmentShader,
-      uniforms: {
-        uTime: { value: 0.0 },
-      },
-      side: THREE.DoubleSide,
-      transparent: true,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false,
-    });
-  }, []);
-
-  // Generate 2,800 Swirling Relativistic Keplerian Particles
+  // 1,600 Fine Keplerian Glowing Embers
   const [particlePositions, particleColors, particleSpeeds, particleRadii] = useMemo(() => {
-    const count = 2800;
+    const count = 1600;
     const positions = new Float32Array(count * 3);
     const colors = new Float32Array(count * 3);
     const speeds = new Float32Array(count);
     const radii = new Float32Array(count);
 
-    const cWhite = new THREE.Color("#ffffff");
-    const cAmber = new THREE.Color("#fbbf24");
-    const cCrimson = new THREE.Color("#dc2626");
+    const cWhite = new THREE.Color("#fff7ed");
+    const cAmber = new THREE.Color("#f59e0b");
+    const cCrimson = new THREE.Color("#b91c1c");
 
     for (let i = 0; i < count; i++) {
-      const r = 2.15 + Math.pow(Math.random(), 1.6) * 7.5;
+      const r = 2.12 + Math.pow(Math.random(), 1.5) * 6.8;
       const theta = Math.random() * Math.PI * 2;
-      const height = (Math.random() - 0.5) * 0.24 * (r / 3.5);
+      const height = (Math.random() - 0.5) * 0.16 * (r / 3.0);
 
       positions[i * 3] = r * Math.cos(theta);
       positions[i * 3 + 1] = height;
       positions[i * 3 + 2] = r * Math.sin(theta);
 
       radii[i] = r;
-      // Relativistic Keplerian angular speed ~ 1 / r^1.5
-      speeds[i] = (2.2 / Math.pow(r, 1.4)) * (0.85 + Math.random() * 0.3);
+      speeds[i] = (2.0 / Math.pow(r, 1.4)) * (0.85 + Math.random() * 0.3);
 
-      const t = (r - 2.15) / 7.5;
-      const col = t < 0.28 ? cWhite.clone().lerp(cAmber, t / 0.28) : cAmber.clone().lerp(cCrimson, (t - 0.28) / 0.72);
+      const t = (r - 2.12) / 6.8;
+      const col = t < 0.3 ? cWhite.clone().lerp(cAmber, t / 0.3) : cAmber.clone().lerp(cCrimson, (t - 0.3) / 0.7);
 
       colors[i * 3] = col.r;
       colors[i * 3 + 1] = col.g;
@@ -382,23 +316,15 @@ export function BlackHoleScene({
     return geo;
   }, [particlePositions, particleColors]);
 
-  // Frame Update Loop (High-Precision Relativistic Clock)
+  // Animation Frame Loop
   useFrame((state, delta) => {
     const dt = Math.min(delta, 0.05) * spinSpeed;
     const elapsedTime = state.clock.getElapsedTime() * spinSpeed;
 
-    // Update Shader Uniforms
     diskMaterial.uniforms.uTime.value = elapsedTime;
-    lensUpperMaterial.uniforms.uTime.value = elapsedTime;
-    lensLowerMaterial.uniforms.uTime.value = elapsedTime;
-    jetMaterial.uniforms.uTime.value = elapsedTime;
+    lensMaterial.uniforms.uTime.value = elapsedTime;
 
-    // Rotate Relativistic Accretion Disk slightly for geometry motion
-    if (diskRef.current) {
-      diskRef.current.rotation.z += dt * 0.05;
-    }
-
-    // Swirl individual relativistic particles around event horizon
+    // Swirl particles
     if (particlesEnabled && particlesRef.current?.geometry?.attributes?.position) {
       const attr = particlesRef.current.geometry.attributes.position as THREE.BufferAttribute;
       const pos = attr.array as Float32Array;
@@ -420,25 +346,37 @@ export function BlackHoleScene({
   });
 
   return (
-    <group position={[0, 0, 0]} rotation={[0.24, -0.32, 0]}>
-      {/* 1. Deep Cosmic Starfield & Background Nebula */}
-      <Stars radius={150} depth={90} count={6000} factor={4.8} saturation={0.3} fade speed={0.35} />
+    // Clean balanced orientation: tilted slightly forward by 17 degrees for iconic perspective
+    <group position={[0, 0, 0]} rotation={[0.28, 0, 0]}>
+      {/* 1. Deep Cosmic Starfield */}
+      <Stars radius={140} depth={70} count={5000} factor={4.2} saturation={0.25} fade speed={0.3} />
 
-      {/* Relativistic Illumination */}
-      <ambientLight intensity={0.12} />
-      <pointLight position={[0, 0, 0]} intensity={5.5} distance={30} color="#fbbf24" />
-      <pointLight position={[0, 4.0, 0]} intensity={2.5} distance={18} color="#fed7aa" />
-      <pointLight position={[0, -4.0, 0]} intensity={2.5} distance={18} color="#fed7aa" />
+      {/* Warm Ambient Cosmic Glow */}
+      <ambientLight intensity={0.15} />
+      <pointLight position={[0, 0, 0]} intensity={4.0} distance={25} color="#f59e0b" />
 
-      {/* 2. CENTRAL EVENT HORIZON (Absolute Darkness: Kerr Singularity, Absorbs All Photons) */}
-      <mesh renderOrder={10}>
+      {/* 2. GRAVITATIONAL LENSING: VERTICAL EINSTEIN RING (Light from rear disk warped above/below) */}
+      {/* Positioned vertically right behind the event horizon (z = -0.06), perfectly concentric */}
+      <mesh ref={lensRef} position={[0, 0, -0.06]} renderOrder={3} material={lensMaterial}>
+        <ringGeometry args={[2.03, 4.25, 128]} />
+      </mesh>
+
+      {/* 3. PRIMARY EQUATORIAL ACCRETION DISK (Horizontal XZ Plane) */}
+      {/* The front half cleanly sweeps in front, the rear half passes behind the event horizon */}
+      <mesh ref={diskRef} rotation={[Math.PI / 2, 0, 0]} renderOrder={6} material={diskMaterial}>
+        <ringGeometry args={[2.06, 9.2, 128, 32]} />
+      </mesh>
+
+      {/* 4. CENTRAL EVENT HORIZON (Pure, Pitch-Black Void, Light Sink) */}
+      {/* Rendered with depthWrite to solidly occlude the rear half of the disk */}
+      <mesh position={[0, 0, 0]} renderOrder={10}>
         <sphereGeometry args={[2.0, 64, 64]} />
         <meshBasicMaterial color="#000000" depthWrite={true} />
       </mesh>
 
-      {/* 3. PHOTON SPHERE RING (r = 1.5 Rs - Super Incandescent White-Cyan Ring on Silhouette Rim) */}
-      <mesh position={[0, 0, 0.05]} renderOrder={11}>
-        <ringGeometry args={[2.01, 2.14, 128]} />
+      {/* 5. RAZOR-SHARP PHOTON SPHERE RIM (Tight Glowing Filament at r = 1.5 Rs) */}
+      <mesh position={[0, 0, 0.02]} renderOrder={12}>
+        <ringGeometry args={[2.008, 2.052, 128]} />
         <meshBasicMaterial
           color="#ffffff"
           side={THREE.DoubleSide}
@@ -448,9 +386,9 @@ export function BlackHoleScene({
         />
       </mesh>
 
-      {/* Second Soft Photon Fringe */}
-      <mesh position={[0, 0, 0.05]} renderOrder={11}>
-        <ringGeometry args={[2.04, 2.22, 128]} />
+      {/* Soft Gold Photon Fringe */}
+      <mesh position={[0, 0, 0.02]} renderOrder={12}>
+        <ringGeometry args={[2.035, 2.095, 128]} />
         <meshBasicMaterial
           color="#fef08a"
           side={THREE.DoubleSide}
@@ -460,124 +398,31 @@ export function BlackHoleScene({
         />
       </mesh>
 
-      {/* 4. GRAVITATIONAL LENSING: UPPER WARPED HALO ARCH (Einstein Ring Over Event Horizon) */}
-      {/* Semicircular arch curving over top rear of event horizon */}
-      <group position={[0, 0, -0.25]} rotation={[-0.14, 0, 0]} renderOrder={5}>
-        <mesh ref={lensUpperRef} material={lensUpperMaterial}>
-          <torusGeometry args={[2.95, 0.58, 32, 128, Math.PI]} />
-        </mesh>
-        {/* Secondary Hot Core Halo */}
-        <mesh>
-          <torusGeometry args={[2.62, 0.18, 32, 128, Math.PI]} />
-          <meshBasicMaterial
-            color="#fef3c7"
-            transparent
-            opacity={0.88}
-            blending={THREE.AdditiveBlending}
-            side={THREE.DoubleSide}
-          />
-        </mesh>
-      </group>
-
-      {/* 5. GRAVITATIONAL LENSING: LOWER WARPED HALO ARCH (Einstein Ring Under Event Horizon) */}
-      {/* Semicircular arch curving under bottom rear of event horizon */}
-      <group position={[0, 0, -0.25]} rotation={[-0.14, 0, Math.PI]} renderOrder={5}>
-        <mesh ref={lensLowerRef} material={lensLowerMaterial}>
-          <torusGeometry args={[2.95, 0.48, 32, 128, Math.PI]} />
-        </mesh>
-        {/* Secondary Hot Core Halo */}
-        <mesh>
-          <torusGeometry args={[2.62, 0.16, 32, 128, Math.PI]} />
-          <meshBasicMaterial
-            color="#fef3c7"
-            transparent
-            opacity={0.85}
-            blending={THREE.AdditiveBlending}
-            side={THREE.DoubleSide}
-          />
-        </mesh>
-      </group>
-
-      {/* 6. PRIMARY EQUATORIAL ACCRETION DISK (High-Definition GLSL Keplerian Plasma) */}
-      <mesh ref={diskRef} rotation={[Math.PI / 2, 0, 0]} material={diskMaterial}>
-        <ringGeometry args={[2.08, 9.9, 128, 32]} />
-      </mesh>
-
-      {/* Inner Ultra-Hot ISCO Corona Fringe */}
-      <mesh rotation={[Math.PI / 2, 0, 0]}>
-        <ringGeometry args={[2.12, 2.55, 128]} />
-        <meshBasicMaterial
-          color="#ffffff"
-          side={THREE.DoubleSide}
-          transparent
-          opacity={0.88}
-          blending={THREE.AdditiveBlending}
-        />
-      </mesh>
-
-      {/* 7. BIPOLAR RELATIVISTIC JETS (Synchrotron Polar Outflow along Spin Axis) */}
-      {jetsEnabled && (
-        <group>
-          {/* North Polar Jet (+Y) */}
-          <group position={[0, 0.8, 0]}>
-            <mesh ref={jetUpperRef} material={jetMaterial}>
-              <cylinderGeometry args={[0.08, 0.85, 12.0, 32, 1, true]} />
-            </mesh>
-            {/* Magnetic Helical Confinement Rings */}
-            <mesh position={[0, 2.5, 0]} rotation={[Math.PI / 2, 0, 0]}>
-              <torusGeometry args={[0.26, 0.03, 16, 32]} />
-              <meshBasicMaterial color="#38bdf8" transparent opacity={0.65} blending={THREE.AdditiveBlending} />
-            </mesh>
-            <mesh position={[0, 5.0, 0]} rotation={[Math.PI / 2, 0, 0]}>
-              <torusGeometry args={[0.42, 0.035, 16, 32]} />
-              <meshBasicMaterial color="#38bdf8" transparent opacity={0.5} blending={THREE.AdditiveBlending} />
-            </mesh>
-            <mesh position={[0, 8.0, 0]} rotation={[Math.PI / 2, 0, 0]}>
-              <torusGeometry args={[0.62, 0.04, 16, 32]} />
-              <meshBasicMaterial color="#818cf8" transparent opacity={0.4} blending={THREE.AdditiveBlending} />
-            </mesh>
-          </group>
-
-          {/* South Polar Jet (-Y) */}
-          <group position={[0, -0.8, 0]} rotation={[Math.PI, 0, 0]}>
-            <mesh ref={jetLowerRef} material={jetMaterial}>
-              <cylinderGeometry args={[0.08, 0.85, 12.0, 32, 1, true]} />
-            </mesh>
-            {/* Magnetic Helical Confinement Rings */}
-            <mesh position={[0, 2.5, 0]} rotation={[Math.PI / 2, 0, 0]}>
-              <torusGeometry args={[0.26, 0.03, 16, 32]} />
-              <meshBasicMaterial color="#38bdf8" transparent opacity={0.65} blending={THREE.AdditiveBlending} />
-            </mesh>
-            <mesh position={[0, 5.0, 0]} rotation={[Math.PI / 2, 0, 0]}>
-              <torusGeometry args={[0.42, 0.035, 16, 32]} />
-              <meshBasicMaterial color="#38bdf8" transparent opacity={0.5} blending={THREE.AdditiveBlending} />
-            </mesh>
-            <mesh position={[0, 8.0, 0]} rotation={[Math.PI / 2, 0, 0]}>
-              <torusGeometry args={[0.62, 0.04, 16, 32]} />
-              <meshBasicMaterial color="#818cf8" transparent opacity={0.4} blending={THREE.AdditiveBlending} />
-            </mesh>
-          </group>
-        </group>
-      )}
-
-      {/* 8. RELATIVISTIC KEPLERIAN PARTICLE EMBER SWARM */}
+      {/* 6. FINE KEPLERIAN GLOWING DUST PARTICLES */}
       {particlesEnabled && (
-        <points ref={particlesRef} geometry={particlesGeometry}>
+        <points ref={particlesRef} geometry={particlesGeometry} renderOrder={15}>
           <pointsMaterial
-            size={0.062}
+            size={0.038}
             vertexColors
             transparent
-            opacity={0.88}
+            opacity={0.85}
             blending={THREE.AdditiveBlending}
             depthWrite={false}
           />
         </points>
       )}
 
-      {/* 9. GRAVITATIONAL WARPING SHADOW (Volumetric Depth Cue Behind Horizon) */}
-      <mesh position={[0, 0, -0.35]}>
-        <sphereGeometry args={[2.28, 32, 32]} />
-        <meshBasicMaterial color="#020408" transparent opacity={0.7} side={THREE.BackSide} />
+      {/* 7. SOFT VOLUMETRIC CORONA HAZE */}
+      <mesh position={[0, 0, -0.2]} renderOrder={2}>
+        <ringGeometry args={[2.05, 5.5, 64]} />
+        <meshBasicMaterial
+          color="#d97706"
+          side={THREE.DoubleSide}
+          transparent
+          opacity={0.16}
+          blending={THREE.AdditiveBlending}
+          depthWrite={false}
+        />
       </mesh>
     </group>
   );
