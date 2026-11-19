@@ -1,7 +1,7 @@
 # ASSET CREDITS & LICENSING MANIFEST
 
 Project: Space Mission Design Game
-Date: November 15, 2026
+Date: November 19, 2026
 
 ## 1. 3D Model Assets (glTF / GLB)
 
@@ -19,8 +19,12 @@ Date: November 15, 2026
 | Component | Description | Reference / Standard | Source |
 | :--- | :--- | :--- | :--- |
 | **Procedural Blue Marble Earth** | Dynamic canvas texture rendering continental geometry, oceanic gradients, deserts, and cloud layers | NASA Visible Earth / Blue Marble reference data | In-engine procedural generation (`earthTexture.ts`) |
+| **Procedural Solar System Textures** | Dynamic procedural high-resolution surface maps for Mercury, Venus, Earth, Mars, Jupiter, Saturn, Uranus, and Neptune | NASA Scientific Visualization Studio Planetary Maps | In-engine procedural generation (`planetTextures.ts`) |
+| **Gargantua Gravitational Lensing** | Relativistic curved photon ring, event horizon silhouette, and 1,400 Keplerian swirling particles | Thorne et al. gravitational lensing models & Interstellar physics | In-engine procedural geometry (`BlackHoleScene.tsx`) |
+| **Project Aegis Impactor & Dimorphos** | Hypervelocity kinetic collision target boulder, DRACO optical guidance reticle, and LICIACube ejecta plume | NASA DART Mission Data (JPL/APL) | In-engine procedural geometry (`AegisScene.tsx`) |
+| **Project Europa Cryosphere & Abyssal Sub** | Cryogenic chaotic terrain, thermal drill plume, 130 MPa submersible, and hydrothermal black smoker chimney | NASA Ocean Worlds Life Surveyor (OWLS) & Galileo data | In-engine procedural geometry (`EuropaScene.tsx`) |
 | **CubeSat 3U/6U Spacecraft Architecture** | Hard-anodized Al 6061-T6 corner rails, P-POD separation switches, Kapton MLI thermal blankets, GaAs photovoltaic cells | Cal Poly CDS Rev 14.1 & NASA LSP-REQ-317.01 | In-engine aerospace CAD model |
-| **Audio Synthesizer** | Realistic spacecraft telemetry beeps, airlock cycling hiss, RCS thruster puffs, and relay switches | Standard Web Audio API zero-latency synthesis | Custom synthesis engine (`audio.ts`) |
+| **Audio Synthesizer Engine** | Spacecraft telemetry beeps, active sonar pings, airlock cycling hiss, Doppler radar whines, and RCS puffs | Standard Web Audio API zero-latency synthesis | Custom synthesis engine (`audio.ts`) |
 
 ## 3. License Terms (CC0 1.0 Universal)
 

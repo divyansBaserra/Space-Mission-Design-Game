@@ -2,7 +2,7 @@
 
 import * as THREE from "three";
 
-export type InventoryItemId = "TOOLKIT" | "SOLAR_WING" | "SBAND_ANTENNA";
+export type InventoryItemId = "TOOLKIT" | "SOLAR_WING" | "SBAND_ANTENNA" | "LUNAR_SAMPLE" | "ALSEP_KIT";
 
 export interface InventoryItem {
   id: InventoryItemId;
@@ -12,7 +12,9 @@ export interface InventoryItem {
   icon: string;
 }
 
-export type PlayerControlMode = "ASTRONAUT" | "SPACECRAFT_COCKPIT";
+export type PlayerControlMode = "ASTRONAUT" | "SPACECRAFT_COCKPIT" | "SURFACE_EXPLORATION";
+
+export type GameMode = "ORBITAL_REPAIR" | "FLIGHT_SIM" | "HANGAR_SANDBOX";
 
 export type MissionStep =
   | "BRIEFING"
@@ -24,6 +26,10 @@ export type MissionStep =
   | "BOARD_SPACECRAFT"
   | "COCKPIT_ORBITAL_MANEUVER"
   | "APPROACH_DOCKING_PORT"
+  | "SURFACE_DESCENT"
+  | "SURFACE_LANDED"
+  | "EXPLORE_SURFACE"
+  | "HANGAR_ASSEMBLY"
   | "MISSION_COMPLETE"
   | "MISSION_FAILED";
 
@@ -54,6 +60,27 @@ export interface SpacecraftFlightState {
   alignmentAngleDeg: number;
   isDocked: boolean;
   dockingTargetPos: THREE.Vector3;
+  cameraViewMode: "COCKPIT" | "CHASE";
+  landingGearDeployed: boolean;
+  isLanded: boolean;
+  surfaceAltitudeMeters: number;
+  verticalSpeedMps: number;
+  landingTargetPos: THREE.Vector3;
+  distanceToLandingPad: number;
+  flightDestination: "ORBIT_GATEWAY" | "LUNAR_BASE_ALPHA";
+  touchdownVerticalSpeed?: number;
+  touchdownDistanceToPad?: number;
+  touchdownScore?: number;
+}
+
+export interface HangarCraftState {
+  chassis: "1U" | "3U" | "6U" | "ORBITER";
+  solar: "BODY_MOUNTED" | "SINGLE_WING" | "DUAL_WING";
+  solarDeployed: boolean;
+  propulsion: "NONE" | "COLD_GAS" | "HYDRAZINE" | "ION";
+  payload: "IMAGER" | "PLASMA" | "LIDAR" | "RADAR";
+  telecom: "UHF" | "SBAND" | "XBAND";
+  isThrusterFiring: boolean;
 }
 
 export interface GameSettings {
@@ -80,9 +107,18 @@ export interface GameState {
   airlockOuterDoorOpen: boolean;
   satellite: SatelliteRepairState;
   spacecraft: SpacecraftFlightState;
+  lunarSampleCollected: boolean;
+  radiationLevelMsv: number;
+  surfaceCoordinates: { lat: string; lon: string };
   missionMetSeconds: number;
   score: number;
   paused: boolean;
+  showControlsOverlay: boolean;
   interactionTarget: string | null;
   interactionPrompt: string | null;
+  hangarCraft: HangarCraftState;
+  activeFlightContract: string;
+  alsepDeployed: boolean;
+  alsepPosition: THREE.Vector3 | null;
+  isMagBootsLocked?: boolean;
 }

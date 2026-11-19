@@ -6,6 +6,7 @@ import * as THREE from "three";
 import { StationEnvironment } from "./StationEnvironment";
 import { PlayerController } from "./PlayerController";
 import { SpacecraftFlight } from "./SpacecraftFlight";
+import { PostProcessingEffects } from "./PostProcessingEffects";
 import { GameState, InventoryItemId } from "./types";
 import { StationPhysics } from "./physics";
 
@@ -27,12 +28,25 @@ interface GameCanvasProps {
     speed: number,
     distToDock: number,
     relVel: number,
-    alignAngle: number
+    alignAngle: number,
+    cameraViewMode: "COCKPIT" | "CHASE",
+    landingGearDeployed: boolean,
+    isLanded: boolean,
+    surfaceAltitudeMeters: number,
+    verticalSpeedMps: number,
+    distToPad: number
   ) => void;
   onDockComplete: () => void;
+  onLandComplete?: (touchdownVy: number, touchdownDist: number, scoreAward: number) => void;
   onTogglePause?: () => void;
   onEquipItem?: (id: InventoryItemId) => void;
   onExitCockpit?: () => void;
+  onToggleCameraView?: () => void;
+  onToggleLandingGear?: () => void;
+  onToggleControlsOverlay?: () => void;
+  onToggleSector?: () => void;
+  onToggleMagBoots?: () => void;
+  onRetetherToGantry?: () => void;
 }
 
 export function GameCanvas({
@@ -44,9 +58,16 @@ export function GameCanvas({
   onPointerLockChange,
   onUpdateSpacecraft,
   onDockComplete,
+  onLandComplete,
   onTogglePause,
   onEquipItem,
   onExitCockpit,
+  onToggleCameraView,
+  onToggleLandingGear,
+  onToggleControlsOverlay,
+  onToggleSector,
+  onToggleMagBoots,
+  onRetetherToGantry,
 }: GameCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -88,10 +109,21 @@ export function GameCanvas({
       }}
     >
       <Canvas
-        camera={{ position: [0, 1.65, 9], fov: 72, near: 0.1, far: 500 }}
+        camera={{ position: [0, 1.65, 9], fov: 75, near: 0.02, far: 500 }}
         shadows={isShadowsEnabled}
         dpr={dprSetting}
-        gl={{ antialias: gameState.settings?.graphicsQuality !== "LOW", powerPreference: "high-performance" }}
+        gl={{
+          antialias: gameState.settings?.graphicsQuality !== "LOW",
+          powerPreference: "high-performance",
+          toneMapping: THREE.ACESFilmicToneMapping,
+          toneMappingExposure: 1.02,
+        }}
+        onCreated={({ gl }) => {
+          gl.toneMapping = THREE.ACESFilmicToneMapping;
+          gl.toneMappingExposure = 1.02;
+          gl.shadowMap.enabled = isShadowsEnabled;
+          gl.shadowMap.type = THREE.PCFShadowMap;
+        }}
       >
         <Suspense fallback={null}>
           <StationEnvironment
@@ -107,14 +139,25 @@ export function GameCanvas({
             onPointerLockChange={onPointerLockChange}
             onTogglePause={onTogglePause}
             onEquipItem={onEquipItem}
+            onToggleControlsOverlay={onToggleControlsOverlay}
+            onToggleSector={onToggleSector}
+            onToggleMagBoots={onToggleMagBoots}
+            onRetetherToGantry={onRetetherToGantry}
           />
           <SpacecraftFlight
             gameState={gameState}
+            physics={physics}
             onUpdateSpacecraft={onUpdateSpacecraft}
             onDockComplete={onDockComplete}
+            onLandComplete={onLandComplete}
             onTogglePause={onTogglePause}
             onExitCockpit={onExitCockpit}
+            onToggleCameraView={onToggleCameraView}
+            onToggleLandingGear={onToggleLandingGear}
+            onToggleControlsOverlay={onToggleControlsOverlay}
+            onToggleSector={onToggleSector}
           />
+          <PostProcessingEffects gameState={gameState} />
         </Suspense>
       </Canvas>
     </div>

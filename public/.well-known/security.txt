@@ -1,0 +1,9 @@
+# Security Policy & Vulnerability Disclosure for NASA Space Mission Design Game
+# Canonical RFC 9116 Security Policy
+
+Contact: https://github.com/divyansBaserra/Space-Mission-Design-Game/security
+Expires: 2027-12-31T23:59:59.000Z
+Preferred-Languages: en
+Canonical: https://space-mission-design-game.pages.dev/.well-known/security.txt
+Policy: https://github.com/divyansBaserra/Space-Mission-Design-Game/blob/main/SECURITY.md
+Acknowledgments: https://github.com/divyansBaserra/Space-Mission-Design-Game/blob/main/HALL_OF_FAME.md
