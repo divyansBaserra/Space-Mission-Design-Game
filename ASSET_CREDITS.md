@@ -1,7 +1,7 @@
 # ASSET CREDITS & LICENSING MANIFEST
 
 Project: Space Mission Design Game
-Date: November 19, 2026
+Date: November 15, 2026
 
 ## 1. 3D Model Assets (glTF / GLB)
 
